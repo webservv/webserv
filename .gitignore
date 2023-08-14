@@ -5,5 +5,4 @@
 */*/*.o
 */*/*.d
 .DS_Store
-.vscode
 webserv

@@ -1,5 +1,4 @@
-CC                 = c++ -std=c++98
-CFLAGS             = -Wall -Wextra -Werror -MMD
+CXXFLAGS           = -Wall -Wextra -Werror -MMD -std=c++98
 NAME               = webserv
 RM                 = rm -f
 
@@ -50,14 +49,19 @@ OBJECTS            = $(SOURCES:.cpp=.o)
 HEADER             = $(MAIN_HEAD) $(CACHE_HEAD) $(CGI_HEAD) $(CONFIG_HEAD) \
 					 $(HTTP_HEAD) $(LOG_HEAD) $(MULTIPLEXING_HEAD) $(SERVER_HEAD) $(UTILITY_HEAD)
 
+
+ifdef DEBUG
+	CXXFLAGS = -Wall -Wextra -Werror -MMD -std=c++98 -g
+endif
+
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
-	@$(CC) $(CFLAGS) $(OBJECTS) -o $(EXEC)
+	@$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(EXEC)
 	@echo -e "$(GREEN)$(EXEC) created!$(DEFAULT)"
 
 %.o: %.cpp $(HEADER)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	@$(RM) $(OBJECTS)
@@ -71,7 +75,10 @@ re:
 	@make fclean
 	@make all
 
-.PHONY: all clean fclean re
+debug: fclean
+	make DEBUG=1
+
+.PHONY: all clean fclean re debug
 
 -include $(OBJECTS:.o=.d)
 
