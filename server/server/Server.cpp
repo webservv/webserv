@@ -4,12 +4,19 @@ static int backlog = 5;
 
 Server* Server::instance = NULL;
 
-Server::Server() : socket_fd(-1), num_connections(0) { }
+Server::Server() : socket_fd(-1), num_connections(0) {}
 
-Server::Server(const Server& copy) { (void)copy; }
+Server::Server(const int port, const char* host): socket_fd(-1), num_connections(0) {
+    createSocket();
+    setSocketOptions();
+    bindSocket(port, host);
+    listenSocket();
+}
+
+Server::Server(const Server& copy) { static_cast<void>(copy); }
 
 Server& Server::operator=(const Server& copy) {
-    (void)copy;
+    static_cast<void>(copy);
     return *this;
 }
 
@@ -18,19 +25,11 @@ Server::~Server() {
 }
 
 // We use a singleton pattern here to ensure that only one instance of the Server class is created.
-Server* Server::getInstance() {
+Server& Server::getInstance(const int port, const char* host) {
     if (instance == NULL) {
-        instance = new Server();
+        instance = new Server(port, host);
     }
-    return instance;
-}
-
-// Configure the server with settings such as port and host.
-void Server::init(int port, const char* host) {
-    createSocket();
-    setSocketOptions();
-    bindSocket(port, host);
-    listenSocket();
+    return *instance;
 }
 
 /*

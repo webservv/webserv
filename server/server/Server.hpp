@@ -20,6 +20,7 @@ private:
     int num_connections;
     
     Server();
+    Server(const int port, const char* host);
     Server(const Server& copy);
     Server& operator=(const Server& copy);
 
@@ -27,10 +28,7 @@ public:
     ~Server();
 
     // Retrieve the single instance of the Server Class.
-    static Server* getInstance();
-
-    // Configure the server with settings such as port and host.
-    void init(int port, const char* host);
+    static Server& getInstance(const int port, const char* host);
 
     // Manage all connections using poll() (or equivalent).
     void handlePoll();
