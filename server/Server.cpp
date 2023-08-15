@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Request.hpp"
+#include "Router.hpp"
 
 #include <fstream>
 
@@ -211,7 +212,9 @@ void Server::receiveFromSocket() {
 	out_file.close();
 
 	try {
-		Request request(buf);
+		Router router(buf);
+		// Request request(buf);
+
 		// also handle request
 	}
 	catch (std::exception& e) {

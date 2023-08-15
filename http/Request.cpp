@@ -2,6 +2,8 @@
 #include "Request.hpp"
 #include <iostream>
 
+Request::Request() {}
+
 Request::Request( std::string request ) 
 :requestParser(request) {
 	std::string line;
@@ -73,4 +75,11 @@ void Request::parseBody(void) {
 		body += requestLines.front() + '\n';
 		requestLines.pop();
 	}
+}
+
+Request::METHOD Request::getMethod() {
+	return method;
+}
+const std::string& Request::getUrl() {
+	return url;
 }
