@@ -1,4 +1,7 @@
 #include "Server.hpp"
+#include "Request.hpp"
+
+#include <fstream>
 
 static int backlog = 5;
 
@@ -191,16 +194,29 @@ void Server::receiveFromSocket() {
 			throw std::runtime_error("ERROR on accept");
 		}
 
-		std::cout << "Received: " << buf << std::endl;
-
+		// std::cout << "Received: " << buf << std::endl;
+		
 		std::string string(buf);
 		send(client_sockfd, buf, string.length(), 0);
 
-		std::cout << "Sent: " << buf << std::endl;
+		// std::cout << "Sent: " << buf << std::endl;
 		if (recvByte < BUFFER_SIZE)
 			break;
 	}
 
+	std::ofstream	out_file;
+	
+	out_file.open("request");
+	out_file << buf;
+	out_file.close();
+
+	try {
+		Request request(buf);
+		// also handle request
+	}
+	catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
 	/*
 	for now, this server is working like echo server. send the exact same message they receive. 
 	we will replace this part with server's actions (HTTP...)

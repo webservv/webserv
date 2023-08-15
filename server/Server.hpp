@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <poll.h>
 #include <fcntl.h>
-#define BUFFER_SIZE 42
+#include <istream>
+#define BUFFER_SIZE 1042
 
 class Server
 {
