@@ -37,13 +37,13 @@ void Router::handleRequest() {
 std::string Router::getMIME(std::string url) {
 
 	(void)(url);
-	return ("text'html");
+	return ("text/html");
 }
 
 void Router::handleGet() {
 
 	std::string mapUrl = g_dir + request.getUrl();
-	if (!access( mapUrl.c_str(), F_OK ))
+	if (access( mapUrl.c_str(), F_OK ))
 		response.makeStatusLine("HTTP/1.1", "404", "Not Found");
 	else {
 		response.makeStatusLine("HTTP/1.1", "200", "OK");
@@ -54,12 +54,12 @@ void Router::handleGet() {
 		std::string line;
 		std::string data;
 		while (std::getline(ifs, line)) {
-			data += line;
+			data += line + "\r\n";
 		}
 		response.makeBody(data, data.size(), getMIME(request.getUrl()));
 	// 4. Determine the Content Type
 	// 5. Send the Response Header
 	}
 	//test
-	std::cout << response.getResponseStr() << std::endl;
+	// std::cout << response.getResponseStr() << std::endl;
 }

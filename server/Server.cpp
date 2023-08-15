@@ -213,6 +213,7 @@ void Server::receiveFromSocket() {
 
 	try {
 		Router router(buf);
+		router.handleRequest();
 		// Request request(buf);
 
 		// also handle request

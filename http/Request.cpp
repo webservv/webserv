@@ -48,10 +48,10 @@ void Request::parseRequstLine() {
 	version = line.substr(space + 1, -1);
 	if (version != "HTTP/1.1")
 		throw std::out_of_range("invalid http, request line!4");
-	
-	std::cout << "method: " << method << std::endl;
-	std::cout << "url: " << url << std::endl;
-	std::cout << "version: " << version << std::endl;
+	// test
+	// std::cout << "method: " << method << std::endl;
+	// std::cout << "url: " << url << std::endl;
+	// std::cout << "version: " << version << std::endl;
 	
 }
 
@@ -67,9 +67,9 @@ void Request::parseHeaders(void) {
 		headers[line.substr(0, index)] = line.substr(index + 1, -1);
 	}
 	//test
-	for (std::unordered_map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
+	// for (std::unordered_map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
 }
 
 void Request::parseBody(void) {
