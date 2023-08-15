@@ -31,7 +31,7 @@ void Request::parseRequstLine() {
 
 	if (requestLines.empty())
 		throw std::out_of_range("invalid http, empty request line!");
-	std::string& line = requestLines.front();
+	std::string line = requestLines.front();
 	requestLines.pop();
 
 	size_t space = line.find(' ');
@@ -66,7 +66,7 @@ void Request::parseRequstLine() {
 
 void Request::parseHeaders(void) {
 	while (!requestLines.empty()) {
-		std::string& line = requestLines.front();
+		std::string line = requestLines.front();
 		requestLines.pop();
 		if (line.size() == 0)
 			break;
