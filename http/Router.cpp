@@ -50,7 +50,7 @@ void Router::handleGet() {
 		std::ifstream ifs;
 		ifs.open(mapUrl.c_str());
 		if (!ifs.is_open())
-			throw ;//
+			throw std::ios_base::failure("File open error. Router::handleget");
 		std::string line;
 		std::string data;
 		while (std::getline(ifs, line)) {
@@ -62,4 +62,8 @@ void Router::handleGet() {
 	}
 	//test
 	// std::cout << response.getResponseStr() << std::endl;
+}
+
+const std::string& Router::getResponseStr(void) const {
+	return response.getResponseStr();
 }

@@ -16,10 +16,10 @@ public:
 	Router(std::string requestStr);
 	~Router();
 public:
-	void	handleRequest(void);
-	void	handleGet(void);
-	std::string getMIME(std::string url);
-
+	void				handleRequest(void);
+	void				handleGet(void);
+	std::string			getMIME(std::string url);
+	const std::string&	getResponseStr(void) const;
 };
 
 #endif

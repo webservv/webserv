@@ -17,6 +17,15 @@ Request::Request( std::string request )
 	parseBody();
 }
 
+Request::Request(const Request& copy) {
+	static_cast<void>(copy);
+}
+
+Request& Request::operator=(const Request& copy) {
+	static_cast<void>(copy);
+	return *this;
+}
+
 // 'GET /index.html HTTP/1.1' <- example
 void Request::parseRequstLine() {
 

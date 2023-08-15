@@ -3,6 +3,7 @@
 #include "Router.hpp"
 
 #include <fstream>
+#include <stdexcept>
 
 static int backlog = 5;
 
@@ -197,8 +198,8 @@ void Server::receiveFromSocket() {
 
 		// std::cout << "Received: " << buf << std::endl;
 		
-		std::string string(buf);
-		send(client_sockfd, buf, string.length(), 0);
+		// std::string string(buf);
+		// send(client_sockfd, buf, string.length(), 0);
 
 		// std::cout << "Sent: " << buf << std::endl;
 		if (recvByte < BUFFER_SIZE)
@@ -214,8 +215,8 @@ void Server::receiveFromSocket() {
 	try {
 		Router router(buf);
 		router.handleRequest();
-		// Request request(buf);
-
+		if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
+			throw std::runtime_error("send error. Server::receiveFromSocket");
 		// also handle request
 	}
 	catch (std::exception& e) {

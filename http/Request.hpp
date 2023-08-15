@@ -24,15 +24,17 @@ private:
 
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
-
-	void parseRequstLine();
-	void parseHeaders();
-	void parseBody();
-
+private:
+	Request(const Request& copy);
+	Request&	operator=(const Request& copy);
 public:
 	Request ( std::string request );
 	Request ();
-	
+private:
+	void parseRequstLine();
+	void parseHeaders();
+	void parseBody();
+public:
 	Request::METHOD getMethod() ;
 	const std::string& getUrl() ;
 
