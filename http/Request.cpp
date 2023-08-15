@@ -20,12 +20,14 @@ Request::Request( std::string request )
 // 'GET /index.html HTTP/1.1' <- example
 void Request::parseRequstLine() {
 
+	if (requestLines.empty())
+		throw std::out_of_range("invalid http, empty request line!");
 	std::string& line = requestLines.front();
 	requestLines.pop();
 
 	size_t space = line.find(' ');
 	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!1");
 	std::string methodString = line.substr(0, space);
 	line = line.substr(space + 1, -1);
 	
@@ -36,16 +38,16 @@ void Request::parseRequstLine() {
 	else if (methodString == "DELETE")
 		method = DELETE;
 	else
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!2");
 
 	space = line.find(' ', space + 1);
 	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!3");
 	url = line.substr(0, space);
 
 	version = line.substr(space + 1, -1);
 	if (version != "HTTP/1.1")
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!4");
 	
 	std::cout << "method: " << method << std::endl;
 	std::cout << "url: " << url << std::endl;
