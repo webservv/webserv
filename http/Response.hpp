@@ -1,39 +1,21 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
-
 #include <string>
-#include <unordered_map>
-#include <sstream>
-#include <queue>
 
-class Request {
-
-enum METHOD {
-	GET,
-	POST,
-	DELETE,
-	OTHER // -> error or maybe we make other methods
-};
-
+class Response {
 private:
-	std::istringstream requestParser;
-	std::queue<std::string> requestLines;
-
-	METHOD method;
-	std::string url;
-	std::string version;
-
-	std::unordered_map<std::string, std::string> headers;
-	std::string body;
-
+	std::string	responseStr;
+private:
+	Response(const Response& copy);
+	Response&	operator=(const Response& copy);
 public:
-	Request ( std::string request );
-
-	void parseRequstLine();
-	void parseHeaders();
-	void parseBody();
-
-
+	Response();
+	~Response();
+public:
+	void				makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);
+	void				makeHeader(const std::string& key, const std::string& value);
+	void				makeBody(const std::string& data, const size_t len, const std::string& type);
+	const std::string&	getResponseStr(void) const;
 };
 
 #endif

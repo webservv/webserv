@@ -7,14 +7,13 @@
 #include <queue>
 
 class Request {
-
+public:
 enum METHOD {
 	GET,
 	POST,
 	DELETE,
 	OTHER // -> error or maybe we make other methods
 };
-
 private:
 	std::istringstream requestParser;
 	std::queue<std::string> requestLines;
@@ -26,13 +25,18 @@ private:
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
 
-public:
-	Request ( std::string request );
-
 	void parseRequstLine();
 	void parseHeaders();
 	void parseBody();
 
+public:
+	Request ( std::string request );
+	Request ();
+	
+	Request::METHOD getMethod() ;
+	const std::string& getUrl() ;
+
+// canonical-form ? 
 
 };
 

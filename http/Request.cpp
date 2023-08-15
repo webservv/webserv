@@ -2,6 +2,8 @@
 #include "Request.hpp"
 #include <iostream>
 
+Request::Request() {}
+
 Request::Request( std::string request ) 
 :requestParser(request) {
 	std::string line;
@@ -18,12 +20,14 @@ Request::Request( std::string request )
 // 'GET /index.html HTTP/1.1' <- example
 void Request::parseRequstLine() {
 
+	if (requestLines.empty())
+		throw std::out_of_range("invalid http, empty request line!");
 	std::string& line = requestLines.front();
 	requestLines.pop();
 
 	size_t space = line.find(' ');
 	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!1");
 	std::string methodString = line.substr(0, space);
 	line = line.substr(space + 1, -1);
 	
@@ -34,20 +38,20 @@ void Request::parseRequstLine() {
 	else if (methodString == "DELETE")
 		method = DELETE;
 	else
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!2");
 
 	space = line.find(' ', space + 1);
 	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!");
+		throw std::out_of_range("invalid http, request line!3");
 	url = line.substr(0, space);
 
 	version = line.substr(space + 1, -1);
 	if (version != "HTTP/1.1")
-		throw std::out_of_range("invalid http, request line!");
-	
-	std::cout << "method: " << method << std::endl;
-	std::cout << "url: " << url << std::endl;
-	std::cout << "version: " << version << std::endl;
+		throw std::out_of_range("invalid http, request line!4");
+	// test
+	// std::cout << "method: " << method << std::endl;
+	// std::cout << "url: " << url << std::endl;
+	// std::cout << "version: " << version << std::endl;
 	
 }
 
@@ -63,9 +67,9 @@ void Request::parseHeaders(void) {
 		headers[line.substr(0, index)] = line.substr(index + 1, -1);
 	}
 	//test
-	for (std::unordered_map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
-		std::cout << it->first << ": " << it->second << std::endl;
-	}
+	// for (std::unordered_map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
+	// 	std::cout << it->first << ": " << it->second << std::endl;
+	// }
 }
 
 void Request::parseBody(void) {
@@ -73,4 +77,11 @@ void Request::parseBody(void) {
 		body += requestLines.front() + '\n';
 		requestLines.pop();
 	}
+}
+
+Request::METHOD Request::getMethod() {
+	return method;
+}
+const std::string& Request::getUrl() {
+	return url;
 }
