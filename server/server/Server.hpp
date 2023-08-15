@@ -14,9 +14,9 @@ class Server
 private:
     static Server* instance;
     int socket_fd;
-    struct sockaddr_in server_addr;
-    struct sockaddr_in client_addr;
-    struct pollfd poll_fd[256];
+    sockaddr_in server_addr;
+    sockaddr_in client_addr;
+    pollfd poll_fd[256];
     int num_connections;
     
     Server();
