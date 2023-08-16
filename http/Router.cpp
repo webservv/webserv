@@ -1,15 +1,33 @@
 #include "Router.hpp"
-#include "Request.hpp"
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
 
 static const std::string	g_dir = "./document";
+std::map<std::string, std::string> Router::mimeMap;
 
-Router::Router(std::string requestStr) 
-:request(requestStr), response() {
-	
+void Router::initializeMimeMap() {
+    if (mimeMap.empty()) {
+        mimeMap["html"] = "text/html";
+        mimeMap["txt"] = "text/plain";
+        mimeMap["css"] = "text/css";
+        mimeMap["js"] = "application/javascript";
+        mimeMap["json"] = "application/json";
+        mimeMap["xml"] = "application/xml";
+        mimeMap["pdf"] = "application/pdf";
+        mimeMap["zip"] = "application/zip";
+        mimeMap["tar"] = "application/x-tar";
+        mimeMap["gif"] = "image/gif";
+        mimeMap["png"] = "image/png";
+        mimeMap["jpg"] = "image/jpeg";
+    }
 }
+
+Router::Router(std::string requestStr)
+    : request(requestStr), response() {
+    initializeMimeMap();
+}
+
 
 Router::~Router() {}
 
@@ -34,10 +52,27 @@ void Router::handleRequest() {
 		return ;
 }
 
-std::string Router::getMIME(std::string url) {
+std::string Router::getExtension(const std::string& url) {
+    size_t extensionStart = url.find_last_of('.');
+    if (extensionStart == std::string::npos) {
+        return "";
+    }
+    return url.substr(extensionStart + 1);
+}
 
-	(void)(url);
-	return ("text/html");
+std::string Router::findMimeType(const std::string& extension) {
+    std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
+    if (it != mimeMap.end()) {
+        return it->second;
+    } else {
+        return "application/octet-stream";
+    }
+}
+
+std::string Router::getMIME(std::string url) {
+    std::string extension = getExtension(url);
+    // return findMimeType(extension);
+    return ("text/html");
 }
 
 void Router::handleGet() {
