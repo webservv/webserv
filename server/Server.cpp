@@ -1,7 +1,6 @@
 #include "Server.hpp"
 #include "Request.hpp"
 #include "Router.hpp"
-
 #include <fstream>
 #include <stdexcept>
 
@@ -182,49 +181,45 @@ recv() : receive a message from socket
 
 return value: the number of bytes received
 */
+
+void Server::receiveBuffer(char* buf) {
+    int recvByte;
+    while (true) {
+        memset(buf, 0, BUFFER_SIZE);
+        recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
+
+        if (recvByte == -1) {
+            std::cout << strerror(errno) << std::endl;
+            std::cout << errno << std::endl;
+            throw std::runtime_error("ERROR on accept");
+        }
+
+        if (recvByte < BUFFER_SIZE)
+            break;
+    }
+}
+
+void Server::writeToFile(const char* buf) {
+    std::ofstream out_file;
+    out_file.open("request");
+    out_file << buf;
+    out_file.close();
+}
+
+void Server::processRequest(const char* buf) {
+    try {
+        Router router(buf);
+        router.handleRequest();
+        if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
+            throw std::runtime_error("send error. Server::receiveFromSocket");
+    } catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
+}
+
 void Server::receiveFromSocket() {
-	char buf[BUFFER_SIZE] = {0, };				// NULL init
-	int	recvByte;
-
-	while (true) {
-		memset(buf, 0, sizeof(buf));
-		recvByte = recv(client_sockfd, buf, sizeof(buf), 0);
-
-		if (recvByte == -1) {
-			std::cout << strerror(errno) << std::endl;
-			std::cout << errno << std::endl;
-			throw std::runtime_error("ERROR on accept");
-		}
-
-		// std::cout << "Received: " << buf << std::endl;
-		
-		// std::string string(buf);
-		// send(client_sockfd, buf, string.length(), 0);
-
-		// std::cout << "Sent: " << buf << std::endl;
-		if (recvByte < BUFFER_SIZE)
-			break;
-	}
-
-	std::ofstream	out_file;
-	
-	out_file.open("request");
-	out_file << buf;
-	out_file.close();
-
-	try {
-		Router router(buf);
-		router.handleRequest();
-		if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
-			throw std::runtime_error("send error. Server::receiveFromSocket");
-		// also handle request
-	}
-	catch (std::exception& e) {
-		std::cout << e.what() << std::endl;
-	}
-	/*
-	for now, this server is working like echo server. send the exact same message they receive. 
-	we will replace this part with server's actions (HTTP...)
-	*/
-
+    char buf[BUFFER_SIZE] = {0,};
+    receiveBuffer(buf);
+    writeToFile(buf);
+    processRequest(buf);
 }

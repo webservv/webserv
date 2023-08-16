@@ -24,6 +24,7 @@ private:
 
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
+
 private:
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
@@ -31,7 +32,10 @@ public:
 	Request ( std::string request );
 	Request ();
 private:
-	void parseRequstLine();
+    void parseMethod(std::string& line);
+    void parseURL(std::string& line);
+    void parseVersion(std::string& line, size_t space);
+	void parseRequestLine();
 	void parseHeaders();
 	void parseBody();
 public:

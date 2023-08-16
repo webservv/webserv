@@ -26,6 +26,9 @@ private:
 	Server(const int port, const char* host);
 	Server(const Server& copy);
 	Server& operator=(const Server& copy);
+    void receiveBuffer(char* buf);
+    void writeToFile(const char* buf);
+    void processRequest(const char* buf);
 
 public:
 	~Server();
