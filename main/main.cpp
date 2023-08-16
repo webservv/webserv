@@ -10,10 +10,7 @@ int main() {
 		std::cout << "Server started, waiting for connections..." << std::endl;
 
 		while (true) {
-			server.acceptConnection();
-			server.receiveFromSocket();
-			// server.handlePoll();
-            break;
+			server.waitEvents();
 		}
 		server.stop();
 	} catch (const std::exception& e) {
