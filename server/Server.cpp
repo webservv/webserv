@@ -80,31 +80,10 @@ void Server::stop() {
 		- SOCK_RAW : Provides raw network protocol access.
 	 protocol : 0
 */
-/*
-fcntl function is for manipulating file descriptors.
-int fcntl(int fd, int cmd, ... /* arg * / );
-	- fd : file descriptor
-	- cmd : F_GETFL, F_SETFL
-		- F_GETFL : get file descriptor flags
-		- F_SETFL : set file descriptor flags
-	- arg : O_NONBLOCK
-		- O_NONBLOCK : non-blocking mode
-*/
 void Server::createSocket() {
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0) {
 		throw std::runtime_error("ERROR opening socket");
-	}
-
-	int flags = fcntl(socket_fd, F_GETFL, 0);
-	if (flags == -1) {
-		throw std::runtime_error("ERROR getting socket flags");
-	}
-
-	flags |= O_NONBLOCK;
-
-	if (fcntl(socket_fd, F_SETFL, flags) == -1) {
-		throw std::runtime_error("ERROR setting socket to non-blocking");
 	}
 }
 
@@ -230,7 +209,7 @@ void Server::writeToFile(const char* buf) {
 
 void Server::processRequest(const char* buf) {
 	try {
-		Router router(buf);
+		Router router(buf, client_sockfd);
 		router.handleRequest();
 		if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket");
