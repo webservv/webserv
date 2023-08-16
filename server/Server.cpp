@@ -80,16 +80,6 @@ void Server::stop() {
 		- SOCK_RAW : Provides raw network protocol access.
 	 protocol : 0
 */
-/*
-fcntl function is for manipulating file descriptors.
-int fcntl(int fd, int cmd, ... );
-	- fd : file descriptor
-	- cmd : F_GETFL, F_SETFL
-		- F_GETFL : get file descriptor flags
-		- F_SETFL : set file descriptor flags
-	- arg : O_NONBLOCK
-		- O_NONBLOCK : non-blocking mode
-*/
 void Server::createSocket() {
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0) {
