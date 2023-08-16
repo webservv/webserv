@@ -33,7 +33,7 @@ public:
 public:
 	void				handleRequest(void);
 	void				handleGet(void);
-	std::string			getMIME(std::string url);
+	std::string         getMIME(const std::string& url);
 	const std::string&	getResponseStr(void) const;
 };
 

@@ -68,7 +68,7 @@ std::string Router::findMimeType(const std::string& extension) {
     }
 }
 
-std::string Router::getMIME(std::string url) {
+std::string Router::getMIME(const std::string& url) {
     const std::string& extension = getExtension(url);
     return findMimeType(extension);
 }
