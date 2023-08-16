@@ -72,6 +72,7 @@ void Server::createSocket() {
 	addIOchanges(socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
+
 /* 
 	 int
 	 setsockopt(int socket, int level, int option_name,
@@ -190,10 +191,10 @@ void Server::receiveBuffer(const int client_sockfd) {
 }
 
 void Server::writeToFile(const char* buf) {
-    std::ofstream out_file;
-    out_file.open("request");
-    out_file << buf;
-    out_file.close();
+	std::ofstream out_file;
+	out_file.open("request");
+	out_file << buf;
+	out_file.close();
 }
 
 void Server::processRequest(const std::string& buf, const int client_sockfd) {
