@@ -1,24 +1,25 @@
-#include "includes.hpp"
+
+#include "Server.hpp"
 
 int main() {
-    const int port = 8080;
-    const char* host = "0.0.0.0";
+	const int port = 8080;
+	const char* host = "127.0.0.1";
 
-    try {
-        Server* server = Server::getInstance();
-        server->init(port, host);
+	try {
+		Server& server = Server::getInstance(port, host);
+		std::cout << "Server started, waiting for connections..." << std::endl;
 
-        std::cout << "Server started, waiting for connections..." << std::endl;
+		while (true) {
+			server.acceptConnection();
+			server.receiveFromSocket();
+			// server.handlePoll();
+            break;
+		}
+		server.stop();
+	} catch (const std::exception& e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
+	}
 
-        while (true) {
-            server->acceptConnection();
-            server->handlePoll();
-        }
-        server->stop();
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
-
-    return 0;
+	return 0;
 }

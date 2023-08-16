@@ -5,5 +5,7 @@
 */*/*.o
 */*/*.d
 .DS_Store
-.vscode
+.vscode/settings.json
 webserv
+a.out
+request
