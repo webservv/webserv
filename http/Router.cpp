@@ -23,8 +23,8 @@ void Router::initializeMimeMap() {
     }
 }
 
-Router::Router(std::string requestStr)
-    : request(requestStr), response() {
+Router::Router(std::string requestStr, int clientSock)
+    : request(requestStr), clientSocket(clientSock) {
     initializeMimeMap();
 }
 
@@ -71,32 +71,69 @@ std::string Router::findMimeType(const std::string& extension) {
 
 std::string Router::getMIME(std::string url) {
     std::string extension = getExtension(url);
-    // return findMimeType(extension);
-    return ("text/html");
+    return findMimeType(extension);
 }
 
-void Router::handleGet() {
+void Router::parseURL(std::string& filePath) {
+    std::string urlPath = request.getUrl();
+    filePath = g_dir + urlPath;
+}
 
-	std::string mapUrl = g_dir + request.getUrl();
-	if (access( mapUrl.c_str(), F_OK ))
-		response.makeStatusLine("HTTP/1.1", "404", "Not Found");
-	else {
-		response.makeStatusLine("HTTP/1.1", "200", "OK");
-		std::ifstream ifs;
-		ifs.open(mapUrl.c_str());
-		if (!ifs.is_open())
-			throw std::ios_base::failure("File open error. Router::handleget");
-		std::string line;
-		std::string data;
-		while (std::getline(ifs, line)) {
-			data += line + "\r\n";
-		}
-		response.makeBody(data, data.size(), getMIME(request.getUrl()));
-	// 4. Determine the Content Type
-	// 5. Send the Response Header
-	}
-	//test
-	// std::cout << response.getResponseStr() << std::endl;
+bool Router::resourceExists(const std::string& filePath) {
+    return !access(filePath.c_str(), F_OK);
+}
+
+void Router::readFile(const std::string& filePath, std::string& content) {
+    std::ifstream ifs(filePath.c_str());
+    if (!ifs.is_open()) {
+        throw std::ios_base::failure("File open error.");
+    }
+    content.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+}
+
+void Router::sendResponse(const std::string& responseStr) {
+    const char* responseBuffer = responseStr.c_str();
+    size_t bytesToSend = responseStr.size();
+    ssize_t bytesSent = 0;
+
+    while (bytesToSend > 0) {
+        ssize_t result = send(clientSocket, responseBuffer + bytesSent, bytesToSend, 0);
+
+        if (result < 0) {
+            std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
+            break;
+        }
+
+        bytesSent += result;
+        bytesToSend -= result;
+    }
+}
+
+
+void Router::handleGet() {
+    try {
+        std::string filePath;
+        parseURL(filePath);
+
+        if (!resourceExists(filePath)) {
+            response.makeStatusLine("HTTP/1.1", "404", "Not Found");
+            return;
+        }
+
+        std::string content;
+        readFile(filePath, content);
+        std::string mimeType = getMIME(filePath);
+
+        response.makeStatusLine("HTTP/1.1", "200", "OK");
+        response.makeHeader("Content-Type", mimeType);
+        response.makeHeader("Content-Length", std::to_string(content.size()));
+        response.makeBody(content, content.size(), mimeType);
+
+        sendResponse(response.getResponseStr());
+    } catch (const std::ios_base::failure& e) {
+        response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
 }
 
 const std::string& Router::getResponseStr(void) const {

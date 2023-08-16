@@ -80,12 +80,23 @@ void Server::stop() {
 		- SOCK_RAW : Provides raw network protocol access.
 	 protocol : 0
 */
+/*
+fcntl function is for manipulating file descriptors.
+int fcntl(int fd, int cmd, ... );
+	- fd : file descriptor
+	- cmd : F_GETFL, F_SETFL
+		- F_GETFL : get file descriptor flags
+		- F_SETFL : set file descriptor flags
+	- arg : O_NONBLOCK
+		- O_NONBLOCK : non-blocking mode
+*/
 void Server::createSocket() {
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0) {
 		throw std::runtime_error("ERROR opening socket");
 	}
 }
+
 
 /* 
 	 int
@@ -183,43 +194,43 @@ return value: the number of bytes received
 */
 
 void Server::receiveBuffer(char* buf) {
-    int recvByte;
-    while (true) {
-        memset(buf, 0, BUFFER_SIZE);
-        recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
+	int recvByte;
+	while (true) {
+		memset(buf, 0, BUFFER_SIZE);
+		recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 
-        if (recvByte == -1) {
-            std::cout << strerror(errno) << std::endl;
-            std::cout << errno << std::endl;
-            throw std::runtime_error("ERROR on accept");
-        }
+		if (recvByte == -1) {
+			std::cout << strerror(errno) << std::endl;
+			std::cout << errno << std::endl;
+			throw std::runtime_error("ERROR on accept");
+		}
 
-        if (recvByte < BUFFER_SIZE)
-            break;
-    }
+		if (recvByte < BUFFER_SIZE)
+			break;
+	}
 }
 
 void Server::writeToFile(const char* buf) {
-    std::ofstream out_file;
-    out_file.open("request");
-    out_file << buf;
-    out_file.close();
+	std::ofstream out_file;
+	out_file.open("request");
+	out_file << buf;
+	out_file.close();
 }
 
 void Server::processRequest(const char* buf) {
-    try {
-        Router router(buf);
-        router.handleRequest();
-        if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
-            throw std::runtime_error("send error. Server::receiveFromSocket");
-    } catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+	try {
+		Router router(buf, client_sockfd);
+		router.handleRequest();
+		if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
+			throw std::runtime_error("send error. Server::receiveFromSocket");
+	} catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
 }
 
 void Server::receiveFromSocket() {
-    char buf[BUFFER_SIZE] = {0,};
-    receiveBuffer(buf);
-    writeToFile(buf);
-    processRequest(buf);
+	char buf[BUFFER_SIZE] = {0,};
+	receiveBuffer(buf);
+	writeToFile(buf);
+	processRequest(buf);
 }
