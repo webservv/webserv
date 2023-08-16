@@ -28,7 +28,6 @@ Router::Router(std::string requestStr, int clientSock)
     initializeMimeMap();
 }
 
-
 Router::~Router() {}
 
 Router::Router(const Router& copy) {
@@ -70,7 +69,7 @@ std::string Router::findMimeType(const std::string& extension) {
 }
 
 std::string Router::getMIME(std::string url) {
-    std::string extension = getExtension(url);
+    const std::string& extension = getExtension(url);
     return findMimeType(extension);
 }
 
@@ -109,7 +108,6 @@ void Router::sendResponse(const std::string& responseStr) {
     }
 }
 
-
 void Router::handleGet() {
     try {
         std::string filePath;
@@ -125,8 +123,6 @@ void Router::handleGet() {
         std::string mimeType = getMIME(filePath);
 
         response.makeStatusLine("HTTP/1.1", "200", "OK");
-        response.makeHeader("Content-Type", mimeType);
-        response.makeHeader("Content-Length", std::to_string(content.size()));
         response.makeBody(content, content.size(), mimeType);
 
         sendResponse(response.getResponseStr());
