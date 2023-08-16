@@ -135,3 +135,4 @@ void Router::handleGet() {
 const std::string& Router::getResponseStr(void) const {
 	return response.getResponseStr();
 }
+
