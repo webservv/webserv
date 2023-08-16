@@ -12,7 +12,7 @@ Request::Request( std::string request )
 			line.pop_back();
 		requestLines.push(line);
 	}
-	parseRequstLine();
+	parseRequestLine();
 	parseHeaders();
 	parseBody();
 }
@@ -27,46 +27,51 @@ Request& Request::operator=(const Request& copy) {
 }
 
 // 'GET /index.html HTTP/1.1' <- example
-void Request::parseRequstLine() {
+void Request::parseMethod(std::string& line) {
+    size_t space = line.find(' ');
+    if (space == std::string::npos)
+        throw std::out_of_range("invalid http, request line!1");
+    std::string methodString = line.substr(0, space);
+    line = line.substr(space + 1);
 
-	if (requestLines.empty())
-		throw std::out_of_range("invalid http, empty request line!");
-	std::string& line = requestLines.front();
-	requestLines.pop();
+    if (methodString == "GET")
+        method = GET;
+    else if (methodString == "POST")
+        method = POST;
+    else if (methodString == "DELETE")
+        method = DELETE;
+    else
+        throw std::out_of_range("invalid http, request line!2");
+}
 
-	size_t space = line.find(' ');
-	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!1");
-	std::string methodString = line.substr(0, space);
-	line = line.substr(space + 1, -1);
-	
-	if (methodString == "GET")
-		method = GET;
-	else if (methodString == "POST")
-		method = POST;
-	else if (methodString == "DELETE")
-		method = DELETE;
-	else
-		throw std::out_of_range("invalid http, request line!2");
+void Request::parseURL(std::string& line) {
+    size_t space = line.find(' ');
+    if (space == std::string::npos)
+        throw std::out_of_range("invalid http, request line!3");
+    url = line.substr(0, space);
+}
 
-	space = line.find(' ', space + 1);
-	if (space == std::string::npos)
-		throw std::out_of_range("invalid http, request line!3");
-	url = line.substr(0, space);
+void Request::parseVersion(std::string& line, size_t space) {
+    version = line.substr(space + 1);
+    if (version != "HTTP/1.1")
+        throw std::out_of_range("invalid http, request line!4");
+}
 
-	version = line.substr(space + 1, -1);
-	if (version != "HTTP/1.1")
-		throw std::out_of_range("invalid http, request line!4");
-	// test
-	// std::cout << "method: " << method << std::endl;
-	// std::cout << "url: " << url << std::endl;
-	// std::cout << "version: " << version << std::endl;
-	
+void Request::parseRequestLine() {
+    if (requestLines.empty())
+        throw std::out_of_range("invalid http, empty request line!");
+    std::string line = requestLines.front();
+    requestLines.pop();
+
+    parseMethod(line);
+    size_t space = line.find(' ');
+    parseURL(line);
+    parseVersion(line, space);
 }
 
 void Request::parseHeaders(void) {
 	while (!requestLines.empty()) {
-		std::string& line = requestLines.front();
+		std::string line = requestLines.front();
 		requestLines.pop();
 		if (line.size() == 0)
 			break;
