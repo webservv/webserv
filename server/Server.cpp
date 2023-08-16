@@ -8,6 +8,7 @@
 #include <sys/_types/_intptr_t.h>
 #include <sys/_types/_uintptr_t.h>
 #include <sys/event.h>
+#include <unistd.h>
 
 static int backlog = 5;
 
@@ -15,7 +16,7 @@ Server* Server::instance = NULL;
 
 Server::Server() : socket_fd(-1) {}
 
-Server::Server(const int port, const char* host): socket_fd(-1) {
+Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS_SIZE) {
 	kqueue_fd = kqueue();
 	if (kqueue_fd < 0)
 		throw std::runtime_error("kqueue error. " + std::string(strerror(errno)));
@@ -179,6 +180,8 @@ void Server::receiveBuffer(const int client_sockfd) {
     while (true) {
         recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 		clientMessages[client_sockfd] += buf;
+		if (recvByte <= 0)
+			disconnect(client_sockfd);
         if (recvByte == -1) {
             std::cout << strerror(errno) << std::endl;
             throw std::runtime_error("ERROR on accept");
@@ -215,9 +218,9 @@ void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint3
 }
 
 void Server::waitEvents(void) {
-	IOevents.resize(IOchanges.size());
 	const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-
+	
+	IOchanges.clear();
 	if (events < 0)
 		throw std::runtime_error("kevent error! " + std::string(strerror(errno)));
 	for (int i = 0; i < events; i++) {
@@ -229,8 +232,15 @@ void Server::waitEvents(void) {
 		else if (clientMessages.find(cur.ident) != clientMessages.end()) {
 			if (cur.filter == EVFILT_READ)
 				receiveBuffer(cur.ident);
-			else if (cur.filter == EVFILT_WRITE)
+			else if (cur.filter == EVFILT_WRITE && clientMessages[cur.ident] != "") {
 				processRequest(clientMessages[cur.ident], cur.ident);
+				clientMessages[cur.ident].clear();
+			}
 		}
 	}
+}
+
+void Server::disconnect(const int client_sockfd) {
+	close(client_sockfd);
+	clientMessages.erase(client_sockfd);
 }

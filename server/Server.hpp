@@ -13,7 +13,7 @@
 #include <vector>
 #include <map>
 #define BUFFER_SIZE 1042
-
+#define EVENTS_SIZE 100
 class Server
 {
 private:
@@ -34,6 +34,7 @@ private:
     void writeToFile(const char* buf);
     void processRequest(const std::string& buf, const int client_sockfd);
 	void addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
+	void disconnect(const int client_sockfd);
 public:
 	~Server();
 
