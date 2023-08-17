@@ -8,7 +8,10 @@ int main() {
 	try {
 		Server& server = Server::getInstance(port, host);
 		while (true) {
-			server.waitEvents();
+			server.acceptConnection();
+			server.receiveFromSocket();
+			// server.handlePoll();
+            break;
 		}
 		server.stop();
 	} catch (const std::exception& e) {

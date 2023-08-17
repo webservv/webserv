@@ -1,7 +1,6 @@
 #include "Server.hpp"
 #include "Request.hpp"
 #include "Router.hpp"
-#include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <sys/_types/_int16_t.h>
@@ -17,7 +16,7 @@ static const std::string    post_txt = "./document/posts.txt";
 
 Server* Server::instance = NULL;
 
-Server::Server() : socket_fd(-1) {}
+Server::Server() : socket_fd(-1), num_connections(0) {}
 
 Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS_SIZE) {
 	kqueue_fd = kqueue();
@@ -49,6 +48,30 @@ Server& Server::getInstance(const int port, const char* host) {
 	}
 	return *instance;
 }
+
+/*
+	int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+		fds : array of pollfd structs
+		nfds : number of fds
+		timeout : timeout in milliseconds
+	struct pollfd {
+		int fd; // file descriptor
+		short events; // requested events
+		short revents; // returned events
+	};
+	POLLIN : There is data to read.
+	POLLOUT : Writing now will not block.
+	POLLERR : Error condition.
+*/
+
+void Server::handlePoll() {
+	int ret = poll(poll_fd, num_connections, -1);
+	if (ret < 0) {
+		throw std::runtime_error("ERROR on poll");
+	}
+	//
+}
+
 
 void Server::stop() {
 	if (socket_fd != -1) {
@@ -127,16 +150,14 @@ bind() : bind socket to address
 	- socklen_t addrlen
 */
 void Server::bindSocket(int port, const char* host) {
-	sockaddr_in	server_addr;
-
-	std::memset(&server_addr, 0, sizeof(server_addr));
+	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = inet_addr(host);
 	if (server_addr.sin_addr.s_addr == INADDR_NONE) {
 		throw std::runtime_error("ERROR invalid host");
 	}
-	if (bind(socket_fd, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
+	if (bind(socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
 		throw std::runtime_error("ERROR on binding");
 	}
 }
@@ -164,8 +185,8 @@ accept() returns a new file descriptor,
 */
 void Server::acceptConnection() {
 	socklen_t client_len = sizeof(client_addr);
-	const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
-
+	
+	client_sockfd = accept(socket_fd, (struct sockaddr*)&client_addr, &client_len);
 	if (client_sockfd < 0) {
 		throw std::runtime_error("ERROR on accept");
 	}
@@ -186,11 +207,10 @@ recv() : receive a message from socket
 return value: the number of bytes received
 */
 
-void Server::receiveBuffer(const int client_sockfd) {
+void Server::receiveBuffer(char* buf) {
     int recvByte;
-	char buf[BUFFER_SIZE] = {0, };
-
     while (true) {
+        memset(buf, 0, BUFFER_SIZE);
         recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 		clientMessages[client_sockfd] += buf;
 		if (recvByte == 0) {
@@ -202,7 +222,6 @@ void Server::receiveBuffer(const int client_sockfd) {
         if (recvByte < BUFFER_SIZE)
             break;
     }
-	writeToFile(buf);
 }
 
 void Server::writeToFile(const char* buf) {
@@ -212,7 +231,7 @@ void Server::writeToFile(const char* buf) {
 	out_file.close();
 }
 
-void Server::processRequest(const std::string& buf, const int client_sockfd) {
+void Server::processRequest(const char* buf) {
     try {
         Router router(buf, client_sockfd);
         router.handleRequest();
@@ -223,11 +242,11 @@ void Server::processRequest(const std::string& buf, const int client_sockfd) {
     }
 }
 
-void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata) {
-	struct kevent	newEvents;
-
-	EV_SET(&newEvents, ident, filter, flags, fflags, data, udata);
-	IOchanges.push_back(newEvents);
+void Server::receiveFromSocket() {
+    char buf[BUFFER_SIZE] = {0,};
+    receiveBuffer(buf);
+    writeToFile(buf);
+    processRequest(buf);
 }
 
 void Server::waitEvents(void) {
