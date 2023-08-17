@@ -39,8 +39,9 @@ private:
 	void parseBody();
 public:
 	Request::METHOD getMethod() ;
+	const std::string& getBody() const;
 	const std::string& getUrl() ;
-
+	const std::string& getHeaderValue(const std::string& headerName) const;
 // canonical-form ? 
 
 };

@@ -76,9 +76,9 @@ void Request::parseHeaders(void) {
 		if (line.size() == 0)
 			break;
 		size_t index = line.find(':');
-		if (index == std::string::npos)
+		if (index == std::string::npos || index + 2 >= line.size())
 			throw std::out_of_range("invalid http, header!");
-		headers[line.substr(0, index)] = line.substr(index + 1, -1);
+		headers[line.substr(0, index)] = line.substr(index + 2);
 	}
 }
 
@@ -94,4 +94,17 @@ Request::METHOD Request::getMethod() {
 }
 const std::string& Request::getUrl() {
 	return url;
+}
+
+const std::string& Request::getHeaderValue(const std::string& headerName) const {
+    std::unordered_map<std::string, std::string>::const_iterator it = headers.find(headerName);
+    if (it != headers.end()) {
+        return it->second;
+    }
+    static const std::string emptyString = "";
+    return emptyString;
+}
+
+const std::string& Request::getBody() const {
+	return body;
 }

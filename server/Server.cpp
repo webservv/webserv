@@ -10,8 +10,10 @@
 #include <sys/event.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
+#include <cstdio>
 
 static int backlog = 5;
+static const std::string    post_txt = "./document/posts.txt";
 
 Server* Server::instance = NULL;
 
@@ -25,6 +27,8 @@ Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS
 	setSocketOptions();
 	bindSocket(port, host);
 	listenSocket();
+    std::remove(post_txt.c_str());
+    std::cout << "Server started, waiting for connections..." << std::endl;
 }
 
 Server::Server(const Server& copy) { static_cast<void>(copy); }
