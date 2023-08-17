@@ -7,8 +7,6 @@ int main() {
 
 	try {
 		Server& server = Server::getInstance(port, host);
-		std::cout << "Server started, waiting for connections..." << std::endl;
-
 		while (true) {
 			server.acceptConnection();
 			server.receiveFromSocket();

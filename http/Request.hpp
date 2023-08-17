@@ -29,7 +29,7 @@ private:
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
 public:
-	Request ( std::string request );
+	Request (const std::string& request);
 	Request ();
 private:
     void parseMethod(std::string& line);
@@ -40,8 +40,9 @@ private:
 	void parseBody();
 public:
 	Request::METHOD getMethod() ;
+	const std::string& getBody() const;
 	const std::string& getUrl() ;
-
+	const std::string& getHeaderValue(const std::string& headerName) const;
 // canonical-form ? 
 
 };
