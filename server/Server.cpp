@@ -185,12 +185,12 @@ void Server::receiveBuffer(const int client_sockfd) {
     while (true) {
         recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 		clientMessages[client_sockfd] += buf;
-		if (recvByte <= 0)
+		if (recvByte == 0) {
 			disconnect(client_sockfd);
-        if (recvByte == -1) {
-            std::cout << strerror(errno) << std::endl;
-            throw std::runtime_error("ERROR on accept");
-        }
+			return;
+		}
+        else if (recvByte == -1)
+            throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
         if (recvByte < BUFFER_SIZE)
             break;
     }
@@ -209,7 +209,7 @@ void Server::processRequest(const std::string& buf, const int client_sockfd) {
         Router router(buf, client_sockfd);
         router.handleRequest();
         if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
-            throw std::runtime_error("send error. Server::receiveFromSocket");
+            throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
     } catch (std::exception& e) {
         std::cout << e.what() << std::endl;
     }
