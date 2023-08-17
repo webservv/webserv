@@ -50,6 +50,10 @@ void Server::stop() {
 		close(socket_fd);
 		socket_fd = -1;
 	}
+	for (std::map<int, std::string>::iterator it = clientMessages.begin(); it != clientMessages.end(); it++) {
+		disconnect(it->first);
+	}
+	close(kqueue_fd);
 }
 
 /*
