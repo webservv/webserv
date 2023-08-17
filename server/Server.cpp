@@ -8,6 +8,7 @@
 #include <sys/_types/_intptr_t.h>
 #include <sys/_types/_uintptr_t.h>
 #include <sys/event.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 
 static int backlog = 5;
@@ -74,6 +75,8 @@ void Server::createSocket() {
 	if (socket_fd < 0) {
 		throw std::runtime_error("ERROR opening socket");
 	}
+	if (fcntl(socket_fd, F_SETFL, fcntl(socket_fd, F_GETFL, 0) | O_NONBLOCK) < 0)
+		throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
 	addIOchanges(socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
@@ -162,7 +165,8 @@ void Server::acceptConnection() {
 	if (client_sockfd < 0) {
 		throw std::runtime_error("ERROR on accept");
 	}
-	// Handle the new connection here or add it to a list of connections
+	if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0)
+		throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
 	addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	clientMessages[client_sockfd] = "";

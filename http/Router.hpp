@@ -26,7 +26,7 @@ private:
     void parseURL(std::string& filePath);
     void readFile(const std::string& filePath, std::string& content);
     void sendResponse(const std::string& responseStr);
-
+	void sendErrorPage(void);
 public:
 	Router(const std::string& requestStr, const int clientSocket);
 	~Router();
