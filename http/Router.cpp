@@ -4,7 +4,7 @@
 #include <iostream>
 
 std::map<std::string, std::string> Router::mimeMap;
-const std::string           FAVICON_PATH = "./favicon/favicon.ico";
+static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
 
 Router::Router(const std::string& requestStr, const int clientSock)
     : request(requestStr), clientSocket(clientSock) {
@@ -78,26 +78,13 @@ void Router::handleGet() {
 
 void Router::handlePost() {
 	try {
-		std::string contentType = request.getHeaderValue("Content-Type");
-		if (contentType != "application/x-www-form-urlencoded") {
-			response.makeStatusLine("HTTP/1.1", "415", "Unsupported Media Type");
-			return;
-		}
-
-		std::string content = request.getBody();
-        std::stringstream ss(content);
-        std::string key;
-        std::string value;
-        std::string body;
-        while (std::getline(ss, key, '=')) {
-            std::getline(ss, value, '&');
-            body += key + " = " + value + '\n';
-        }
-
-		response.makeStatusLine("HTTP/1.1", "200", "OK");
-		response.makeBody(body, body.size(), "text/plain");
-
-		sendResponse(response.getResponseStr());
+		validateContentType();
+		std::string title, postContent;
+		parsePostData(title, postContent);
+		appendPostToFile(title, postContent);
+		std::string htmlResponse;
+		readAndModifyHTML(htmlResponse);
+		sendHTMLResponse(htmlResponse);
 	} catch (const std::exception& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
