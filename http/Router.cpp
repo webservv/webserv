@@ -23,7 +23,7 @@ void Router::initializeMimeMap() {
     }
 }
 
-Router::Router(std::string requestStr, int clientSock)
+Router::Router(const std::string& requestStr, const int clientSock)
     : request(requestStr), clientSocket(clientSock) {
     initializeMimeMap();
 }

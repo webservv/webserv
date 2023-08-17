@@ -4,7 +4,7 @@
 
 Request::Request() {}
 
-Request::Request( std::string request ) 
+Request::Request(const std::string& request) 
 :requestParser(request) {
 	std::string line;
 	while (std::getline(requestParser, line)) {
