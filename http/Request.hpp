@@ -24,6 +24,7 @@ private:
 
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
+
 private:
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
@@ -39,8 +40,9 @@ private:
 	void parseBody();
 public:
 	Request::METHOD getMethod() ;
+	const std::string& getBody() const;
 	const std::string& getUrl() ;
-
+	const std::string& getHeaderValue(const std::string& headerName) const;
 // canonical-form ? 
 
 };
