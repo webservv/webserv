@@ -80,10 +80,6 @@ void Request::parseHeaders(void) {
 			throw std::out_of_range("invalid http, header!");
 		headers[line.substr(0, index)] = line.substr(index + 1, -1);
 	}
-	//test
-	// for (std::unordered_map<std::string, std::string>::iterator it = headers.begin(); it != headers.end(); it++) {
-	// 	std::cout << it->first << ": " << it->second << std::endl;
-	// }
 }
 
 void Request::parseBody(void) {
