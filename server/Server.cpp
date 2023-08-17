@@ -206,7 +206,7 @@ void Server::writeToFile(const char* buf) {
 
 void Server::processRequest(const std::string& buf, const int client_sockfd) {
     try {
-        Router router(buf);
+        Router router(buf, client_sockfd);
         router.handleRequest();
         if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
             throw std::runtime_error("send error. Server::receiveFromSocket");

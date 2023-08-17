@@ -28,7 +28,7 @@ private:
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
 public:
-	Request ( std::string request );
+	Request (const std::string& request);
 	Request ();
 private:
     void parseMethod(std::string& line);

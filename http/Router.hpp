@@ -28,7 +28,7 @@ private:
     void sendResponse(const std::string& responseStr);
 
 public:
-	Router(std::string requestStr, int clientSocket);
+	Router(const std::string& requestStr, const int clientSocket);
 	~Router();
 public:
 	void				handleRequest(void);
