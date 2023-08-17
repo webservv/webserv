@@ -7,23 +7,7 @@
 static const std::string	g_dir = "./document";
 static const std::string    g_error_dir = g_dir + "/error.html";
 std::map<std::string, std::string> Router::mimeMap;
-
-void Router::initializeMimeMap() {
-    if (mimeMap.empty()) {
-        mimeMap["html"] = "text/html";
-        mimeMap["txt"] = "text/plain";
-        mimeMap["css"] = "text/css";
-        mimeMap["js"] = "application/javascript";
-        mimeMap["json"] = "application/json";
-        mimeMap["xml"] = "application/xml";
-        mimeMap["pdf"] = "application/pdf";
-        mimeMap["zip"] = "application/zip";
-        mimeMap["tar"] = "application/x-tar";
-        mimeMap["gif"] = "image/gif";
-        mimeMap["png"] = "image/png";
-        mimeMap["jpg"] = "image/jpeg";
-    }
-}
+const std::string FAVICON_PATH = "webserv/favicon/favicon.ico";
 
 Router::Router(const std::string& requestStr, const int clientSock)
     : request(requestStr), clientSocket(clientSock) {
@@ -70,14 +54,17 @@ void Router::sendResponse(const std::string& responseStr) {
 }
 
 void Router::handleGet() {
-    try {
-        std::string filePath;
-        parseURL(filePath);
+	try {
+		std::string filePath;
+		parseURL(filePath);
+		if (filePath == "./favicon.ico") {
+			filePath = FAVICON_PATH;
+		}
+		if (!resourceExists(filePath)) {
+			sendErrorPage();
+			return;
+		}
 
-        if (!resourceExists(filePath)) {
-            sendErrorPage();
-            return;
-        }
         std::string content;
         readFile(filePath, content);
         std::string mimeType = getMIME(filePath);
@@ -85,11 +72,11 @@ void Router::handleGet() {
         response.makeStatusLine("HTTP/1.1", "200", "OK");
         response.makeBody(content, content.size(), mimeType);
 
-        sendResponse(response.getResponseStr());
-    } catch (const std::ios_base::failure& e) {
-        response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+		sendResponse(response.getResponseStr());
+	} catch (const std::ios_base::failure& e) {
+		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
+		std::cerr << "Error: " << e.what() << std::endl;
+	}
 }
 
 const std::string& Router::getResponseStr(void) const {

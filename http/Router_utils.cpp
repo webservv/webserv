@@ -5,6 +5,23 @@
 
 static const std::string	g_dir = "./document";
 
+void Router::initializeMimeMap() {
+    if (mimeMap.empty()) {
+        mimeMap["html"] = "text/html";
+        mimeMap["txt"] = "text/plain";
+        mimeMap["css"] = "text/css";
+        mimeMap["js"] = "application/javascript";
+        mimeMap["json"] = "application/json";
+        mimeMap["xml"] = "application/xml";
+        mimeMap["pdf"] = "application/pdf";
+        mimeMap["zip"] = "application/zip";
+        mimeMap["tar"] = "application/x-tar";
+        mimeMap["gif"] = "image/gif";
+        mimeMap["png"] = "image/png";
+        mimeMap["jpg"] = "image/jpeg";
+        mimeMap["ico"] = "image/x-icon";
+    }
+}
 
 std::string Router::getExtension(const std::string& url) {
     size_t extensionStart = url.find_last_of('.');
