@@ -4,7 +4,7 @@
 #include <iostream>
 
 static const std::string	g_dir = "./document";
-std::map<std::string, std::string> Router::mimeMap;
+static const std::string    g_error_dir = g_dir + "index.html";
 
 void Router::initializeMimeMap() {
     if (mimeMap.empty()) {
@@ -115,6 +115,7 @@ void Router::handleGet() {
 
         if (!resourceExists(filePath)) {
             response.makeStatusLine("HTTP/1.1", "404", "Not Found");
+            response.makeBody(const std::string &data, const size_t len, const std::string &type)
             return;
         }
 
@@ -134,4 +135,13 @@ void Router::handleGet() {
 
 const std::string& Router::getResponseStr(void) const {
 	return response.getResponseStr();
+}
+
+void Router::sendErrorPage(void) {
+    response.makeStatusLine("HTTP/1.1", "404", "Not Found");
+    if (resourceExists(g_error_dir)) {
+        std::string data;
+        readFile(g_error_dir, data);
+        response.makeBody(data, data.length(), getMIME(data));
+    }
 }
