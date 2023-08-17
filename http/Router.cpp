@@ -3,9 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-
-static const std::string	g_dir = "./document";
-static const std::string    g_error_dir = g_dir + "/error.html";
 std::map<std::string, std::string> Router::mimeMap;
 const std::string           FAVICON_PATH = "./favicon/favicon.ico";
 
@@ -32,7 +29,7 @@ void Router::handleRequest() {
 	} else if (request.getMethod() == Request::POST) {
 		handlePost();
 	} else if (request.getMethod() == Request::DELETE) {
-		// handle DELETE
+		handleDelete();
 	} else
 		return ;
 }
@@ -107,16 +104,13 @@ void Router::handlePost() {
 	}
 }
 
-
-const std::string& Router::getResponseStr(void) const {
-	return response.getResponseStr();
-}
-
-void Router::sendErrorPage(void) {
-    response.makeStatusLine("HTTP/1.1", "404", "Not Found");
-    if (resourceExists(g_error_dir)) {
-        std::string data;
-        readFile(g_error_dir, data);
-        response.makeBody(data, data.length(), getMIME(g_error_dir));
-    }
+void Router::handleDelete() {
+	try {
+		response.makeStatusLine("HTTP/1.1", "501", "Not Implemented");
+		response.makeBody("Delete method not implemented.", 30, "text/plain");
+		sendResponse(response.getResponseStr());
+	} catch (const std::exception& e) {
+		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
+		std::cerr << "Error: " << e.what() << std::endl;
+	}
 }

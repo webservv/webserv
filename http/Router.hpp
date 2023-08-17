@@ -34,6 +34,7 @@ public:
 	void				handleRequest(void);
 	void				handleGet(void);
     void				handlePost(void);
+    void				handleDelete(void);
 	std::string         getMIME(const std::string& url);
 	const std::string&	getResponseStr(void) const;
 };
