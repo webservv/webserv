@@ -78,7 +78,6 @@ void Router::handlePost() {
 		readAndModifyHTML(htmlResponse);
 		makeHTMLResponse(htmlResponse);
 	} catch (const std::exception& e) {
-		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
@@ -115,6 +114,10 @@ void Router::addRequest(const std::string &request) {
 
 void Router::parseHeader(void) {
 	request.parseHeader();
+}
+
+void Router::parseBody(void) {
+	request.parseBody();
 }
 
 void Router::setResponse(const std::string &src) {
