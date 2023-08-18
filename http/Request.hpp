@@ -8,14 +8,14 @@
 
 class Request {
 public:
-enum METHOD {
-	GET,
-	POST,
-	DELETE,
-	OTHER // -> error or maybe we make other methods
-};
+	enum METHOD {
+		GET,
+		POST,
+		DELETE,
+		OTHER // -> error or maybe we make other methods
+	};
 private:
-	std::istringstream requestParser;
+	std::string	requestStr;
 	std::queue<std::string> requestLines;
 
 	METHOD method;
@@ -25,26 +25,28 @@ private:
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
 
-private:
+public:
+	Request();
+	~Request();
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
-public:
-	Request (const std::string& request);
-	Request ();
 private:
     void parseMethod(std::string& line);
     void parseURL(std::string& line);
     void parseVersion(std::string& line, size_t space);
 	void parseRequestLine();
-	void parseHeaders();
-	void parseBody();
+	void parseKeyValues();
+	void addRequestLines(void);
 public:
 	Request::METHOD getMethod() ;
 	const std::string& getBody() const;
 	const std::string& getUrl() ;
 	const std::string& getHeaderValue(const std::string& headerName) const;
-// canonical-form ? 
-
+	void addRequest(const std::string& request);
+	void parseHeader(void);
+	void parseBody(void);
+    bool isHeaderEnd(void) const;
+	bool isRequestEnd(void);
 };
 
 #endif

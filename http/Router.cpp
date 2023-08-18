@@ -1,4 +1,6 @@
 #include "Router.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -6,19 +8,26 @@
 std::map<std::string, std::string> Router::mimeMap;
 static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
 
-Router::Router(const std::string& requestStr, const int clientSock)
-    : request(requestStr), clientSocket(clientSock) {
-    initializeMimeMap();
-}
+Router::Router():
+	request(),
+	response(),
+	haveResponse(false) {
+		initializeMimeMap();
+	}
 
 Router::~Router() {}
 
-Router::Router(const Router& copy) {
-	static_cast<void>(copy);
-}
+Router::Router(const Router& copy):
+	request(copy.request),
+	response(copy.response),
+	haveResponse(copy.haveResponse) {
+		initializeMimeMap();
+	}
 
 Router& Router::operator=(const Router& copy) {
-	static_cast<void>(copy);
+	request = copy.request;
+	response = copy.response;
+	haveResponse = copy.haveResponse;
 	return *this;
 }
 
@@ -30,24 +39,8 @@ void Router::handleRequest() {
 		handlePost();
 	} else if (request.getMethod() == Request::DELETE) {
 		handleDelete();
-	} else
-		return ;
-}
-
-void Router::sendResponse(const std::string& responseStr) {
-    const char* responseBuffer = responseStr.c_str();
-    size_t bytesToSend = responseStr.size();
-    ssize_t bytesSent = 0;
-
-    while (bytesToSend > 0) {
-        ssize_t result = send(clientSocket, responseBuffer + bytesSent, bytesToSend, 0);
-        if (result < 0) {
-            std::cerr << "Error sending response to client: " << strerror(errno) << std::endl;
-            break;
-        }
-        bytesSent += result;
-        bytesToSend -= result;
-    }
+	}
+	haveResponse = true;
 }
 
 void Router::handleGet() {
@@ -58,7 +51,7 @@ void Router::handleGet() {
 			filePath = FAVICON_PATH;
 		}
 		if (!resourceExists(filePath)) {
-			sendErrorPage();
+			makeErrorPage();
 			return;
 		}
 
@@ -69,7 +62,6 @@ void Router::handleGet() {
         response.makeStatusLine("HTTP/1.1", "200", "OK");
         response.makeBody(content, content.size(), mimeType);
 
-		sendResponse(response.getResponseStr());
 	} catch (const std::ios_base::failure& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -84,7 +76,7 @@ void Router::handlePost() {
 		appendPostToFile(title, postContent);
 		std::string htmlResponse;
 		readAndModifyHTML(htmlResponse);
-		sendHTMLResponse(htmlResponse);
+		makeHTMLResponse(htmlResponse);
 	} catch (const std::exception& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -95,9 +87,36 @@ void Router::handleDelete() {
 	try {
 		response.makeStatusLine("HTTP/1.1", "501", "Not Implemented");
 		response.makeBody("Delete method not implemented.", 30, "text/plain");
-		sendResponse(response.getResponseStr());
 	} catch (const std::exception& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
+}
+
+bool Router::isHeaderEnd() {
+	return request.isHeaderEnd();
+}
+
+bool Router::isRequestEnd() {
+	return request.isRequestEnd();
+}
+
+bool Router::getHaveResponse(void) const {
+	return haveResponse;
+}
+
+const std::string& Router::getResponse(void) const {
+	return response.getResponseStr();
+}
+
+void Router::addRequest(const std::string &request) {
+	this->request.addRequest(request);
+}
+
+void Router::parseHeader(void) {
+	request.parseHeader();
+}
+
+void Router::setResponse(const std::string &src) {
+	response.setResponse(src);
 }

@@ -33,3 +33,7 @@ void Response::makeBody(const std::string& data, const size_t len, const std::st
 const std::string& Response::getResponseStr(void) const {
 	return responseStr;
 }
+
+void Response::setResponse(const std::string &src) {
+	responseStr.assign(src);
+}
