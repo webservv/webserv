@@ -25,6 +25,7 @@ private:
 	std::vector<struct kevent> IOchanges;
 	std::vector<struct kevent> IOevents;
 	std::map<int, std::string> clientMessages;
+	std::map<int, std::string> serverMessages;
 private:
 	Server();
 	Server(const int port, const char* host);
@@ -35,6 +36,7 @@ private:
     void processRequest(const std::string& buf, const int client_sockfd);
 	void addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
 	void disconnect(const int client_sockfd);
+	void sendBuffer(const int client_sockfd, const int64_t bufSize);
 public:
 	~Server();
 
