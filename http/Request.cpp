@@ -11,7 +11,8 @@ Request::Request():
     url(""),
     version(""),
     headers(),
-    body("") {}
+    body(""),
+    haveHeader(false) {}
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
@@ -20,7 +21,8 @@ Request::Request(const Request& copy):
     url(copy.url),
     version(copy.version),
     headers(copy.headers),
-    body(copy.body) {}
+    body(copy.body),
+    haveHeader(copy.haveHeader) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -30,6 +32,7 @@ Request& Request::operator=(const Request& copy) {
 	version = copy.version;
 	headers = copy.headers;
 	body = copy.body;
+    haveHeader = copy.haveHeader;
 	return *this;
 }
 
@@ -83,7 +86,7 @@ void Request::parseKeyValues(void) {
 		requestLines.pop();
 		if (line.size() == 0)
 			break;
-		size_t index = line.find(':');
+		size_t index = line.find(": ");
 		if (index == std::string::npos || index + 2 >= line.size())
 			throw std::out_of_range("invalid http, header!");
 		headers[line.substr(0, index)] = line.substr(index + 2);
@@ -134,7 +137,7 @@ bool Request::isHeaderEnd(void) const {
 bool Request::isRequestEnd(void) {
     std::unordered_map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
     
-    if (it != headers.end()) {
+    if (it != headers.end() && headers["Transfer-Encoding"] == "chunked") {
         if (body[body.length() - 3] == '0')
             return true;
         return false;
@@ -152,13 +155,12 @@ bool Request::isRequestEnd(void) {
 }
 
 void Request::parseHeader(void) {
-    static bool check = false;
-    if (check)
+    if (haveHeader)
 		return;
     addRequestLines();
     parseRequestLine();
     parseKeyValues();
-    check = true;
+    haveHeader = true;
 }
 
 void Request::addRequestLines(void) {

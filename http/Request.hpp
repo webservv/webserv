@@ -24,7 +24,7 @@ private:
 
 	std::unordered_map<std::string, std::string> headers;
 	std::string body;
-
+	bool haveHeader;
 public:
 	Request();
 	~Request();
