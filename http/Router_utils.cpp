@@ -126,6 +126,7 @@ void Router::appendPostToFile(const std::string& title, const std::string& postC
 	std::ofstream outFile(post_txt, std::ios::app);
 	if (!outFile) {
 		std::cerr << "Could not open or create posts.txt" << std::endl;
+        response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		throw std::runtime_error("File error");
 	}
 	outFile << "Title: " << title << "\nContent: " << postContent << "\n\n";
@@ -136,6 +137,7 @@ void Router::readAndModifyHTML(std::string& htmlResponse) {
     std::ifstream inFile(index_html);
     if (!inFile.is_open()) {
         std::cerr << "Error opening " << index_html << std::endl;
+        response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
         throw std::runtime_error("File open error");
     }
     htmlResponse.assign((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
