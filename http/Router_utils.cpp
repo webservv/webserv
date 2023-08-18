@@ -74,7 +74,7 @@ const std::string& Router::getResponseStr(void) const {
 	return response.getResponseStr();
 }
 
-void Router::sendErrorPage(void) {
+void Router::makeErrorPage(void) {
     response.makeStatusLine("HTTP/1.1", "404", "Not Found");
     if (resourceExists(g_error_dir)) {
         std::string data;
@@ -150,11 +150,9 @@ void Router::readAndModifyHTML(std::string& htmlResponse) {
     }
 }
 
-
-void Router::sendHTMLResponse(const std::string& htmlResponse) {
+void Router::makeHTMLResponse(const std::string& htmlResponse) {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	response.makeBody(htmlResponse, htmlResponse.size(), "text/html");
-	sendResponse(response.getResponseStr());
 }
 
 std::string Router::readPosts() {

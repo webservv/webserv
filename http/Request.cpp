@@ -1,32 +1,40 @@
 
 #include "Request.hpp"
 #include <iostream>
+#include <sstream>
+#include <cstdlib>
 
-Request::Request() {}
+Request::Request():
+    requestStr(""),
+    requestLines(),
+    method(OTHER),
+    url(""),
+    version(""),
+    headers(),
+    body("") {}
 
-Request::Request(const std::string& request) 
-:requestParser(request) {
-	std::string line;
-	while (std::getline(requestParser, line)) {
-		if (line.back() == '\r')
-			line.pop_back();
-		requestLines.push(line);
-	}
-	parseRequestLine();
-	parseHeaders();
-	parseBody();
-}
-
-Request::Request(const Request& copy) {
-	static_cast<void>(copy);
-}
+Request::Request(const Request& copy):
+    requestStr(copy.requestStr),
+    requestLines(copy.requestLines),
+    method(copy.method),
+    url(copy.url),
+    version(copy.version),
+    headers(copy.headers),
+    body(copy.body) {}
 
 Request& Request::operator=(const Request& copy) {
-	static_cast<void>(copy);
+	requestStr = copy.requestStr;
+	requestLines = copy.requestLines;
+	method = copy.method;
+	url = copy.url;
+	version = copy.version;
+	headers = copy.headers;
+	body = copy.body;
 	return *this;
 }
 
-// 'GET /index.html HTTP/1.1' <- example
+Request::~Request() {}
+
 void Request::parseMethod(std::string& line) {
     size_t space = line.find(' ');
     if (space == std::string::npos)
@@ -69,7 +77,7 @@ void Request::parseRequestLine() {
     parseVersion(line, space);
 }
 
-void Request::parseHeaders(void) {
+void Request::parseKeyValues(void) {
 	while (!requestLines.empty()) {
 		std::string line = requestLines.front();
 		requestLines.pop();
@@ -83,6 +91,7 @@ void Request::parseHeaders(void) {
 }
 
 void Request::parseBody(void) {
+    addRequestLines();
 	while (!requestLines.empty()) {
 		body += requestLines.front() + '\n';
 		requestLines.pop();
@@ -107,4 +116,59 @@ const std::string& Request::getHeaderValue(const std::string& headerName) const 
 
 const std::string& Request::getBody() const {
 	return body;
+}
+
+void Request::addRequest(const std::string &request) {
+    this->requestStr += request; 
+}
+
+bool Request::isHeaderEnd(void) const {
+    size_t pos = requestStr.rfind("\r\n\r\n");
+    if (pos != std::string::npos) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Request::isRequestEnd(void) {
+    std::unordered_map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
+    
+    if (it != headers.end()) {
+        if (body[body.length() - 3] == '0')
+            return true;
+        return false;
+    }
+    it = headers.find("Content-Length");
+    if (it != headers.end()) {
+        size_t len = atoi(headers["Content-Length"].c_str());
+        if (body.length() == len)
+            return true;
+        else
+            return false;
+    }
+    else
+        return true;
+}
+
+void Request::parseHeader(void) {
+    static bool check = false;
+    if (check)
+		return;
+    addRequestLines();
+    parseRequestLine();
+    parseKeyValues();
+    check = true;
+}
+
+void Request::addRequestLines(void) {
+    std::string line;
+    std::stringstream parser(requestStr);
+
+	while (std::getline(parser, line)) {
+		if (line.back() == '\r')
+			line.pop_back();
+		requestLines.push(line);
+	}
+    requestStr.clear();
 }
