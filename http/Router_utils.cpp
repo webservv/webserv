@@ -52,6 +52,9 @@ std::string Router::getMIME(const std::string& url) {
 
 void Router::parseURL(std::string& filePath) {
     std::string urlPath = request.getUrl();
+
+    if (urlPath == "/")
+        urlPath.assign("/index.html");
     filePath = g_dir + urlPath;
 }
 
