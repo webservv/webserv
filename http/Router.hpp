@@ -49,6 +49,7 @@ public:
     const std::string&  getResponse(void) const;
     void                addRequest(const std::string& request);
     void                parseHeader(void);
+    void                parseBody(void);
     void                setResponse(const std::string& src);
 };
 
