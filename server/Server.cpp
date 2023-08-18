@@ -124,6 +124,9 @@ void Server::receiveBuffer(const int client_sockfd) {
         if (recvByte < BUFFER_SIZE)
             break;
     }
+	//TODO: check verified http header -> processRequest
+	processRequest(clientMessages[cur.ident], cur.ident);
+	clientMessages[cur.ident].clear();
 	writeToFile(buf);
 }
 
@@ -135,14 +138,9 @@ void Server::writeToFile(const char* buf) {
 }
 
 void Server::processRequest(const std::string& buf, const int client_sockfd) {
-    try {
-        Router router(buf, client_sockfd);
-        router.handleRequest();
-        if (send(client_sockfd, router.getResponseStr().c_str(), router.getResponseStr().length(), 0) < 0)
-            throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-    } catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+    Router router(buf, client_sockfd);
+    router.handleRequest();
+	serverMessages[client_sockfd] = router.getResponseStr();
 }
 
 void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata) {
@@ -165,16 +163,12 @@ void Server::waitEvents(void) {
 		else if (static_cast<int>(cur.ident) == socket_fd)
 			acceptConnection();
 		else if (clientMessages.find(cur.ident) != clientMessages.end()) {
-			if (cur.filter == EVFILT_READ) {
-				if (cur.flags & EV_EOF)
-					disconnect(cur.ident);
-				else
-					receiveBuffer(cur.ident);
-			}
-			else if (cur.filter == EVFILT_WRITE && clientMessages[cur.ident] != "") {
-				processRequest(clientMessages[cur.ident], cur.ident);
-				clientMessages[cur.ident].clear();
-			}
+			if (cur.flags & EV_EOF)
+				disconnect(cur.ident);
+			else if (cur.filter == EVFILT_READ)
+				receiveBuffer(cur.ident);
+			else if (cur.filter == EVFILT_WRITE && serverMessages[cur.ident] != "")
+				sendBuffer(cur.ident, cur.data);
 		}
 	}
 }
@@ -182,4 +176,24 @@ void Server::waitEvents(void) {
 void Server::disconnect(const int client_sockfd) {
 	close(client_sockfd);
 	clientMessages.erase(client_sockfd);
+	serverMessages.erase(client_sockfd);
+}
+
+void Server::sendBuffer(const int client_sockfd, const int64_t bufSize) {
+	std::string&	message = serverMessages[client_sockfd];
+
+	try {
+		if (bufSize < message.length()) {
+			if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
+            	throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+			message = message.substr(bufSize);
+		}
+		else {
+			if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
+            	throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+			serverMessages.erase(client_sockfd);
+		}
+    } catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
 }
