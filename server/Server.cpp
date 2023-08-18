@@ -42,7 +42,6 @@ Server::~Server() {
 	stop();
 }
 
-// We use a singleton pattern here to ensure that only one instance of the Server class is created.
 Server& Server::getInstance(const int port, const char* host) {
 	if (instance == NULL) {
 		instance = new Server(port, host);
@@ -61,19 +60,6 @@ void Server::stop() {
 	close(kqueue_fd);
 }
 
-/*
-	 int
-	 socket(int domain, int type, int protocol);
-	 domain : AF_INET, AF_INET6, AF_UNIX
-		- AF_INET : IPv4 Internet protocols
-		- AF_INET6 : IPv6 Internet protocols
-		- AF_UNIX : Local communication protocols
-	 type : SOCK_STREAM, SOCK_DGRAM, SOCK_RAW
-		- SOCK_STREAM : Provides sequenced, reliable, two-way, connection-based byte streams.
-		- SOCK_DGRAM : Supports datagrams (connectionless, unreliable messages of a fixed maximum length).
-		- SOCK_RAW : Provides raw network protocol access.
-	 protocol : 0
-*/
 void Server::createSocket() {
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_fd < 0) {
@@ -84,22 +70,6 @@ void Server::createSocket() {
 	addIOchanges(socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
-
-/* 
-	 int
-	 setsockopt(int socket, int level, int option_name,
-		 const void *option_value, socklen_t option_len);
-
-		socket : socket file descriptor
-		level : SOL_SOCKET, IPPROTO_TCP, IPPROTO_IP
-			- SOL_SOCKET : Socket-level option
-			- IPPROTO_TCP : TCP-level option
-			- IPPROTO_IP : IP-level option
-		option_name : SO_REUSEADDR
-			- SO_REUSEADDR : Reuse of local addresses
-		option_value : 1
-		option_len : sizeof(option_value)
-*/
 void Server::setSocketOptions() {
 	int opt = 1;
 	if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
@@ -107,25 +77,6 @@ void Server::setSocketOptions() {
 	}
 }
 
-/*
-socketaddr_in :
-	short sin_family; // e.g. AF_INET, AF_INET6
-	unsigned short sin_port; // e.g. htons(3490)
-	struct in_addr sin_addr; // see struct in_addr, below
-	char sin_zero[8]; // zero this if you want to
-
-htons() : host to network short
-	- host byte order to network byte order
-	- little endian to big endian
-	- 0x1234 -> 0x3412
-
-inet_addr() : IPv4 address string to network byte order
-
-bind() : bind socket to address
-	- socket file descriptor
-	- sockaddr* addr
-	- socklen_t addrlen
-*/
 void Server::bindSocket(int port, const char* host) {
 	sockaddr_in	server_addr;
 
@@ -141,27 +92,12 @@ void Server::bindSocket(int port, const char* host) {
 	}
 }
 
-/*
-listen() : listen for connections on a socket
-	- socket file descriptor
-	- int backlog : maximum length to which the queue of pending connections for sockfd may grow
-*/
 void Server::listenSocket() {
 	if (listen(socket_fd, backlog) < 0) {
 		throw std::runtime_error("ERROR on listening");
 	}
 }
 
-/* 
-accept() : accept a connection on a socket
-	- socket file descriptor
-	- sockaddr* addr
-	- socklen_t* addrlen
-
-accept() returns a new file descriptor,
-	and all communication on this connection should be done using the new file descriptor.
-
-*/
 void Server::acceptConnection() {
 	socklen_t client_len = sizeof(client_addr);
 	const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
@@ -176,16 +112,6 @@ void Server::acceptConnection() {
 	clientMessages[client_sockfd] = "";
 }
 
-/*
-recv() : receive a message from socket 
-	- client socket fd
-	- address of buffer
-	- length 
-	- flag 
-
-return value: the number of bytes received
-*/
-
 void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
 	char buf[BUFFER_SIZE] = {0, };
@@ -193,11 +119,7 @@ void Server::receiveBuffer(const int client_sockfd) {
     while (true) {
         recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 		clientMessages[client_sockfd] += buf;
-		if (recvByte == 0) {
-			disconnect(client_sockfd);
-			return;
-		}
-        else if (recvByte == -1)
+        if (recvByte == -1)
             throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
         if (recvByte < BUFFER_SIZE)
             break;
@@ -243,8 +165,12 @@ void Server::waitEvents(void) {
 		else if (static_cast<int>(cur.ident) == socket_fd)
 			acceptConnection();
 		else if (clientMessages.find(cur.ident) != clientMessages.end()) {
-			if (cur.filter == EVFILT_READ)
-				receiveBuffer(cur.ident);
+			if (cur.filter == EVFILT_READ) {
+				if (cur.flags & EV_EOF)
+					disconnect(cur.ident);
+				else
+					receiveBuffer(cur.ident);
+			}
 			else if (cur.filter == EVFILT_WRITE && clientMessages[cur.ident] != "") {
 				processRequest(clientMessages[cur.ident], cur.ident);
 				clientMessages[cur.ident].clear();
