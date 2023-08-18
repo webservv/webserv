@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <queue>
+#include <vector>
 
 class Request {
 public:
@@ -23,6 +24,7 @@ private:
 	std::string version;
 
 	std::unordered_map<std::string, std::string> headers;
+	std::vector<std::string> bodyLines;
 	std::string body;
 	bool haveHeader;
 public:
@@ -39,7 +41,8 @@ private:
 	void addRequestLines(void);
 public:
 	Request::METHOD getMethod() ;
-	const std::string& getBody() const;
+	const std::vector<std::string>& getBodyLines(void) const;
+	const std::string& getBody(void) const;
 	const std::string& getUrl() ;
 	const std::string& getHeaderValue(const std::string& headerName) const;
 	void addRequest(const std::string& request);
