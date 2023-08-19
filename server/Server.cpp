@@ -11,6 +11,7 @@
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <cstdio>
+#include <utility>
 
 static int backlog = 5;
 static const std::string    post_txt = "./document/posts.txt";
@@ -107,12 +108,16 @@ void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
 	char buf[BUFFER_SIZE] = {0, };
 
+	if (routers[client_sockfd].getHaveResponse())
+		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
+std::cout << buf;
 	routers[client_sockfd].addRequest(std::string(buf));
 	if (routers[client_sockfd].isHeaderEnd()) {
 		routers[client_sockfd].parseHeader();
+		routers[client_sockfd].parseBody();
 		if (routers[client_sockfd].isRequestEnd())
 			routers[client_sockfd].handleRequest();
 	}
@@ -164,5 +169,7 @@ void Server::sendBuffer(const int client_sockfd, const int64_t bufSize) {
 	else {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+		routers.erase(client_sockfd);
+		routers.insert(std::make_pair(client_sockfd, Router()));
 	}
 }

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <sys/_types/_size_t.h>
+#include <vector>
 
 Request::Request():
     requestStr(""),
@@ -11,7 +13,9 @@ Request::Request():
     url(""),
     version(""),
     headers(),
-    body("") {}
+    bodyLines(),
+    body(""),
+    haveHeader(false) {}
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
@@ -20,7 +24,9 @@ Request::Request(const Request& copy):
     url(copy.url),
     version(copy.version),
     headers(copy.headers),
-    body(copy.body) {}
+    bodyLines(copy.bodyLines),
+    body(copy.body),
+    haveHeader(copy.haveHeader) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -29,7 +35,9 @@ Request& Request::operator=(const Request& copy) {
 	url = copy.url;
 	version = copy.version;
 	headers = copy.headers;
+    bodyLines = copy.bodyLines;
 	body = copy.body;
+    haveHeader = copy.haveHeader;
 	return *this;
 }
 
@@ -83,7 +91,7 @@ void Request::parseKeyValues(void) {
 		requestLines.pop();
 		if (line.size() == 0)
 			break;
-		size_t index = line.find(':');
+		size_t index = line.find(": ");
 		if (index == std::string::npos || index + 2 >= line.size())
 			throw std::out_of_range("invalid http, header!");
 		headers[line.substr(0, index)] = line.substr(index + 2);
@@ -93,9 +101,15 @@ void Request::parseKeyValues(void) {
 void Request::parseBody(void) {
     addRequestLines();
 	while (!requestLines.empty()) {
-		body += requestLines.front() + '\n';
+        bodyLines.push_back(requestLines.front());
 		requestLines.pop();
 	}
+    while (!bodyLines.empty() && bodyLines.back() == "") {
+        bodyLines.pop_back();
+    }
+    for (std::vector<std::string>::iterator it = bodyLines.begin(); it != bodyLines.end(); it++) {
+        body += *it;
+    }
 }
 
 Request::METHOD Request::getMethod() {
@@ -114,7 +128,11 @@ const std::string& Request::getHeaderValue(const std::string& headerName) const 
     return emptyString;
 }
 
-const std::string& Request::getBody() const {
+const std::vector<std::string>& Request::getBodyLines(void) const {
+    return bodyLines;
+}
+
+const std::string& Request::getBody(void) const {
 	return body;
 }
 
@@ -134,14 +152,14 @@ bool Request::isHeaderEnd(void) const {
 bool Request::isRequestEnd(void) {
     std::unordered_map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
     
-    if (it != headers.end()) {
-        if (body[body.length() - 3] == '0')
+    if (it != headers.end() && headers["Transfer-Encoding"] == "chunked") {
+        if (bodyLines.back()[0] == '0')
             return true;
         return false;
     }
     it = headers.find("Content-Length");
     if (it != headers.end()) {
-        size_t len = atoi(headers["Content-Length"].c_str());
+        size_t len = std::atoi(headers["Content-Length"].c_str());
         if (body.length() == len)
             return true;
         else
@@ -152,13 +170,12 @@ bool Request::isRequestEnd(void) {
 }
 
 void Request::parseHeader(void) {
-    static bool check = false;
-    if (check)
+    if (haveHeader)
 		return;
     addRequestLines();
     parseRequestLine();
     parseKeyValues();
-    check = true;
+    haveHeader = true;
 }
 
 void Request::addRequestLines(void) {
