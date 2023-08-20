@@ -79,9 +79,7 @@ void Router::handlePost() {
 		std::string htmlResponse;
 		readAndModifyHTML(htmlResponse);
 		makeHTMLResponse(htmlResponse);
-	} catch (const std::runtime_error& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    } catch (const std::invalid_argument& e) {
+	} catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     } 
 }

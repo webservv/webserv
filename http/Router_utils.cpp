@@ -103,21 +103,22 @@ std::string Router::URLDecode(const std::string &input) {
 }
 
 bool Router::isBodyRequired() {
-    if (request.getMethod() == Request::OTHER) {
-        return false;
+    Request::METHOD method = request.getMethod();
+    switch (method) {
+        case Request::POST:
+            return true;
+        default:
+            return false;
     }
-    return true;
 }
 
-
 void Router::validateHeaderLength() {
-    std::string contentLengthHeader = request.getHeaderValue("Content-Length");
-    std::string transferEncodingHeader = request.getHeaderValue("Transfer-Encoding");
+    const std::string& contentLengthHeader = request.getHeaderValue("Content-Length");
+    const std::string& transferEncodingHeader = request.getHeaderValue("Transfer-Encoding");
 
-    if (!transferEncodingHeader.empty() && transferEncodingHeader == "chunked") {
+    if (transferEncodingHeader == "chunked") {
         return;
     }
-
     if (contentLengthHeader.empty()) {
         if (isBodyRequired()) {
             makeErrorResponse(411);
@@ -125,7 +126,6 @@ void Router::validateHeaderLength() {
         }
         return;
     }
-
     try {
         int contentLength = std::stoi(contentLengthHeader);
         if (contentLength < 0) {
