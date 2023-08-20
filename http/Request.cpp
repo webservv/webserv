@@ -153,7 +153,7 @@ bool Request::isRequestEnd(void) {
     std::unordered_map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
     
     if (it != headers.end() && headers["Transfer-Encoding"] == "chunked") {
-        if (bodyLines.back()[0] == '0')
+        if (!bodyLines.empty() && bodyLines.back()[0] == '0')
             return true;
         return false;
     }
