@@ -45,6 +45,7 @@ public:
 	const std::string& getBody(void) const;
 	const std::string& getUrl() ;
 	const std::string& getHeaderValue(const std::string& headerName) const;
+
 	void addRequest(const std::string& request);
 	void parseHeader(void);
 	void parseBody(void);
