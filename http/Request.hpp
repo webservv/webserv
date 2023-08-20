@@ -1,11 +1,13 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
-#include <string>
-#include <unordered_map>
 #include <sstream>
 #include <queue>
 #include <vector>
+#include <map>
+#include <algorithm>
+#include <cctype>
+#include <string>
 
 class Request {
 public:
@@ -22,8 +24,7 @@ private:
 	METHOD method;
 	std::string url;
 	std::string version;
-
-	std::unordered_map<std::string, std::string> headers;
+	std::map<std::string, std::string> headers;
 	std::vector<std::string> bodyLines;
 	std::string body;
 	bool haveHeader;

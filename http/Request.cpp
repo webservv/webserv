@@ -3,7 +3,6 @@
 #include <sstream>
 #include <cstdlib>
 #include <sys/_types/_size_t.h>
-#include <vector>
 
 Request::Request():
     requestStr(""),
@@ -49,10 +48,16 @@ const std::string& Request::getUrl() {
 	return url;
 }
 
+struct ToLower {
+    char operator()(char c) const {
+        return std::tolower(static_cast<unsigned char>(c));
+    }
+};
+
 const std::string& Request::getHeaderValue(const std::string& headerName) const {
     std::string lowerHeaderName = headerName;
-    std::transform(lowerHeaderName.begin(), lowerHeaderName.end(), lowerHeaderName.begin(), ::tolower);
-    std::unordered_map<std::string, std::string>::const_iterator it = headers.find(lowerHeaderName);
+    std::transform(lowerHeaderName.begin(), lowerHeaderName.end(), lowerHeaderName.begin(), ToLower());
+    std::map<std::string, std::string>::const_iterator it = headers.find(lowerHeaderName);
     if (it != headers.end()) {
         return it->second;
     }
@@ -82,7 +87,7 @@ bool Request::isHeaderEnd(void) const {
 }
 
 bool Request::isRequestEnd(void) {
-    std::unordered_map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
+    std::map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
     
     if (it != headers.end() && headers["Transfer-Encoding"] == "chunked") {
         if (bodyLines.back()[0] == '0')
