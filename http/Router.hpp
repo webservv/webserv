@@ -25,11 +25,14 @@ private:
 	void makeErrorPage(void);
     std::string readPosts(void);
     std::string URLDecode(const std::string& str);
+    void validateHeaderLength(void);
     void validateContentType(void);
+    bool isBodyRequired(void);
     void parsePostData(std::string& title, std::string& postContent);
     void appendPostToFile(const std::string& title, const std::string& postContent);
     void readAndModifyHTML(std::string& htmlResponse);
     void makeHTMLResponse(const std::string& htmlResponse);
+    void makeErrorResponse(int statusCode);
 public:
 	Router();
 	Router(const Router& src);
