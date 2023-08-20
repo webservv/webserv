@@ -48,15 +48,13 @@ const std::string& Request::getUrl() {
 	return url;
 }
 
-struct ToLower {
-    char operator()(char c) const {
-        return std::tolower(static_cast<unsigned char>(c));
-    }
-};
+static char tolower_char(unsigned char c) {
+    return std::tolower(c);
+}
 
 const std::string& Request::getHeaderValue(const std::string& headerName) const {
     std::string lowerHeaderName = headerName;
-    std::transform(lowerHeaderName.begin(), lowerHeaderName.end(), lowerHeaderName.begin(), ToLower());
+    std::transform(lowerHeaderName.begin(), lowerHeaderName.end(), lowerHeaderName.begin(), tolower_char);
     std::map<std::string, std::string>::const_iterator it = headers.find(lowerHeaderName);
     if (it != headers.end()) {
         return it->second;
