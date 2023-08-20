@@ -139,8 +139,8 @@ void Router::validateHeaderLength() {
 }
 
 void Router::validateContentType() {
-    std::string contentType = request.getHeaderValue("Content-Type");
-    std::string transferEncoding = request.getHeaderValue("Transfer-Encoding");
+    const std::string& contentType = request.getHeaderValue("Content-Type");
+    const std::string& transferEncoding = request.getHeaderValue("Transfer-Encoding");
 
     if (!transferEncoding.empty()) {
         if (transferEncoding != "chunked") {
@@ -156,7 +156,7 @@ void Router::validateContentType() {
 }
 
 void Router::parsePostData(std::string& title, std::string& postContent) {
-	std::string content = request.getBody();
+	const std::string& content = request.getBody();
 	std::stringstream ss(content);
 	std::string key;
 	std::string value;
@@ -182,34 +182,42 @@ void Router::parsePostData(std::string& title, std::string& postContent) {
 }
 
 void Router::appendPostToFile(const std::string& title, const std::string& postContent) {
-	std::ofstream outFile(post_txt, std::ios::app);
-	if (!outFile) {
-		std::cerr << "Could not open or create posts.txt" << std::endl;
+    std::ofstream outFile(post_txt.c_str(), std::ios::app);
+    if (!outFile) {
+        std::cerr << "Could not open or create posts.txt" << std::endl;
         makeErrorResponse(500);
-		throw std::runtime_error("File error");
-	}
-	outFile << "Title: " << title << "\nContent: " << postContent << "\n\n";
-	outFile.close();
+        throw std::runtime_error("File error");
+    }
+    outFile << "Title: " << title << "\nContent: " << postContent << "\n\n";
+    outFile.close();
 }
 
 void Router::readAndModifyHTML(std::string& htmlResponse) {
-    std::ifstream inFile(index_html);
+    std::ifstream inFile(index_html.c_str());
     if (!inFile.is_open()) {
         std::cerr << "Error opening " << index_html << std::endl;
         makeErrorResponse(500);
         throw std::runtime_error("File open error");
     }
-    htmlResponse.assign((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+
+    std::ostringstream oss;
+    char c;
+    while (inFile.get(c)) {
+        oss.put(c);
+    }
+    htmlResponse = oss.str();
     inFile.close();
 
-    std::size_t commentPos = htmlResponse.find("<!-- You can add forums, threads, posts, etc. here -->");
+    std::string commentStr = "<!-- You can add forums, threads, posts, etc. here -->";
+    std::size_t commentPos = htmlResponse.find(commentStr);
     if (commentPos != std::string::npos) {
         std::string postsHtml = readPosts();
-        htmlResponse.replace(commentPos, std::string("<!-- You can add forums, threads, posts, etc. here -->").length(), postsHtml);
+        htmlResponse.replace(commentPos, commentStr.length(), postsHtml);
     } else {
         std::cerr << "Placeholder comment not found in HTML file." << std::endl;
     }
 }
+
 
 void Router::makeHTMLResponse(const std::string& htmlResponse) {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
