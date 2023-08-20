@@ -15,6 +15,7 @@ void Router::initializeMimeMap() {
         mimeMap["html"] = "text/html";
         mimeMap["txt"] = "text/plain";
         mimeMap["css"] = "text/css";
+        mimeMap["file"] = "text/file";
         mimeMap["js"] = "application/javascript";
         mimeMap["json"] = "application/json";
         mimeMap["xml"] = "application/xml";
@@ -92,7 +93,7 @@ std::string Router::URLDecode(const std::string &input) {
             is >> std::hex >> value;
             oss << static_cast<char>(value);
             i += 2;
-        } else if (input[i] == '+') { // Handling the space encoded as '+'
+        } else if (input[i] == '+') {
             oss << ' ';
         } else {
             oss << input[i];
@@ -138,20 +139,21 @@ void Router::validateHeaderLength() {
 }
 
 void Router::validateContentType() {
-	std::string contentType = request.getHeaderValue("Content-Type");
-	std::string transferEncoding = request.getHeaderValue("Transfer-Encoding");
+    std::string contentType = request.getHeaderValue("Content-Type");
+    std::string transferEncoding = request.getHeaderValue("Transfer-Encoding");
 
-	if (contentType == "application/x-www-form-urlencoded") {
-		return;
-	}
-
-	if (transferEncoding == "chunked") {
-		return;
-	}
-	makeErrorResponse(400);
-	throw std::runtime_error("Invalid Content-Type or Transfer-Encoding value");
+    if (!transferEncoding.empty()) {
+        if (transferEncoding != "chunked") {
+            makeErrorResponse(501);
+            throw std::runtime_error("Invalid Transfer-Encoding value");
+        }
+        return;
+    }
+    if (!contentType.empty() && contentType != "application/x-www-form-urlencoded") {
+        makeErrorResponse(415);
+        throw std::runtime_error("Unsupported Media Type");
+    }
 }
-
 
 void Router::parsePostData(std::string& title, std::string& postContent) {
 	std::string content = request.getBody();
@@ -178,7 +180,6 @@ void Router::parsePostData(std::string& title, std::string& postContent) {
         throw std::runtime_error("Post content cannot be empty");
     }
 }
-
 
 void Router::appendPostToFile(const std::string& title, const std::string& postContent) {
 	std::ofstream outFile(post_txt, std::ios::app);
