@@ -12,15 +12,30 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
+#define NULL_FD -1
 
 static int backlog = 5;
 static const std::string    post_txt = "./document/posts.txt";
 
 Server* Server::instance = NULL;
 
-Server::Server() : socket_fd(-1) {}
+Server::Server():
+	socket_fd(NULL_FD),
+	client_addr(),
+	kqueue_fd(NULL_FD),
+	IOchanges(),
+	IOevents(EVENTS_SIZE),
+	sockets(),
+	pipes() {}
 
-Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS_SIZE) {
+Server::Server(const int port, const char* host):
+	socket_fd(NULL_FD),
+	client_addr(),
+	kqueue_fd(NULL_FD),
+	IOchanges(),
+	IOevents(EVENTS_SIZE),
+	sockets(),
+	pipes() {
 	kqueue_fd = kqueue();
 	if (kqueue_fd < 0)
 		throw std::runtime_error("kqueue error. " + std::string(strerror(errno)));
@@ -28,7 +43,6 @@ Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS
 	setSocketOptions();
 	bindSocket(port, host);
 	listenSocket();
-    std::remove(post_txt.c_str());
     std::cout << "Server started, waiting for connections..." << std::endl;
 }
 
@@ -40,9 +54,10 @@ Server& Server::operator=(const Server& copy) {
 }
 
 Server::~Server() {
-	for (std::map<int, Router>::iterator it = routers.begin(); it != routers.end(); it++) {
+	for (std::map<int, Router>::iterator it = sockets.begin(); it != sockets.end(); it++) {
 		disconnect(it->first);
 	}
+	close(kqueue_fd);
 }
 
 Server& Server::getInstance(const int port, const char* host) {
@@ -101,25 +116,29 @@ void Server::acceptConnection() {
 		throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
 	addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	routers.insert(std::make_pair(client_sockfd, Router()));
+	sockets.insert(std::make_pair(client_sockfd, Router(this)));
+}
+
+void Server::addFd(void) {
+
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
 	char buf[BUFFER_SIZE] = {0, };
 
-	if (routers[client_sockfd].getHaveResponse())
+	if (sockets[client_sockfd].getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
 std::cout << buf;
-	routers[client_sockfd].addRequest(std::string(buf));
-	if (routers[client_sockfd].isHeaderEnd()) {
-		routers[client_sockfd].parseHeader();
-		routers[client_sockfd].parseBody();
-		if (routers[client_sockfd].isRequestEnd())
-			routers[client_sockfd].handleRequest();
+	sockets[client_sockfd].addRequest(std::string(buf));
+	if (sockets[client_sockfd].isHeaderEnd()) {
+		sockets[client_sockfd].parseHeader();
+		sockets[client_sockfd].parseBody();
+		if (sockets[client_sockfd].isRequestEnd())
+			sockets[client_sockfd].handleRequest();
 	}
 }
 
@@ -142,34 +161,51 @@ void Server::waitEvents(void) {
 			throw std::runtime_error("kevent EV_ERROR!");
 		else if (static_cast<int>(cur.ident) == socket_fd)
 			acceptConnection();
-		else if (routers.find(cur.ident) != routers.end()) {
+		else if (sockets.find(cur.ident) != sockets.end()) {
 			if (cur.flags & EV_EOF)
 				disconnect(cur.ident);
 			else if (cur.filter == EVFILT_READ)
 				receiveBuffer(cur.ident);
-			else if (cur.filter == EVFILT_WRITE && routers[cur.ident].getHaveResponse())
+			else if (cur.filter == EVFILT_WRITE && sockets[cur.ident].getHaveResponse())
 				sendBuffer(cur.ident, cur.data);
+		}
+		else if (pipes.find(cur.ident) != pipes.end()) {
+			Router&	tmp = *pipes[cur.ident];
+			if (cur.flags & EV_EOF)
+				tmp.disconnectCGI();
+			else if (cur.filter == EVFILT_READ)
+				tmp.readCGI();
+			else if (cur.filter == EVFILT_WRITE)
+				tmp.writeCGI(cur.data);
 		}
 	}
 }
 
 void Server::disconnect(const int client_sockfd) {
 	close(client_sockfd);
-	routers.erase(client_sockfd);
+	sockets.erase(client_sockfd);
 }
 
-void Server::sendBuffer(const int client_sockfd, const int64_t bufSize) {
-	const std::string& message = routers[client_sockfd].getResponse();
-
-	if (bufSize < static_cast<long long>(message.length())) {
+void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
+	const std::string& message = sockets[client_sockfd].getResponse();
+std::cout << "###########HTTP response###########" << std::endl;
+std::cout << message << std::endl;
+	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		routers[client_sockfd].setResponse(message.substr(bufSize));
+		sockets[client_sockfd].setResponse(message.substr(bufSize));
 	}
 	else {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		routers.erase(client_sockfd);
-		routers.insert(std::make_pair(client_sockfd, Router()));
+		sockets.erase(client_sockfd);
+		sockets.insert(std::make_pair(client_sockfd, Router(this)));
 	}
+}
+
+void Server::addPipes(const int writeFd, const int readFd, Router* const router) {
+	pipes[writeFd] = router;
+	pipes[readFd] = router;
+	addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
