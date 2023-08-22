@@ -85,11 +85,13 @@ bool Request::isHeaderEnd(void) const {
 }
 
 bool Request::isRequestEnd(void) {
-    std::map<std::string, std::string>::iterator it = headers.find("Transfer-Encoding");
+    std::map<std::string, std::string>::iterator it = headers.find("transfer-encoding");
     
-    if (it != headers.end() && headers["Transfer-Encoding"] == "chunked") {
-        if (!bodyLines.empty() && bodyLines.back()[0] == '0')
+    if (it != headers.end() && headers["transfer-encoding"] == "chunked") {
+        if (!bodyLines.empty() && bodyLines.back()[0] == '0') {
+            std::cout << "chunked end" << std::endl;
             return true;
+        }
         return false;
     }
     it = headers.find("Content-Length");

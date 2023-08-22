@@ -130,16 +130,15 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (sockets[client_sockfd].getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
+std::cout << buf << std::endl;
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-std::cout << buf;
 	sockets[client_sockfd].addRequest(std::string(buf));
 	if (sockets[client_sockfd].isHeaderEnd()) {
         try {
 		    sockets[client_sockfd].parseHeader();
         } catch (const std::exception& e) {
             sockets[client_sockfd].makeErrorResponse(405);
-            sockets[client_sockfd].handleRequest();
             return;
         }
 		sockets[client_sockfd].parseBody();
@@ -194,8 +193,6 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
-std::cout << "###########HTTP response###########" << std::endl;
-std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));

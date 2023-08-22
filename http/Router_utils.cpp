@@ -164,7 +164,7 @@ void Router::parsePostData(std::string& title, std::string& postContent) {
 	std::string key;
 	std::string value;
 
-    if (content.size() == 0) {
+    if (content == "0" || content.size() == 0) {
         makeErrorResponse(405);
         throw std::runtime_error("Post data cannot be empty");
     }
@@ -290,4 +290,5 @@ void Router::makeErrorResponse(int statusCode) {
 
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
     response.makeBody(body, body.length(), "text/plain");
+    haveResponse = true;
 }
