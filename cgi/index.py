@@ -1,4 +1,16 @@
 #!/usr/bin/python3
+import cgi, cgitb 
+
+import os
+
+for param in os.environ.keys():
+   print("<b>%20s</b>: %s<\br>" % (param, os.environ[param]))
+
+form = cgi.FieldStorage()
+
+my_id = form.getvalue("id")
+
+print("id: ", my_id)
 print("Content-Type: text/html")
 print()
 print('''<!DOCTYPE html>

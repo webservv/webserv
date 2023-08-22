@@ -151,7 +151,7 @@ void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint3
 
 void Server::waitEvents(void) {
 	const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-	
+
 	IOchanges.clear();
 	if (events < 0)
 		throw std::runtime_error("kevent error! " + std::string(strerror(errno)));

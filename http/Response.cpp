@@ -124,6 +124,12 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 		i++;
 	}
 	envList[i] = NULL;
+std::cout << "##################ENV_LIST#####################" << std::endl;
+i = 0;
+while (envList[i]) {
+std::cout << envList[i] << std::endl;
+i++;
+}
 	return envList;
 }
 
