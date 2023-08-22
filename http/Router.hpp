@@ -3,16 +3,20 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
+
 #include <string>
 #include <map>
 #include <sys/socket.h>
 #include <unistd.h>
+
+class Server;
 
 class Router {
 private:
 	Request		request;
 	Response	response;
     bool        haveResponse;
+    Server*     server;
 private:
     static std::map<std::string, std::string> mimeMap;
     static void initializeMimeMap();
@@ -34,6 +38,7 @@ private:
     void makeHTMLResponse(const std::string& htmlResponse);
 public:
 	Router();
+    Router(Server* const server);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -54,6 +59,11 @@ public:
     void                parseBody(void);
     void                setResponse(const std::string& src);
     void                makeErrorResponse(int statusCode);
+    void                readCGI(void);
+    void                writeCGI(const intptr_t fdBufferSize);
+    void                disconnectCGI(void);
+    int                 getWriteFd(void) const;
+    int                 getReadFd(void) const;
 };
 
 #endif
