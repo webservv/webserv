@@ -116,7 +116,13 @@ void Server::receiveBuffer(const int client_sockfd) {
 std::cout << buf;
 	routers[client_sockfd].addRequest(std::string(buf));
 	if (routers[client_sockfd].isHeaderEnd()) {
-		routers[client_sockfd].parseHeader();
+        try {
+		    routers[client_sockfd].parseHeader();
+        } catch (const std::exception& e) {
+            routers[client_sockfd].makeErrorResponse(405);
+            routers[client_sockfd].handleRequest();
+            return;
+        }
 		routers[client_sockfd].parseBody();
 		if (routers[client_sockfd].isRequestEnd())
 			routers[client_sockfd].handleRequest();

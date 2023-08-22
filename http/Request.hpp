@@ -40,6 +40,10 @@ private:
 	void parseRequestLine();
 	void parseKeyValues();
 	void addRequestLines(void);
+    void readHeadersAndInitialRequestLines(std::stringstream& parser);
+    void handleChunkedTransferEncoding(std::stringstream& parser);
+    void handleNonChunkedTransferEncoding(std::stringstream& parser);
+    void handleFirstLineOfBody(std::stringstream& parser, std::string& line);
 public:
 	Request::METHOD getMethod() ;
 	const std::vector<std::string>& getBodyLines(void) const;
