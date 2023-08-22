@@ -54,8 +54,11 @@ void Router::parseURL(std::string& filePath) {
     std::string urlPath = request.getUrl();
 
     if (urlPath == "/")
-        urlPath.assign("/index.html");
-    filePath = g_dir + urlPath;
+        filePath = g_dir + "/index.html";
+    else if (!urlPath.compare(0, 4, "/cgi"))
+        filePath = urlPath;
+    else
+        filePath = g_dir + urlPath;
 }
 
 bool Router::resourceExists(const std::string& filePath) {

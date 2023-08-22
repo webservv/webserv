@@ -1,6 +1,8 @@
 #include "Router.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "Server.hpp"
+
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -11,7 +13,16 @@ static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
 Router::Router():
 	request(),
 	response(),
-	haveResponse(false) {
+	haveResponse(false),
+	server(NULL) {
+		initializeMimeMap();
+	}
+
+Router::Router(Server* const server):
+	request(),
+	response(),
+	haveResponse(false),
+	server(server) {
 		initializeMimeMap();
 	}
 
@@ -20,7 +31,8 @@ Router::~Router() {}
 Router::Router(const Router& copy):
 	request(copy.request),
 	response(copy.response),
-	haveResponse(copy.haveResponse) {
+	haveResponse(copy.haveResponse),
+	server(copy.server) {
 		initializeMimeMap();
 	}
 
@@ -28,6 +40,7 @@ Router& Router::operator=(const Router& copy) {
 	request = copy.request;
 	response = copy.response;
 	haveResponse = copy.haveResponse;
+	server = copy.server;
 	return *this;
 }
 
@@ -40,7 +53,6 @@ void Router::handleRequest() {
 	} else if (request.getMethod() == Request::DELETE) {
 		handleDelete();
 	}
-	haveResponse = true;
 }
 
 void Router::handleGet() {
@@ -50,17 +62,26 @@ void Router::handleGet() {
 		if (filePath == "./favicon.ico") {
 			filePath = FAVICON_PATH;
 		}
-		if (!resourceExists(filePath)) {
-			makeErrorPage();
-			return;
+		if (!filePath.compare(0, 4, "/cgi")) {
+			response.makeStatusLine("HTTP/1.1", "200", "OK");
+			std::map<std::string, std::string> envs;
+			envs["SCRIPT_NAME"] = "./cgi/index.py";
+			response.connectCGI(envs);
+			server->addPipes(response.getWriteFd(), response.getReadFd(), this);
 		}
-
-        std::string content;
-        readFile(filePath, content);
-        std::string mimeType = getMIME(filePath);
-
-        response.makeStatusLine("HTTP/1.1", "200", "OK");
-        response.makeBody(content, content.size(), mimeType);
+		else {
+			if (!resourceExists(filePath)) {
+				makeErrorPage();
+				return;
+			}
+			std::string content;
+        	readFile(filePath, content);
+        	std::string mimeType = getMIME(filePath);
+        	response.makeStatusLine("HTTP/1.1", "200", "OK");
+        	response.makeBody(content, content.size(), mimeType);
+			haveResponse = true;
+		}
+        
 
 	} catch (const std::ios_base::failure& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
@@ -77,6 +98,7 @@ void Router::handlePost() {
 		std::string htmlResponse;
 		readAndModifyHTML(htmlResponse);
 		makeHTMLResponse(htmlResponse);
+		haveResponse = true;
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
@@ -86,6 +108,7 @@ void Router::handleDelete() {
 	try {
 		response.makeStatusLine("HTTP/1.1", "501", "Not Implemented");
 		response.makeBody("Delete method not implemented.", 30, "text/plain");
+		haveResponse = true;
 	} catch (const std::exception& e) {
 		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -122,4 +145,25 @@ void Router::parseBody(void) {
 
 void Router::setResponse(const std::string &src) {
 	response.setResponse(src);
+}
+
+void Router::readCGI(void) {
+	response.readCGI();
+}
+
+void Router::writeCGI(const intptr_t fdBufferSize) {
+	response.writeCGI(fdBufferSize);
+}
+
+void Router::disconnectCGI(void) {
+	response.disconnectCGI();
+	haveResponse = true;
+}
+
+int Router::getWriteFd(void) const {
+	return response.getWriteFd();
+}
+
+int Router::getReadFd(void) const {
+	return response.getReadFd();
 }

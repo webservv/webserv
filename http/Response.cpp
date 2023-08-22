@@ -135,11 +135,8 @@ void Response::readCGI(void) {
 		read_size = read(readFd, buf, BUFFER_SIZE);
 		if (read_size < 0)
 			throw std::runtime_error("getFromCGI: " + std::string(strerror(errno)));
-		else if (read_size == 0) {
-			close(readFd);
-			readFd = NULL_FD;
+		else if (read_size == 0)
 			break;
-		}
 		buf[read_size] = '\0';
 		responseStr += buf;
 	}
@@ -148,7 +145,7 @@ void Response::readCGI(void) {
 void Response::writeCGI(const intptr_t fdBufferSize) {
 	intptr_t bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
 
-	if (messageToCGI.size() <= bufSize) {
+	if (static_cast<intptr_t>(messageToCGI.size()) <= bufSize) {
 		if (write(writeFd, messageToCGI.c_str(), messageToCGI.size()) < 0)
 			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
 		messageToCGI.clear();
@@ -164,6 +161,7 @@ void Response::writeCGI(const intptr_t fdBufferSize) {
 }
 
 void Response::disconnectCGI(void) {
+std::cout << "####disconnectCGI####" << std::endl;
 	int	stat;
 
 	if (writeFd != NULL_FD)

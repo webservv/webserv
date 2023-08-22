@@ -12,15 +12,30 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
+#define NULL_FD -1
 
 static int backlog = 5;
 static const std::string    post_txt = "./document/posts.txt";
 
 Server* Server::instance = NULL;
 
-Server::Server() : socket_fd(-1) {}
+Server::Server():
+	socket_fd(NULL_FD),
+	client_addr(),
+	kqueue_fd(NULL_FD),
+	IOchanges(),
+	IOevents(EVENTS_SIZE),
+	sockets(),
+	pipes() {}
 
-Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS_SIZE) {
+Server::Server(const int port, const char* host):
+	socket_fd(NULL_FD),
+	client_addr(),
+	kqueue_fd(NULL_FD),
+	IOchanges(),
+	IOevents(EVENTS_SIZE),
+	sockets(),
+	pipes() {
 	kqueue_fd = kqueue();
 	if (kqueue_fd < 0)
 		throw std::runtime_error("kqueue error. " + std::string(strerror(errno)));
@@ -28,7 +43,6 @@ Server::Server(const int port, const char* host): socket_fd(-1), IOevents(EVENTS
 	setSocketOptions();
 	bindSocket(port, host);
 	listenSocket();
-    std::remove(post_txt.c_str());
     std::cout << "Server started, waiting for connections..." << std::endl;
 }
 
@@ -101,7 +115,7 @@ void Server::acceptConnection() {
 		throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
 	addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	sockets.insert(std::make_pair(client_sockfd, Router()));
+	sockets.insert(std::make_pair(client_sockfd, Router(this)));
 }
 
 void Server::addFd(void) {
@@ -161,12 +175,7 @@ void Server::waitEvents(void) {
 			else if (cur.filter == EVFILT_READ)
 				tmp.readCGI();
 			else if (cur.filter == EVFILT_WRITE)
-				tmp.writeCGI();
-		}
-		else if(readFds.find(cur.ident) != readFds.end()) {
-			Router&	tmp = *pipes[cur.ident];
-			if (cur.filter == EVFILT_READ)
-				tmp.
+				tmp.writeCGI(cur.data);
 		}
 	}
 }
@@ -178,7 +187,8 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
-
+std::cout << "###########HTTP response###########" << std::endl;
+std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
@@ -188,7 +198,7 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
 		sockets.erase(client_sockfd);
-		sockets.insert(std::make_pair(client_sockfd, Router()));
+		sockets.insert(std::make_pair(client_sockfd, Router(this)));
 	}
 }
 
