@@ -64,6 +64,7 @@ public:
     void                disconnectCGI(void);
     int                 getWriteFd(void) const;
     int                 getReadFd(void) const;
+    int                 getRequestError() const;
 };
 
 #endif

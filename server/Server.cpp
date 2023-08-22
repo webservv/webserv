@@ -138,7 +138,8 @@ std::cout << buf << std::endl;
         try {
 		    sockets[client_sockfd].parseHeader();
         } catch (const std::exception& e) {
-            sockets[client_sockfd].makeErrorResponse(405);
+            int error = getRequestError(client_sockfd);
+            sockets[client_sockfd].makeErrorResponse(error);
             return;
         }
 		sockets[client_sockfd].parseBody();
@@ -211,4 +212,8 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 	pipes[readFd] = router;
 	addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+}
+
+int Server::getRequestError(const int client_sockfd) {
+    return sockets[client_sockfd].getRequestError();
 }

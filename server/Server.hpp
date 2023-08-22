@@ -52,6 +52,7 @@ public:
 	void addFd(void);
 	void waitEvents(void);
 	void addPipes(const int writeFd, const int readFd, Router* const router);
+    int getRequestError(const int client_sockfd);
 };
 
 #endif

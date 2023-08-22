@@ -169,3 +169,7 @@ int Router::getWriteFd(void) const {
 int Router::getReadFd(void) const {
 	return response.getReadFd();
 }
+
+int Router::getRequestError() const {
+    return request.getError();
+}

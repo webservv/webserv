@@ -28,6 +28,7 @@ private:
 	std::vector<std::string> bodyLines;
 	std::string body;
 	bool haveHeader;
+    int error;
 public:
 	Request();
 	~Request();
@@ -56,6 +57,7 @@ public:
 	void parseBody(void);
     bool isHeaderEnd(void) const;
 	bool isRequestEnd(void);
+    int getError(void) const;
 };
 
 #endif

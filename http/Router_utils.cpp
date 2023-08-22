@@ -269,6 +269,10 @@ void Router::makeErrorResponse(int statusCode) {
             reasonPhrase = "Length Required";
             body = "The request did not specify the length of its content, which is required by the requested resource.";
             break;
+        case 413:
+            reasonPhrase = "Request Entity Too Large";
+            body = "The server is refusing to process a request because the request entity is larger than the server is willing or able to process.";
+            break;
         case 415:
             reasonPhrase = "Unsupported Media Type";
             body = "The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method.";
@@ -280,6 +284,10 @@ void Router::makeErrorResponse(int statusCode) {
         case 501:
             reasonPhrase = "Not Implemented";
             body = "The server does not support the functionality required to fulfill the request.";
+            break;
+        case 505:
+            reasonPhrase = "HTTP Version Not Supported";
+            body = "The server does not support, or refuses to support, the HTTP protocol version that was used in the request message.";
             break;
         default:
             statusCode = 500;

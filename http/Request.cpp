@@ -104,3 +104,7 @@ bool Request::isRequestEnd(void) {
     else
         return true;
 }
+
+int Request::getError(void) const {
+    return error;
+}

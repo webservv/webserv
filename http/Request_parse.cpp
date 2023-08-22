@@ -9,8 +9,10 @@ const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
 
 void Request::parseMethod(std::string& line) {
     size_t space = line.find(' ');
-    if (space == std::string::npos)
+    if (space == std::string::npos) {
+        error = 400;
         throw std::out_of_range("invalid http, request line! Missing or misplaced space");
+    }
     std::string methodString = line.substr(0, space);
     line = line.substr(space + 1);
     if (methodString == "GET")
@@ -19,21 +21,27 @@ void Request::parseMethod(std::string& line) {
         method = POST;
     else if (methodString == "DELETE")
         method = DELETE;
-    else
+    else {
+        error = 405;
         throw std::out_of_range("invalid http, request line! Unsupported method: " + methodString);
+    }
 }
 
 void Request::parseURL(std::string& line) {
     size_t space = line.find(' ');
-    if (space == std::string::npos)
+    if (space == std::string::npos) {
+        error = 400;
         throw std::out_of_range("invalid http, request line! Missing or misplaced space");
+    }
     url = line.substr(0, space);
 }
 
 void Request::parseVersion(std::string& line, size_t space) {
     version = line.substr(space + 1);
-    if (version != "HTTP/1.1")
+    if (version != "HTTP/1.1") {
+        error = 505;
         throw std::out_of_range("invalid http, request line! Unsupported version: " + version);
+    }
 }
 
 void Request::parseBody(void) {
@@ -94,6 +102,7 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
         }
 
         if (chunkSize > MAX_CHUNK_SIZE) {
+            error = 413;
             throw std::out_of_range("invalid http, chunk size is too big!");
         }
 
@@ -106,8 +115,10 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
 }
 
 void Request::parseRequestLine() {
-    if (requestLines.empty())
+    if (requestLines.empty()) {
+        error = 400;
         throw std::out_of_range("invalid http, empty request line!");
+    }
     std::string line = requestLines.front();
     requestLines.pop();
     parseMethod(line);
@@ -123,8 +134,10 @@ void Request::parseKeyValues(void) {
 		if (line.size() == 0)
 			break;
 		size_t index = line.find(": ");
-		if (index == std::string::npos || index + 2 >= line.size())
+		if (index == std::string::npos || index + 2 >= line.size()) {
+            error = 400;
 			throw std::out_of_range("invalid http, header!");
+        }
         std::string headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
         
