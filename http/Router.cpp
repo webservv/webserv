@@ -45,12 +45,13 @@ Router& Router::operator=(const Router& copy) {
 }
 
 void Router::handleRequest() {
+    Request::METHOD method = request.getMethod();
 
-	if (request.getMethod() == Request::GET) {
-		handleGet();
-	} else if (request.getMethod() == Request::POST) {
+	if (method == Request::GET) {
+        handleGet();
+	} else if (method == Request::POST) {
 		handlePost();
-	} else if (request.getMethod() == Request::DELETE) {
+	} else if (method == Request::DELETE) {
 		handleDelete();
 	}
 }
@@ -84,13 +85,14 @@ void Router::handleGet() {
         
 
 	} catch (const std::ios_base::failure& e) {
-		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
+        makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
 
 void Router::handlePost() {
 	try {
+        validateHeaderLength();
 		validateContentType();
 		std::string title, postContent;
 		parsePostData(title, postContent);
@@ -100,8 +102,8 @@ void Router::handlePost() {
 		makeHTMLResponse(htmlResponse);
 		haveResponse = true;
 	} catch (const std::exception& e) {
-		std::cerr << "Error: " << e.what() << std::endl;
-	}
+        std::cerr << "Error: " << e.what() << std::endl;
+    } 
 }
 
 void Router::handleDelete() {
@@ -110,7 +112,7 @@ void Router::handleDelete() {
 		response.makeBody("Delete method not implemented.", 30, "text/plain");
 		haveResponse = true;
 	} catch (const std::exception& e) {
-		response.makeStatusLine("HTTP/1.1", "500", "Internal Server Error");
+		makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
