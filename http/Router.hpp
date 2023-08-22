@@ -36,7 +36,6 @@ private:
     void appendPostToFile(const std::string& title, const std::string& postContent);
     void readAndModifyHTML(std::string& htmlResponse);
     void makeHTMLResponse(const std::string& htmlResponse);
-    void makeErrorResponse(int statusCode);
 public:
 	Router();
     Router(Server* const server);
@@ -59,11 +58,13 @@ public:
     void                parseHeader(void);
     void                parseBody(void);
     void                setResponse(const std::string& src);
+    void                makeErrorResponse(int statusCode);
     void                readCGI(void);
     void                writeCGI(const intptr_t fdBufferSize);
     void                disconnectCGI(void);
     int                 getWriteFd(void) const;
     int                 getReadFd(void) const;
+    int                 getRequestError() const;
 };
 
 #endif

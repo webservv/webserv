@@ -161,7 +161,6 @@ void Response::writeCGI(const intptr_t fdBufferSize) {
 }
 
 void Response::disconnectCGI(void) {
-std::cout << "####disconnectCGI####" << std::endl;
 	int	stat;
 
 	if (writeFd != NULL_FD)
