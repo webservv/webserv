@@ -28,6 +28,7 @@ private:
 	std::vector<std::string> bodyLines;
 	std::string body;
 	bool haveHeader;
+    int error;
 public:
 	Request();
 	~Request();
@@ -40,6 +41,10 @@ private:
 	void parseRequestLine();
 	void parseKeyValues();
 	void addRequestLines(void);
+    void readHeadersAndInitialRequestLines(std::stringstream& parser);
+    void handleChunkedTransferEncoding(std::stringstream& parser);
+    void handleNonChunkedTransferEncoding(std::stringstream& parser);
+    void handleFirstLineOfBody(std::stringstream& parser, std::string& line);
 public:
 	Request::METHOD getMethod() ;
 	const std::vector<std::string>& getBodyLines(void) const;
@@ -52,6 +57,7 @@ public:
 	void parseBody(void);
     bool isHeaderEnd(void) const;
 	bool isRequestEnd(void);
+    int getError(void) const;
 };
 
 #endif
