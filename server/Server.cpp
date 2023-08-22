@@ -57,6 +57,7 @@ Server::~Server() {
 	for (std::map<int, Router>::iterator it = sockets.begin(); it != sockets.end(); it++) {
 		disconnect(it->first);
 	}
+	close(kqueue_fd);
 }
 
 Server& Server::getInstance(const int port, const char* host) {
