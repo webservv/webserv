@@ -51,14 +51,10 @@ void Request::parseBody(void) {
 }
 
 void Request::addRequestLines(void) {
-    std::string line;
     std::stringstream parser(requestStr);
-    parser.clear();
-    parser.seekg(0);
-
     readHeadersAndInitialRequestLines(parser);
+
     bool isChunked = headers["transfer-encoding"] == "chunked";
-    
     if (isChunked) {
         handleChunkedTransferEncoding(parser);
     } else {
@@ -71,17 +67,13 @@ void Request::addRequestLines(void) {
 void Request::readHeadersAndInitialRequestLines(std::stringstream& parser) {
     std::string line;
     while (std::getline(parser, line) && !line.empty()) {
-        if (line.back() == '\r')
-            line.pop_back();
+        if (line.back() == '\r') line.pop_back();
         requestLines.push(line);
     }
 }
 
 void Request::handleNonChunkedTransferEncoding(std::stringstream& parser) {
     std::string line;
-    if (requestStr.find("0\r\n") == 0) {
-        throw std::out_of_range("non-chunked transfer encoding needs to have body!");
-    }
     while (std::getline(parser, line)) {
         if (line.back() == '\r') line.pop_back();
         requestLines.push(line);
@@ -102,14 +94,14 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
         }
 
         if (chunkSize > MAX_CHUNK_SIZE) {
-            throw std::out_of_range("invalid http, chunk size!");
+            throw std::out_of_range("invalid http, chunk size is too big!");
         }
 
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
         std::string chunkData(buffer.begin(), buffer.end());
         requestLines.push(chunkData);
-        parser.ignore(2);
+        parser.ignore(2); // Ignore the \r\n after the chunk
     }
 }
 

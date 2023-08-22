@@ -89,7 +89,6 @@ bool Request::isRequestEnd(void) {
     
     if (it != headers.end() && headers["transfer-encoding"] == "chunked") {
         if (!bodyLines.empty() && bodyLines.back()[0] == '0') {
-            std::cout << "chunked end" << std::endl;
             return true;
         }
         return false;
