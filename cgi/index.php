@@ -1,19 +1,10 @@
-#!/usr/bin/python3
-import cgi, cgitb 
+#!/usr/bin/php
+<?php
+print("Content-Type: text/html");
+echo "\r\n\r\n";
 
-import os
-
-for param in os.environ.keys():
-   print("<b>%20s</b>: %s<\br>" % (param, os.environ[param]))
-
-form = cgi.FieldStorage()
-
-my_id = form.getvalue("id")
-
-print("id: ", my_id)
-print("Content-Type: text/html")
-print()
-print('''<!DOCTYPE html>
+echo <<<HTML
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -49,15 +40,13 @@ print('''<!DOCTYPE html>
             </ul>
         </section>
 
-        <!-- Open Forum section added here -->
         <section>
             <h2>Discussion Topics</h2>
-            <!-- You can add forums, threads, posts, etc. here -->
         </section>
 
         <section>
             <h2>Create a New Post</h2>
-            <form action="/submit-post" method="post">
+            <form action="/cgi/post.py" method="post">
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required><br><br>
 
@@ -74,4 +63,5 @@ print('''<!DOCTYPE html>
     </footer>
 </body>
 </html>
-''')
+HTML;
+?>
