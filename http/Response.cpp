@@ -14,7 +14,7 @@
 #define NULL_FD -1
 #define NULL_PID -1
 
-static const std::string g_SCRIPT_NAME = "SCRIPT_NAME";
+static const std::string g_PATH_INFO = "PATH_INFO";
 static const std::string g_QURY_STRING = "QURY_STRING";
 
 Response::Response():
@@ -83,14 +83,15 @@ void Response::setMessageToCGI(const std::string &src) {
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
-	
-	if (access(envs[g_SCRIPT_NAME].c_str(), F_OK))
-		throw std::runtime_error("getFromCGI: " + std::string(strerror(errno)));
+std::cout << envs[g_PATH_INFO] << std::endl;
+std::cout << "size: " << envs[g_PATH_INFO].size() << std::endl;
+	if (access(envs[g_PATH_INFO].c_str(), F_OK))
+		throw std::runtime_error("getFromCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
-		throw std::runtime_error("getFromCGI: " + std::string(strerror(errno)));
+		throw std::runtime_error("getFromCGI2: " + std::string(strerror(errno)));
 	cgiPid = fork();
 	if (cgiPid < 0)
-		throw std::runtime_error("getFromCGI: " + std::string(strerror(errno)));
+		throw std::runtime_error("getFromCGI3: " + std::string(strerror(errno)));
 	else if (cgiPid == CHILD_PID)
 		processCGI(readPipe, envs);
 	close(readPipe[WRITE]);
@@ -106,7 +107,7 @@ void Response::processCGI(int fd[2], std::map<std::string, std::string>& envs) {
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 	close(fd[READ]);
 	close(fd[WRITE]);
-	if (execve(envs[g_SCRIPT_NAME].c_str(), NULL, envList) < 0)
+	if (execve(envs[g_PATH_INFO].c_str(), NULL, envList) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 }
 
@@ -124,12 +125,6 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 		i++;
 	}
 	envList[i] = NULL;
-std::cout << "##################ENV_LIST#####################" << std::endl;
-i = 0;
-while (envList[i]) {
-std::cout << envList[i] << std::endl;
-i++;
-}
 	return envList;
 }
 
@@ -140,7 +135,7 @@ void Response::readCGI(void) {
 	while (true) {
 		read_size = read(readFd, buf, BUFFER_SIZE);
 		if (read_size < 0)
-			throw std::runtime_error("getFromCGI: " + std::string(strerror(errno)));
+			throw std::runtime_error("readCGI: " + std::string(strerror(errno)));
 		else if (read_size == 0)
 			break;
 		buf[read_size] = '\0';

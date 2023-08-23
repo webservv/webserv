@@ -66,9 +66,7 @@ void Router::handleGet() {
 		if (!filePath.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
 			std::map<std::string, std::string> envs;
-			envs["SCRIPT_NAME"] = "./cgi/index.py";
-			envs["SERVER_NAME"] = "default server";
-			envs["id"] = "testID";
+			makeCGIenvs(envs);
 			response.connectCGI(envs);
 			server->addPipes(response.getWriteFd(), response.getReadFd(), this);
 		}

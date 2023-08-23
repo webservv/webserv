@@ -77,6 +77,42 @@ const std::string& Router::getResponseStr(void) const {
 	return response.getResponseStr();
 }
 
+void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
+    static const std::string requestHeaderList[] = {
+        "content-type",
+        "content-length",
+        "cookie",
+        "user-agent",
+        ""
+    };
+    static const std::string envHeaderNames[] = {
+        "CONTENT_TYPE",
+        "CONTENT_LENGTH",
+        "HTTP_COOKIE",
+        "HTTP_USER_AGENT",
+        "QUERY_STRING",
+        "REQUEST_METHOD",
+        "SCRIPT_NAME",
+        "PATH_INFO"
+    };
+    int i = 0;
+
+    while (!requestHeaderList[i].empty()) {
+        const std::string&  value = request.findValue(requestHeaderList[i]);
+        if (!value.empty()) {
+            envs[envHeaderNames[i]] = value;
+        }
+        i++;
+    }
+    
+    const std::string&  query = request.getQuery();
+    if (!query.empty())
+        envs["QUERY_STRING"] = query;
+    envs["REQUEST_METHOD"] = request.getStrMethod();
+    envs["PATH_INFO"] = request.getPath();
+    //SEVER_NAME
+}
+
 std::string Router::URLDecode(const std::string &input) {
     std::ostringstream oss;
     for (std::size_t i = 0; i < input.length(); ++i) {
@@ -106,8 +142,8 @@ bool Router::isBodyRequired() {
 }
 
 void Router::validateHeaderLength() {
-    const std::string& contentLengthHeader = request.getHeaderValue("Content-Length");
-    const std::string& transferEncodingHeader = request.getHeaderValue("Transfer-Encoding");
+    const std::string& contentLengthHeader = request.findValue("Content-Length");
+    const std::string& transferEncodingHeader = request.findValue("Transfer-Encoding");
 
     if (transferEncodingHeader == "chunked") {
         return;
@@ -132,8 +168,8 @@ void Router::validateHeaderLength() {
 }
 
 void Router::validateContentType() {
-    const std::string& contentType = request.getHeaderValue("Content-Type");
-    const std::string& transferEncoding = request.getHeaderValue("Transfer-Encoding");
+    const std::string& contentType = request.findValue("Content-Type");
+    const std::string& transferEncoding = request.findValue("Transfer-Encoding");
 
     if (!transferEncoding.empty()) {
         if (transferEncoding != "chunked") {
