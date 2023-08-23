@@ -22,11 +22,7 @@ private:
 	std::queue<std::string> requestLines;
 
 	METHOD method;
-	std::string url;
-	std::string version;
-	std::map<std::string, std::string> headers;
-	std::vector<std::string> bodyLines;
-	std::string body;
+	std::map<std::string, std::string> values;
 	bool haveHeader;
     int error;
 public:
@@ -36,8 +32,8 @@ public:
 	Request&	operator=(const Request& copy);
 private:
     void parseMethod(std::string& line);
-    void parseURL(std::string& line);
-    void parseVersion(std::string& line, size_t space);
+    void parseURL(const std::string& line);
+    void parseVersion(const std::string& line, const size_t space);
 	void parseRequestLine();
 	void parseKeyValues();
 	void addRequestLines(void);
@@ -46,11 +42,14 @@ private:
     void handleNonChunkedTransferEncoding(std::stringstream& parser);
     void handleFirstLineOfBody(std::stringstream& parser, std::string& line);
 public:
-	Request::METHOD getMethod() ;
+	Request::METHOD getMethod(void) const;
+	const std::string& getStrMethod(void) const;
 	const std::vector<std::string>& getBodyLines(void) const;
+	const std::string& findValue(const std::string& headerName) const;
 	const std::string& getBody(void) const;
-	const std::string& getUrl() ;
-	const std::string& getHeaderValue(const std::string& headerName) const;
+	const std::string& getUrl(void) const;
+	const std::string& getPath(void) const;
+	const std::string& getQuery(void) const;
 
 	void addRequest(const std::string& request);
 	void parseHeader(void);

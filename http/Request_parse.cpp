@@ -15,60 +15,69 @@ void Request::parseMethod(std::string& line) {
     }
     std::string methodString = line.substr(0, space);
     line = line.substr(space + 1);
-    if (methodString == "GET")
+    if (methodString == "GET") {
         method = GET;
-    else if (methodString == "POST")
+        values["method"] = "GET";
+    }
+    else if (methodString == "POST") {
         method = POST;
-    else if (methodString == "DELETE")
+        values["method"] = "POST";
+    }
+    else if (methodString == "DELETE") {
         method = DELETE;
+        values["method"] = "DELETE";
+    }
     else {
         error = 405;
         throw std::out_of_range("invalid http, request line! Unsupported method: " + methodString);
     }
 }
 
-void Request::parseURL(std::string& line) {
-    size_t space = line.find(' ');
+void Request::parseURL(const std::string& line) {
+    const size_t space = line.find(' ');
     if (space == std::string::npos) {
         error = 400;
         throw std::out_of_range("invalid http, request line! Missing or misplaced space");
     }
-    url = line.substr(0, space);
+    const std::string& tmp = line.substr(0, space);
+    const size_t  query_index = tmp.find('?');
+    values["url"] = tmp;
+    if (query_index != std::string::npos) {
+        values["path"] = '.' + tmp.substr(0, query_index - 1);
+        values["query"] = tmp.substr(query_index, -1);
+    }
+    else
+        values["path"] = '.' + tmp;
 }
 
-void Request::parseVersion(std::string& line, size_t space) {
-    version = line.substr(space + 1);
-    if (version != "HTTP/1.1") {
+void Request::parseVersion(const std::string& line, const size_t space) {
+    values["version"] = line.substr(space + 1);
+    if (values["version"] != "HTTP/1.1") {
         error = 505;
-        throw std::out_of_range("invalid http, request line! Unsupported version: " + version);
+        throw std::out_of_range("invalid http, request line! Unsupported version: " + values["version"]);
     }
 }
 
 void Request::parseBody(void) {
     addRequestLines();
 	while (!requestLines.empty()) {
-        bodyLines.push_back(requestLines.front());
+        values["body"] += requestLines.front();
 		requestLines.pop();
 	}
-    while (!bodyLines.empty() && bodyLines.back() == "") {
-        bodyLines.pop_back();
-    }
-    for (std::vector<std::string>::iterator it = bodyLines.begin(); it != bodyLines.end(); it++) {
-        body += *it;
-    }
 }
 
 void Request::addRequestLines(void) {
     std::stringstream parser(requestStr);
-    readHeadersAndInitialRequestLines(parser);
+    bool isChunked = false;
 
-    bool isChunked = headers["transfer-encoding"] == "chunked";
+    if (values.find("transfer-encoding") != values.end() && values["transfer-encoding"] == "chunked")
+        isChunked = true;
+    readHeadersAndInitialRequestLines(parser);
     if (isChunked) {
         handleChunkedTransferEncoding(parser);
     } else {
         handleNonChunkedTransferEncoding(parser);
     }
-
     requestStr.clear();
 }
 
@@ -141,7 +150,7 @@ void Request::parseKeyValues(void) {
         std::string headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
         
-		headers[headerName] = line.substr(index + 2);
+		values[headerName] = line.substr(index + 2);
 	}
 }
 

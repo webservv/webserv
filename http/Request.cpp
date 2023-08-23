@@ -8,67 +8,65 @@ Request::Request():
     requestStr(""),
     requestLines(),
     method(OTHER),
-    url(""),
-    version(""),
-    headers(),
-    bodyLines(),
-    body(""),
+    values(),
     haveHeader(false) {}
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
     requestLines(copy.requestLines),
     method(copy.method),
-    url(copy.url),
-    version(copy.version),
-    headers(copy.headers),
-    bodyLines(copy.bodyLines),
-    body(copy.body),
+    values(copy.values),
     haveHeader(copy.haveHeader) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
 	requestLines = copy.requestLines;
 	method = copy.method;
-	url = copy.url;
-	version = copy.version;
-	headers = copy.headers;
-    bodyLines = copy.bodyLines;
-	body = copy.body;
+	values = copy.values;
+
     haveHeader = copy.haveHeader;
 	return *this;
 }
 
 Request::~Request() {}
 
-Request::METHOD Request::getMethod() {
+Request::METHOD Request::getMethod(void) const {
 	return method;
 }
-const std::string& Request::getUrl() {
-	return url;
+
+const std::string& Request::getStrMethod(void) const {
+    return findValue("method");
+}
+
+const std::string& Request::getUrl(void) const {
+	return findValue("url");
+}
+
+const std::string& Request::getPath(void) const {
+    return findValue("path");
+}
+
+const std::string& Request::getQuery(void) const {
+    return findValue("query");
 }
 
 static char tolower_char(unsigned char c) {
     return std::tolower(c);
 }
 
-const std::string& Request::getHeaderValue(const std::string& headerName) const {
+const std::string& Request::findValue(const std::string& headerName) const {
     std::string lowerHeaderName = headerName;
     std::transform(lowerHeaderName.begin(), lowerHeaderName.end(), lowerHeaderName.begin(), tolower_char);
-    std::map<std::string, std::string>::const_iterator it = headers.find(lowerHeaderName);
-    if (it != headers.end()) {
+    std::map<std::string, std::string>::const_iterator it = values.find(lowerHeaderName);
+    if (it != values.end()) {
         return it->second;
     }
     static const std::string emptyString = "";
     return emptyString;
 }
 
-const std::vector<std::string>& Request::getBodyLines(void) const {
-    return bodyLines;
-}
-
 const std::string& Request::getBody(void) const {
-	return body;
+	return findValue("body");
 }
 
 void Request::addRequest(const std::string &request) {
@@ -85,18 +83,26 @@ bool Request::isHeaderEnd(void) const {
 }
 
 bool Request::isRequestEnd(void) {
-    std::map<std::string, std::string>::iterator it = headers.find("transfer-encoding");
+    std::map<std::string, std::string>::iterator it = values.find("transfer-encoding");
     
-    if (it != headers.end() && headers["transfer-encoding"] == "chunked") {
-        if (!bodyLines.empty() && bodyLines.back()[0] == '0') {
-            return true;
+    if (it != values.end() && it->second == "chunked") {
+        if (values.find("body") != values.end()) {
+            const std::string&  body = values["body"];
+            for (size_t i = body.size() - 1; i >= 0; i--) {
+                if (body[i] == '\r' || body[i] == '\n')
+                    continue;
+                else if (body[i] == '0')
+                    return true;
+                else
+                    return false;
+            }
         }
         return false;
     }
-    it = headers.find("Content-Length");
-    if (it != headers.end()) {
-        size_t len = std::atoi(headers["Content-Length"].c_str());
-        if (body.length() == len)
+    it = values.find("Content-Length");
+    if (it != values.end()) {
+        size_t len = std::atoi(values["Content-Length"].c_str());
+        if (values.find("body") != values.end() && values["body"].length() == len)
             return true;
         else
             return false;
