@@ -55,7 +55,7 @@ public:
 	void addPipes(const int writeFd, const int readFd, Router* const router);
     int getRequestError(const int client_sockfd);
     void addCookie(const std::string& key, const std::string& value);
-
+    const std::string& getCookie(const std::string& key);
 };
 
 #endif

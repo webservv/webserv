@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 std::map<std::string, std::string> Router::mimeMap;
 static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
@@ -106,9 +107,17 @@ void Router::connectCGI(void) {
 
 	makeCGIenvs(envs);
     if (request.isHaveCookie()) {
-        cookieId++;
-        server->addCookie(std::to_string(cookieId), request.getBody());
-        response.setCookieValue(std::to_string(cookieId));
+        std::string cookie = request.findValue("Cookie");
+        if (cookie == "") {
+            cookieId++;
+            std::stringstream ss;
+            ss << cookieId;
+            std::string cookieIdStr = ss.str();
+            server->addCookie(ss.str(), request.getBody());
+            response.makeHeader("Set-Cookie", cookieIdStr);
+        } else {
+            // std::cout << "cookie: " << cookie << std::endl;
+        }
     }
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(envs);

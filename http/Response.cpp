@@ -59,8 +59,6 @@ void Response::makeBody(const std::string& data, const size_t len, const std::st
 	ss << len;
 	responseStr += "Content-Length: " + ss.str() + "\r\n";
 	responseStr += "Content-Type: " + type + "\r\n";
-    if (cookieValue.size() > 0)
-        responseStr += "Set-Cookie: " + g_COOKIE_KEY + cookieValue + "\r\n";
 	responseStr += "\r\n";
 	responseStr += data;
 }

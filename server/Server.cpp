@@ -222,3 +222,7 @@ int Server::getRequestError(const int client_sockfd) {
 void Server::addCookie(const std::string& key, const std::string& value) {
     cookies[key] = value;
 }
+
+const std::string& Server::getCookie(const std::string& key) {
+    return cookies[key];
+}
