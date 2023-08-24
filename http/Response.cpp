@@ -18,6 +18,7 @@
 
 static const std::string g_PATH_INFO = "PATH_INFO";
 static const std::string g_QURY_STRING = "QURY_STRING";
+static const std::string g_COOKIE_KEY = "Cookie=";
 
 Response::Response():
 	responseStr(""),
@@ -58,6 +59,8 @@ void Response::makeBody(const std::string& data, const size_t len, const std::st
 	ss << len;
 	responseStr += "Content-Length: " + ss.str() + "\r\n";
 	responseStr += "Content-Type: " + type + "\r\n";
+    if (cookieValue.size() > 0)
+        responseStr += "Set-Cookie: " + g_COOKIE_KEY + cookieValue + "\r\n";
 	responseStr += "\r\n";
 	responseStr += data;
 }
@@ -186,4 +189,8 @@ void Response::disconnectCGI(void) {
 		if (!WIFEXITED(stat))
 			throw std::logic_error("disconnectCGI: " + std::string(strerror(errno)));
 	}
+}
+
+void Response::setCookieValue(const std::string& value) {
+    cookieValue = value;
 }

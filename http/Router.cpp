@@ -9,6 +9,7 @@
 
 std::map<std::string, std::string> Router::mimeMap;
 static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
+static int cookieId = 0;
 
 Router::Router():
 	request(),
@@ -104,6 +105,11 @@ void Router::connectCGI(void) {
 	std::map<std::string, std::string> envs;
 
 	makeCGIenvs(envs);
+    if (request.isHaveCookie()) {
+        cookieId++;
+        server->addCookie(std::to_string(cookieId), request.getBody());
+        response.setCookieValue(std::to_string(cookieId));
+    }
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(envs);
 	server->addPipes(response.getWriteFd(), response.getReadFd(), this);

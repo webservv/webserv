@@ -101,7 +101,7 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
     envs["REQUEST_METHOD"] = request.getStrMethod();
     envs["PATH_INFO"] = request.getPath();
     envs["SERVER_PROTOCOL"] = request.getVersion();
-std::cout << "version: " << request.getVersion() << std::endl;
+// std::cout << "version: " << request.getVersion() << std::endl;
     //SEVER_NAME
 }
 

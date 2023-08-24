@@ -194,7 +194,7 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
-std::cout << message << std::endl;
+// std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
@@ -217,4 +217,8 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 
 int Server::getRequestError(const int client_sockfd) {
     return sockets[client_sockfd].getRequestError();
+}
+
+void Server::addCookie(const std::string& key, const std::string& value) {
+    cookies[key] = value;
 }
