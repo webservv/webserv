@@ -48,6 +48,14 @@ void Router::makeErrorResponse(int statusCode) {
             reasonPhrase = "Not Implemented";
             body = "The server does not support the functionality required to fulfill the request.";
             break;
+        case 502:
+            reasonPhrase = "Bad Gateway";
+            body = "The server, while acting as a gateway or proxy, received an invalid response from the upstream server it accessed in attempting to fulfill the request.";
+            break;
+        case 503:
+            reasonPhrase = "Service Unavailable";
+            body = "The server is currently unable to handle the request due to a temporary overloading or maintenance of the server.";
+            break;
         case 505:
             reasonPhrase = "HTTP Version Not Supported";
             body = "The server does not support, or refuses to support, the HTTP protocol version that was used in the request message.";
