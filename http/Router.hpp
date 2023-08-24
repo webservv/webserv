@@ -48,6 +48,8 @@ private:
     void				handleDelete(void);
 	std::string         getMIME(const std::string& url);
 	const std::string&	getResponseStr(void) const;
+    void                makeCGIenvs(std::map<std::string, std::string>& envs) const;
+    void                connectCGI(void);
 public:
 	void				handleRequest(void);
     bool                isHeaderEnd(void);

@@ -157,14 +157,14 @@ void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint3
 
 void Server::waitEvents(void) {
 	const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-	
+
 	IOchanges.clear();
 	if (events < 0)
 		throw std::runtime_error("kevent error! " + std::string(strerror(errno)));
 	for (int i = 0; i < events; i++) {
 		const struct kevent& cur = IOevents[i];
 		if (cur.flags & EV_ERROR)
-			throw std::runtime_error("kevent EV_ERROR!");
+			throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
 		else if (static_cast<int>(cur.ident) == socket_fd)
 			acceptConnection();
 		else if (sockets.find(cur.ident) != sockets.end()) {
@@ -194,6 +194,7 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
+std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
