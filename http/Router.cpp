@@ -57,18 +57,13 @@ void Router::handleRequest() {
 }
 
 void Router::handleGet() {
+	const std::string& filePath = request.getPath();
+	std::map<std::string, std::string> envs;
+
 	try {
-		std::string filePath;
-		parseURL(filePath);
-		if (filePath == "./favicon.ico") {
-			filePath = FAVICON_PATH;
-		}
-		if (!filePath.compare(0, 4, "/cgi")) {
+		if (!filePath.compare(0, 5, "./cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
-			std::map<std::string, std::string> envs;
-			makeCGIenvs(envs);
-			response.connectCGI(envs);
-			server->addPipes(response.getWriteFd(), response.getReadFd(), this);
+			connectCGI();
 		}
 		else {
 			if (!resourceExists(filePath)) {
@@ -82,8 +77,6 @@ void Router::handleGet() {
         	response.makeBody(content, content.size(), mimeType);
 			haveResponse = true;
 		}
-        
-
 	} catch (const std::ios_base::failure& e) {
         makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -91,19 +84,9 @@ void Router::handleGet() {
 }
 
 void Router::handlePost() {
-	try {
-        validateHeaderLength();
-		validateContentType();
-		std::string title, postContent;
-		parsePostData(title, postContent);
-		appendPostToFile(title, postContent);
-		std::string htmlResponse;
-		readAndModifyHTML(htmlResponse);
-		makeHTMLResponse(htmlResponse);
-		haveResponse = true;
-	} catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    } 
+	validateHeaderLength();
+	validateContentType();
+	connectCGI();
 }
 
 void Router::handleDelete() {
@@ -115,4 +98,13 @@ void Router::handleDelete() {
 		makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
+}
+
+void Router::connectCGI(void) {
+	std::map<std::string, std::string> envs;
+
+	makeCGIenvs(envs);
+	response.setMessageToCGI(request.getBody());
+	response.connectCGI(envs);
+	server->addPipes(response.getWriteFd(), response.getReadFd(), this);
 }
