@@ -1,10 +1,12 @@
 #include "Response.hpp"
+#include <cstddef>
 #include <cstring>
 #include <queue>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
 #include <sys/_types/_pid_t.h>
+#include <sys/_types/_ssize_t.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #define CHILD_PID 0
@@ -83,8 +85,7 @@ void Response::setMessageToCGI(const std::string &src) {
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
-std::cout << envs[g_PATH_INFO] << std::endl;
-std::cout << "size: " << envs[g_PATH_INFO].size() << std::endl;
+
 	if (access(envs[g_PATH_INFO].c_str(), F_OK))
 		throw std::runtime_error("getFromCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
@@ -122,6 +123,7 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 			envList[i][j] = tmp[j];
 		}
 		envList[i][tmp.size()] = '\0';
+// std::cout << "envList[" << i << "]: " << envList[i] << std::endl;
 		i++;
 	}
 	envList[i] = NULL;
@@ -144,14 +146,24 @@ void Response::readCGI(void) {
 }
 
 void Response::writeCGI(const intptr_t fdBufferSize) {
-	intptr_t bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
-
-	if (static_cast<intptr_t>(messageToCGI.size()) <= bufSize) {
-		if (write(writeFd, messageToCGI.c_str(), messageToCGI.size()) < 0)
-			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
-		messageToCGI.clear();
+	intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
+	ssize_t		writeLength;
+	if (messageToCGI.size() == 0) {
 		close(writeFd);
 		writeFd = NULL_FD;
+		return;
+	}
+	if (static_cast<intptr_t>(messageToCGI.size()) <= bufSize) {
+		writeLength = write(writeFd, messageToCGI.c_str(), messageToCGI.size());
+		if (writeLength < 0)
+			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
+		if (writeLength == static_cast<ssize_t>(messageToCGI.size())) {
+			messageToCGI.clear();
+			close(writeFd);
+			writeFd = NULL_FD;
+		}
+		else
+			messageToCGI = messageToCGI.substr(writeLength, -1);
 	}
 	else {
 		const std::string writeMessage = messageToCGI.substr(0, bufSize);

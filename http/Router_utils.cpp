@@ -50,17 +50,6 @@ std::string Router::getMIME(const std::string& url) {
     return findMimeType(extension);
 }
 
-void Router::parseURL(std::string& filePath) {
-    std::string urlPath = request.getUrl();
-
-    if (urlPath == "/")
-        filePath = g_dir + "/index.html";
-    else if (!urlPath.compare(0, 4, "/cgi"))
-        filePath = urlPath;
-    else
-        filePath = g_dir + urlPath;
-}
-
 bool Router::resourceExists(const std::string& filePath) {
     return !access(filePath.c_str(), F_OK);
 }
@@ -93,7 +82,8 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
         "QUERY_STRING",
         "REQUEST_METHOD",
         "SCRIPT_NAME",
-        "PATH_INFO"
+        "PATH_INFO",
+        "SERVER_PROTOCOL"
     };
     int i = 0;
 
@@ -110,6 +100,8 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
         envs["QUERY_STRING"] = query;
     envs["REQUEST_METHOD"] = request.getStrMethod();
     envs["PATH_INFO"] = request.getPath();
+    envs["SERVER_PROTOCOL"] = request.getVersion();
+std::cout << "version: " << request.getVersion() << std::endl;
     //SEVER_NAME
 }
 
