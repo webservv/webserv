@@ -16,6 +16,8 @@
 #define NULL_FD -1
 #define NULL_PID -1
 
+static const std::string g_COOKIE_KEY = "Cookie=";
+
 Response::Response():
 	responseStr(""),
 	messageToCGI(""),
@@ -182,4 +184,8 @@ void Response::disconnectCGI(void) {
 		if (!WIFEXITED(stat))
 			throw std::logic_error("disconnectCGI: " + std::string(strerror(errno)));
 	}
+}
+
+void Response::setCookieValue(const std::string& value) {
+    cookieValue = value;
 }

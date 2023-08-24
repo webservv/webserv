@@ -15,16 +15,16 @@ public:
 		GET,
 		POST,
 		DELETE,
-		OTHER // -> error or maybe we make other methods
+		OTHER
 	};
 private:
 	std::string	requestStr;
 	std::queue<std::string> requestLines;
-
 	METHOD method;
 	std::map<std::string, std::string> values;
 	bool haveHeader;
     int error;
+    bool haveCookie;
 public:
 	Request();
 	~Request();
@@ -58,6 +58,7 @@ public:
     bool isHeaderEnd(void) const;
 	bool isRequestEnd(void);
     int getError(void) const;
+    bool isHaveCookie(void) const;
 };
 
 #endif

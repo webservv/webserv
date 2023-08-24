@@ -10,6 +10,7 @@ private:
 	int			writeFd;
 	int			readFd;
 	pid_t		cgiPid;
+    std::string cookieValue;
 public:
 	Response();
 	~Response();
@@ -31,6 +32,7 @@ public:
 	void				readCGI(void);
 	void				writeCGI(const intptr_t fdBufferSize);
 	void				disconnectCGI(void);
+    void				setCookieValue(const std::string& value);
 };
 
 #endif

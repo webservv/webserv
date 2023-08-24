@@ -198,7 +198,7 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
-std::cout << message << std::endl;
+// std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
@@ -241,4 +241,12 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	}
 	ret += tmp << bitShift;
 	return ret;
+
+void Server::addCookie(const std::string& key, const std::string& value) {
+    cookies[key] = value;
+}
+
+const std::string& Server::getCookie(const std::string& key) {
+    return cookies[key];
+
 }
