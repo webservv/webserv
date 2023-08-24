@@ -164,7 +164,7 @@ void Server::waitEvents(void) {
 	for (int i = 0; i < events; i++) {
 		const struct kevent& cur = IOevents[i];
 		if (cur.flags & EV_ERROR)
-			throw std::runtime_error("kevent EV_ERROR!");
+			throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
 		else if (static_cast<int>(cur.ident) == socket_fd)
 			acceptConnection();
 		else if (sockets.find(cur.ident) != sockets.end()) {
