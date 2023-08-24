@@ -28,6 +28,7 @@ private:
 	std::vector<struct kevent> IOevents;
 	std::map<int, Router> sockets;
 	std::map<int, Router*> pipes;
+    std::map<std::string, std::string> cookies;
 private:
 	Server();
 	Server(const int port, const char* host);
@@ -53,6 +54,8 @@ public:
 	void waitEvents(void);
 	void addPipes(const int writeFd, const int readFd, Router* const router);
     int getRequestError(const int client_sockfd);
+    void addCookie(const std::string& key, const std::string& value);
+    const std::string& getCookie(const std::string& key);
 };
 
 #endif

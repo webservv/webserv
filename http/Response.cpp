@@ -18,6 +18,7 @@
 
 static const std::string g_PATH_INFO = "PATH_INFO";
 static const std::string g_QURY_STRING = "QURY_STRING";
+static const std::string g_COOKIE_KEY = "Cookie=";
 
 Response::Response():
 	responseStr(""),
@@ -186,4 +187,8 @@ void Response::disconnectCGI(void) {
 		if (!WIFEXITED(stat))
 			throw std::logic_error("disconnectCGI: " + std::string(strerror(errno)));
 	}
+}
+
+void Response::setCookieValue(const std::string& value) {
+    cookieValue = value;
 }

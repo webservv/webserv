@@ -6,6 +6,7 @@
 #include <vector>
 
 const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
+static const std::string POST_URL = "/cgi/index.php";
 
 void Request::parseMethod(std::string& line) {
     size_t space = line.find(' ');
@@ -131,6 +132,9 @@ void Request::parseRequestLine() {
     std::string line = requestLines.front();
     requestLines.pop();
     parseMethod(line);
+    if (line.find(POST_URL) != std::string::npos) {
+        haveCookie = true;
+    }
     size_t space = line.find(' ');
     parseURL(line);
     parseVersion(line, space);
@@ -161,4 +165,8 @@ void Request::parseHeader(void) {
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
+}
+
+bool Request::isHaveCookie(void) const {
+    return haveCookie;
 }
