@@ -50,6 +50,10 @@ const std::string& Request::getQuery(void) const {
     return findValue("query");
 }
 
+const std::string& Request::getVersion(void) const {
+    return findValue("version");
+}
+
 static char tolower_char(unsigned char c) {
     return std::tolower(c);
 }

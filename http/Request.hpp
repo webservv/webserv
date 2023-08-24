@@ -50,6 +50,7 @@ public:
 	const std::string& getUrl(void) const;
 	const std::string& getPath(void) const;
 	const std::string& getQuery(void) const;
+	const std::string& getVersion(void) const;
 
 	void addRequest(const std::string& request);
 	void parseHeader(void);
