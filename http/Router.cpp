@@ -107,13 +107,13 @@ void Router::connectCGI(void) {
 
 	makeCGIenvs(envs);
     if (request.isHaveCookie()) {
-        std::string cookie = request.findValue("Cookie");
+        const std::string& cookie = request.findValue("Cookie");
         if (cookie == "") {
             cookieId++;
             std::stringstream ss;
             ss << cookieId;
             std::string cookieIdStr = ss.str();
-            server->addCookie(ss.str(), request.getBody());
+            server->addCookie(cookieIdStr, request.getBody());
             response.makeHeader("Set-Cookie", cookieIdStr);
         } else {
             // std::cout << "cookie: " << cookie << std::endl;
