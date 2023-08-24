@@ -17,10 +17,6 @@ HTTP_PATH		= http/
 HTTP_SRCS		= $(wildcard $(HTTP_PATH)*.cpp)
 HTTP_HEAD		= $(wildcard $(HTTP_PATH)*.hpp)
 
-LOG_PATH		= log/
-LOG_SRCS		= $(wildcard $(LOG_PATH)*.cpp)
-LOG_HEAD		= $(wildcard $(LOG_PATH)*.hpp)
-
 MAIN_PATH		= main/
 MAIN_SRCS		= $(wildcard $(MAIN_PATH)*.cpp)
 MAIN_HEAD		= $(wildcard $(MAIN_PATH)*.hpp)
@@ -30,16 +26,16 @@ SERVER_SRCS		= $(wildcard $(SERVER_PATH)*.cpp)
 SERVER_HEAD		= $(wildcard $(SERVER_PATH)*.hpp)
 
 SOURCES			= $(MAIN_SRCS) $(CGI_SRCS) $(CONFIG_SRCS) \
-					 $(HTTP_SRCS) $(LOG_SRCS) $(SERVER_SRCS)
+					 $(HTTP_SRCS) $(SERVER_SRCS)
 
 OBJECTS			= $(SOURCES:.cpp=.o)
 
 INCLUDE_DIRS	= $(CGI_PATH) $(CONFIG_PATH) $(HTTP_PATH) \
-				  $(LOG_PATH) $(SERVER_PATH)
+				 $(SERVER_PATH)
 INCLUDE_FLAGS	= $(addprefix -I, $(INCLUDE_DIRS))
 
 HEADER			= $(MAIN_HEAD) $(CGI_HEAD) $(CONFIG_HEAD) \
-					 $(HTTP_HEAD) $(LOG_HEAD) $(SERVER_HEAD)
+					 $(HTTP_HEAD) $(SERVER_HEAD)
 
 
 ifdef DEBUG
