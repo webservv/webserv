@@ -83,7 +83,7 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
     envs["REMOTE_HOST"] = request.findValue("REMOTE_HOST");
     envs["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
     envs["REMOTE_USER"] = request.findValue("REMOTE_USER");
-    envs["REQUES_METHOD"] = request.getStrMethod();
+    envs["REQUEST_METHOD"] = request.getStrMethod();
     envs["SCRIPT_NAME"] = request.findValue("SCRIPT_NAME");
     envs["SERVER_NAME"] = host.substr(0, portIndex);
     envs["SERVER_HOST"] = host.substr(portIndex + 1, -1);
