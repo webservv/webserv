@@ -43,6 +43,7 @@ private:
 	void disconnect(const int client_sockfd);
 	void sendBuffer(const int client_sockfd, const intptr_t bufSize);
 	in_addr_t IPToInt(const std::string& ip) const;
+	std::string intToIP(in_addr_t ip) const;
 public:
 	static Server& getInstance(const int port, const char* host);
 	void createSocket();

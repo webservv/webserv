@@ -5,7 +5,9 @@
 #include <cstring>
 #include <fstream>
 #include <netinet/in.h>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 #include <sys/_types/_in_addr_t.h>
 #include <sys/_types/_int16_t.h>
 #include <sys/_types/_intptr_t.h>
@@ -94,6 +96,8 @@ void Server::bindSocket(int port, const char* host) {
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = IPToInt(host);
+std::cout << "original IP: " << host << std::endl;
+std::cout << "intToIP: " << intToIP(server_addr.sin_addr.s_addr) << std::endl;
 	if (server_addr.sin_addr.s_addr == INADDR_NONE) {
 		throw std::runtime_error("ERROR invalid host");
 	}
@@ -239,4 +243,20 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	}
 	ret += tmp << bitShift;
 	return ret;
+}
+
+std::string Server::intToIP(in_addr_t ip) const {
+	std::string strIP;
+	std::stringstream ss;
+	int			tmp = 0;
+
+	for (int i = 0; i < 4; i++) {
+		tmp = ip % (1 << 8);
+		ip = ip >> 8;
+		ss << tmp;
+		strIP += ss.str() + '.';
+		ss.str("");
+	}
+	strIP.pop_back();
+	return strIP;
 }
