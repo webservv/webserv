@@ -144,6 +144,7 @@ void Response::readCGI(void) {
 void Response::writeCGI(const intptr_t fdBufferSize) {
 	intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
 	ssize_t		writeLength;
+
 	if (messageToCGI.size() == 0) {
 		close(writeFd);
 		writeFd = NULL_FD;
