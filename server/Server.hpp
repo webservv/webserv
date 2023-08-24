@@ -42,6 +42,7 @@ private:
 	void addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
 	void disconnect(const int client_sockfd);
 	void sendBuffer(const int client_sockfd, const intptr_t bufSize);
+	in_addr_t IPToInt(const std::string& ip) const;
 public:
 	static Server& getInstance(const int port, const char* host);
 	void createSocket();

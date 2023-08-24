@@ -1,9 +1,12 @@
 #include "Server.hpp"
 #include "Request.hpp"
 #include "Router.hpp"
+#include <arpa/inet.h>
 #include <cstring>
 #include <fstream>
+#include <netinet/in.h>
 #include <stdexcept>
+#include <sys/_types/_in_addr_t.h>
 #include <sys/_types/_int16_t.h>
 #include <sys/_types/_intptr_t.h>
 #include <sys/_types/_uintptr_t.h>
@@ -90,7 +93,7 @@ void Server::bindSocket(int port, const char* host) {
 	std::memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
-	server_addr.sin_addr.s_addr = inet_addr(host);
+	server_addr.sin_addr.s_addr = IPToInt(host);
 	if (server_addr.sin_addr.s_addr == INADDR_NONE) {
 		throw std::runtime_error("ERROR invalid host");
 	}
@@ -117,6 +120,7 @@ void Server::acceptConnection() {
 	addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	sockets.insert(std::make_pair(client_sockfd, Router(this)));
+std::cout << client_addr.sin_addr.s_addr << std::endl;
 }
 
 void Server::addFd(void) {
@@ -217,4 +221,22 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 
 int Server::getRequestError(const int client_sockfd) {
     return sockets[client_sockfd].getRequestError();
+}
+
+in_addr_t Server::IPToInt(const std::string& ip) const {
+	in_addr_t	ret = 0;
+	int			tmp = 0;
+	int			bitShift = 0;
+	
+	for (size_t i = 0; i < ip.size(); i++) {
+		if (ip[i] == '.') {
+			ret += tmp << bitShift;
+			tmp = 0;
+			bitShift += 8;
+			continue;
+		}
+		tmp = tmp * 10 + ip[i] - '0';
+	}
+	ret += tmp << bitShift;
+	return ret;
 }
