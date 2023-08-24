@@ -9,7 +9,7 @@
 			"type": "cppdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/config/a.out",
-			"args": ["example.conf"],
+			"args": ["subject.conf"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
 			"environment": [],

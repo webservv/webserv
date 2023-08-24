@@ -6,18 +6,21 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <map>
 
 struct location {
+	std::map<std::string, std::string> info;
 	std::string url;
-	std::string root;
-	std::string index;
+	std::vector<std::string> allowedMethod;
+	bool autoIndex;
 };
 
 struct server{
 	int listen_port;
 	std::string server_name;
 	std::vector<location> locations;
-	std::string error_page; // it can be many and various...
+	std::map<int, std::string> errorPages;
+	int clinetMaxSize;
 };
 
 class Config {
@@ -30,8 +33,10 @@ private:
 	Config&	operator=(const Config& copy);
 
 private:
+	void parseHTTP();
 	void parseServer();
 	void parseLocation(server& server);
+	void parseErrorPage(server& server);
 	void tokenization(const std::string& line);
 
 public:
