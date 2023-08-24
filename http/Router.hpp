@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
+#include <netinet/in.h>
 #include <string>
 #include <map>
 #include <sys/socket.h>
@@ -17,6 +18,7 @@ private:
 	Response	response;
     bool        haveResponse;
     Server*     server;
+    sockaddr_in clientAddr;
 private:
     static std::map<std::string, std::string> mimeMap;
     static void initializeMimeMap();
@@ -38,7 +40,7 @@ private:
     void makeHTMLResponse(const std::string& htmlResponse);
 public:
 	Router();
-    Router(Server* const server);
+    Router(Server* const server, const sockaddr_in& clientAddr);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -50,6 +52,7 @@ private:
 	const std::string&	getResponseStr(void) const;
     void                makeCGIenvs(std::map<std::string, std::string>& envs) const;
     void                connectCGI(void);
+    std::string         intToIP(in_addr_t ip) const;
 public:
 	void				handleRequest(void);
     bool                isHeaderEnd(void);
@@ -66,7 +69,8 @@ public:
     void                disconnectCGI(void);
     int                 getWriteFd(void) const;
     int                 getReadFd(void) const;
-    int                 getRequestError() const;
+    int                 getRequestError(void) const;
+    const sockaddr_in&  getClientAddr(void) const;
 };
 
 #endif

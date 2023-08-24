@@ -16,9 +16,6 @@
 #define NULL_FD -1
 #define NULL_PID -1
 
-static const std::string g_PATH_INFO = "PATH_INFO";
-static const std::string g_QURY_STRING = "QURY_STRING";
-
 Response::Response():
 	responseStr(""),
 	messageToCGI(""),
@@ -86,7 +83,7 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
 
-	if (access(envs[g_PATH_INFO].c_str(), F_OK))
+	if (access(('.' + envs["SCRIPT_NAME"]).c_str(), F_OK))
 		throw std::runtime_error("getFromCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
 		throw std::runtime_error("getFromCGI2: " + std::string(strerror(errno)));
@@ -108,7 +105,7 @@ void Response::processCGI(int fd[2], std::map<std::string, std::string>& envs) {
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 	close(fd[READ]);
 	close(fd[WRITE]);
-	if (execve(envs[g_PATH_INFO].c_str(), NULL, envList) < 0)
+	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 }
 
@@ -123,7 +120,6 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 			envList[i][j] = tmp[j];
 		}
 		envList[i][tmp.size()] = '\0';
-// std::cout << "envList[" << i << "]: " << envList[i] << std::endl;
 		i++;
 	}
 	envList[i] = NULL;

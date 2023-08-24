@@ -26,7 +26,6 @@ Server* Server::instance = NULL;
 
 Server::Server():
 	socket_fd(NULL_FD),
-	client_addr(),
 	kqueue_fd(NULL_FD),
 	IOchanges(),
 	IOevents(EVENTS_SIZE),
@@ -35,7 +34,6 @@ Server::Server():
 
 Server::Server(const int port, const char* host):
 	socket_fd(NULL_FD),
-	client_addr(),
 	kqueue_fd(NULL_FD),
 	IOchanges(),
 	IOevents(EVENTS_SIZE),
@@ -96,8 +94,6 @@ void Server::bindSocket(int port, const char* host) {
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 	server_addr.sin_addr.s_addr = IPToInt(host);
-std::cout << "original IP: " << host << std::endl;
-std::cout << "intToIP: " << intToIP(server_addr.sin_addr.s_addr) << std::endl;
 	if (server_addr.sin_addr.s_addr == INADDR_NONE) {
 		throw std::runtime_error("ERROR invalid host");
 	}
@@ -113,6 +109,7 @@ void Server::listenSocket() {
 }
 
 void Server::acceptConnection() {
+	sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
 	const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
 
@@ -123,8 +120,7 @@ void Server::acceptConnection() {
 		throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
 	addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	sockets.insert(std::make_pair(client_sockfd, Router(this)));
-std::cout << client_addr.sin_addr.s_addr << std::endl;
+	sockets.insert(std::make_pair(client_sockfd, Router(this, client_addr)));
 }
 
 void Server::addFd(void) {
@@ -211,8 +207,10 @@ std::cout << message << std::endl;
 	else {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+		
+		const sockaddr_in	tmp = sockets[client_sockfd].getClientAddr();
 		sockets.erase(client_sockfd);
-		sockets.insert(std::make_pair(client_sockfd, Router(this)));
+		sockets.insert(std::make_pair(client_sockfd, Router(this, tmp)));
 	}
 }
 
@@ -243,20 +241,4 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	}
 	ret += tmp << bitShift;
 	return ret;
-}
-
-std::string Server::intToIP(in_addr_t ip) const {
-	std::string strIP;
-	std::stringstream ss;
-	int			tmp = 0;
-
-	for (int i = 0; i < 4; i++) {
-		tmp = ip % (1 << 8);
-		ip = ip >> 8;
-		ss << tmp;
-		strIP += ss.str() + '.';
-		ss.str("");
-	}
-	strIP.pop_back();
-	return strIP;
 }

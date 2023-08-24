@@ -40,14 +40,20 @@ void Request::parseURL(const std::string& line) {
         throw std::out_of_range("invalid http, request line! Missing or misplaced space");
     }
     const std::string& tmp = line.substr(0, space);
-    const size_t  query_index = tmp.find('?');
+    const size_t queryIndex = tmp.find('?');
+    const size_t pathInfoIndex = tmp.find(queryIndex, '/');
     values["url"] = tmp;
-    if (query_index != std::string::npos) {
-        values["path"] = '.' + tmp.substr(0, query_index - 1);
-        values["query"] = tmp.substr(query_index, -1);
+    if (queryIndex != std::string::npos) {
+        values["script_name"] = tmp.substr(0, queryIndex - 1);
+        if (pathInfoIndex != std::string::npos)
+            values["query_string"] = tmp.substr(queryIndex, -1);
+        else
+            values["query_string"] = tmp.substr(queryIndex, pathInfoIndex - queryIndex);
     }
     else
-        values["path"] = '.' + tmp;
+        values["script_name"] = tmp;
+    if (pathInfoIndex != std::string::npos)
+        values["path_info"] = tmp.substr(pathInfoIndex, -1);
 }
 
 void Request::parseVersion(const std::string& line, const size_t space) {

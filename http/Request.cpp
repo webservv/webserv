@@ -43,7 +43,7 @@ const std::string& Request::getUrl(void) const {
 }
 
 const std::string& Request::getPath(void) const {
-    return findValue("path");
+    return findValue("SCRIPT_NAME");
 }
 
 const std::string& Request::getQuery(void) const {
