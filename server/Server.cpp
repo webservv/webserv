@@ -241,6 +241,7 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	}
 	ret += tmp << bitShift;
 	return ret;
+}
 
 void Server::addCookie(const std::string& key, const std::string& value) {
     cookies[key] = value;
@@ -248,5 +249,4 @@ void Server::addCookie(const std::string& key, const std::string& value) {
 
 const std::string& Server::getCookie(const std::string& key) {
     return cookies[key];
-
 }
