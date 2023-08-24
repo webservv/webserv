@@ -15,31 +15,7 @@ echo <<<HTML
     <header>
         <h1>Welcome to My Website</h1>
     </header>
-    
-    <nav>
-        <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Services</a></li>
-            <li><a href="#">Contact</a></li>
-        </ul>
-    </nav>
-    
     <main>
-        <section>
-            <h2>About Us</h2>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed at felis sed ligula dictum vulputate.</p>
-        </section>
-        
-        <section>
-            <h2>Our Services</h2>
-            <ul>
-                <li>Web Development</li>
-                <li>Graphic Design</li>
-                <li>Digital Marketing</li>
-            </ul>
-        </section>
-
         <section>
             <h2>Discussion Topics</h2>
         </section>
