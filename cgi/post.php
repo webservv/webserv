@@ -11,7 +11,7 @@ else {
     $title = "";
     $content = "";
 }
-$data_dir = "/Users/seonlim/subjects/rank5/webserv/DB";
+$data_dir = "../DB";
 $post_file = $data_dir . "/posts.txt";
 if (!empty($title) && !empty($content)) {
     $post_data = $title . "\t" . $content . "\n";

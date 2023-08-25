@@ -41,6 +41,8 @@ private:
     void handleChunkedTransferEncoding(std::stringstream& parser);
     void handleNonChunkedTransferEncoding(std::stringstream& parser);
     void handleFirstLineOfBody(std::stringstream& parser, std::string& line);
+	void parseHeader(void);
+	void parseBody(void);
 public:
 	Request::METHOD getMethod(void) const;
 	const std::string& getStrMethod(void) const;
@@ -53,12 +55,11 @@ public:
 	const std::string& getVersion(void) const;
 
 	void addRequest(const std::string& request);
-	void parseHeader(void);
-	void parseBody(void);
     bool isHeaderEnd(void) const;
 	bool isRequestEnd(void);
     int getError(void) const;
     bool isHaveCookie(void) const;
+    void parse(void);
 };
 
 #endif

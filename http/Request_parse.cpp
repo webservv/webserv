@@ -60,11 +60,10 @@ void Request::parseVersion(const std::string& line, const size_t space) {
 }
 
 void Request::parseBody(void) {
-    addRequestLines();
-	while (!requestLines.empty()) {
+    while (!requestLines.empty()) {
         values["body"] += requestLines.front();
-		requestLines.pop();
-	}
+        requestLines.pop();
+    }
 }
 
 void Request::addRequestLines(void) {
@@ -79,6 +78,7 @@ void Request::addRequestLines(void) {
     } else {
         handleNonChunkedTransferEncoding(parser);
     }
+std::cout << requestStr << std::endl;
     requestStr.clear();
 }
 
@@ -161,7 +161,7 @@ void Request::parseKeyValues(void) {
 void Request::parseHeader(void) {
     if (haveHeader)
         return;
-    addRequestLines();
+
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
@@ -169,4 +169,10 @@ void Request::parseHeader(void) {
 
 bool Request::isHaveCookie(void) const {
     return haveCookie;
+}
+
+void Request::parse(void) {
+    addRequestLines();
+    parseHeader();
+    parseBody();
 }
