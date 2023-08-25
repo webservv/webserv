@@ -1,9 +1,8 @@
-#!/usr/bin/php
-<?php
-print("Content-Type: text/html");
-echo "\r\n\r\n";
+#!/usr/bin/python
 
-echo <<<HTML
+print("Content-Type: text/html")
+print()
+print("""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +21,7 @@ echo <<<HTML
 
         <section>
             <h2>Create a New Post</h2>
-            <form action="/cgi/post.py" method="post">
+            <form action="/cgi/post.php" method="post">
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required><br><br>
 
@@ -39,5 +38,4 @@ echo <<<HTML
     </footer>
 </body>
 </html>
-HTML;
-?>
+""")
