@@ -132,9 +132,6 @@ void Request::parseRequestLine() {
     std::string line = requestLines.front();
     requestLines.pop();
     parseMethod(line);
-    if (line.find(POST_URL) != std::string::npos) {
-        haveCookie = true;
-    }
     size_t space = line.find(' ');
     parseURL(line);
     parseVersion(line, space);
@@ -165,8 +162,4 @@ void Request::parseHeader(void) {
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
-}
-
-bool Request::isHaveCookie(void) const {
-    return haveCookie;
 }

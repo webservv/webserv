@@ -115,6 +115,14 @@ bool Request::isRequestEnd(void) {
         return true;
 }
 
+bool Request::needCookie(void) const {
+    const std::string&  scriptName = findValue("script_name");
+
+    if (scriptName == "/cgi/index.py")
+        return true;
+    return false;
+}
+
 int Request::getError(void) const {
     return error;
 }
