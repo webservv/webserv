@@ -110,19 +110,17 @@ void Router::connectCGI(void) {
 
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	makeCGIenvs(envs);
-    if (request.isHaveCookie()) {
+    if (request.needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
-        if (cookie == "") {
+        if (cookie.empty()) {
             cookieId++;
             std::stringstream ss;
             ss << cookieId;
             std::string cookieIdStr = ss.str();
-            server->addCookie(cookieIdStr, request.getBody());
-            response.makeHeader("Set-Cookie", cookieIdStr);
-        } else {
-            // std::cout << "cookie: " << cookie << std::endl;
-        }
-    }
+            server->addCookie(cookieIdStr, "SessionValues");
+            response.makeHeader("Set-Cookie", "SessionID=" + cookieIdStr);
+    	}
+	}
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(envs);
 	server->addPipes(response.getWriteFd(), response.getReadFd(), this);

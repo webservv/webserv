@@ -24,7 +24,6 @@ private:
 	std::map<std::string, std::string> values;
 	bool haveHeader;
     int error;
-    bool haveCookie;
 public:
 	Request();
 	~Request();
@@ -57,8 +56,8 @@ public:
 	void addRequest(const std::string& request);
     bool isHeaderEnd(void) const;
 	bool isRequestEnd(void);
+	bool needCookie(void) const;
     int getError(void) const;
-    bool isHaveCookie(void) const;
     void parse(void);
 };
 

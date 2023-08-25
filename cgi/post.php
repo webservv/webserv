@@ -13,10 +13,25 @@ else {
 }
 $data_dir = "../DB";
 $post_file = $data_dir . "/posts.txt";
+$id = 0;
+if (file_exists($post_file)) {
+    $lines = file($post_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $id = count($lines);
+}
+
+$cookieHeader = $_SERVER["HTTP_COOKIE"];
+$cookiePairs = explode(";", $cookieHeader);
+$cookies = [];
+foreach ($cookiePairs as $pair) {
+    list($name, $value) = explode("=", trim($pair));
+    $cookies[$name] = $value;
+}
+$SessionID = $cookies["SessionID"];
 if (!empty($title) && !empty($content)) {
-    $post_data = $title . "\t" . $content . "\n";
+    $post_data = $title . "\t" . $content . "\t" . $id . "\t" . $SessionID . "\n";
     file_put_contents($post_file, $post_data, FILE_APPEND);
 }
+
 echo "Content-Type: text/html\r\n\r\n";
 echo "<!DOCTYPE html>\n";
 echo "<html lang='en'>\n";

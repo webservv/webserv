@@ -36,7 +36,7 @@ if os.path.exists(post_file):
         lines = file.readlines()
         lines.reverse()
         for line in lines:
-            title, content = line.strip().split('\t')
+            title, content, _, _ = line.strip().split('\t')
             print("<p>Title: {}</p>".format(title))
             print("<p>Content: {}</p>".format(content))
             print("")

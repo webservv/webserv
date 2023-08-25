@@ -90,6 +90,7 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
     envs["SERVER_HOST"] = host.substr(portIndex + 1, -1);
     envs["SERVER_PROTOCOL"] = request.getVersion();
     envs["SERVER_SOFWARE"] = "webserv/0.42";
+    envs["HTTP_COOKIE"] = request.findValue("cookie");
 }
 
 std::string Router::URLDecode(const std::string &input) {
