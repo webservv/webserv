@@ -21,7 +21,7 @@
 			"request": "launch",
 			"name": "Debug",
 			"program": "${workspaceFolder}/webserv",
-			"args": [],
+			"args": ["config/server.conf"],
 			"cwd": "${workspaceFolder}"
 		}
 	]
