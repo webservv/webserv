@@ -93,20 +93,24 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	if (cgiPid < 0)
 		throw std::runtime_error("getFromCGI3: " + std::string(strerror(errno)));
 	else if (cgiPid == CHILD_PID)
-		processCGI(readPipe, envs);
+		processCGI(readPipe, writePipe, envs);
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
 	writeFd = writePipe[WRITE];
 	readFd = readPipe[READ];
 }
 
-void Response::processCGI(int fd[2], std::map<std::string, std::string>& envs) {
+void Response::processCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) {
 	char**	envList = makeEnvList(envs);
 
-	if (dup2(fd[WRITE], STDOUT_FILENO) < 0)
+	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
-	close(fd[READ]);
-	close(fd[WRITE]);
+	if (dup2(writePipe[READ], STDIN_FILENO) < 0)
+		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+	close(readPipe[READ]);
+	close(readPipe[WRITE]);
+	close(writePipe[READ]);
+	close(writePipe[WRITE]);
 	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 }
