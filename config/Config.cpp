@@ -104,12 +104,21 @@ void Config::parseClientMaxBodySize() {
     }
     valueStr.pop_back();
 
+    int multiplier = 1;
+    if (valueStr.back() == 'M') {
+        multiplier = 1024 * 1024;
+        valueStr.pop_back();
+    }
+
     std::stringstream ss(valueStr);
     ss >> clientMaxBodySize;
     if (ss.fail() || clientMaxBodySize < 0) {
         throw std::out_of_range("invalid client_max_body_size, must be non-negative");
     }
+
+    clientMaxBodySize *= multiplier;
 }
+
 
 
 // listen, server_name, error_page, root, index, location
