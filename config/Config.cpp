@@ -119,9 +119,6 @@ void Config::parseClientMaxBodySize() {
     clientMaxBodySize *= multiplier;
 }
 
-
-
-// listen, server_name, error_page, root, index, location
 void Config::parseServer(void) {
 
 	server new_server;
@@ -222,7 +219,6 @@ void Config::parseIndex(server &new_server) {
     tokens.pop();
 }
 
-// limit_except try_files root autoindex include fastcgi_pass fastcgi_param
 void Config::parseLocation(server& server) {
 	
 	location new_location;
