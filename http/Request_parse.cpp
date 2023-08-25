@@ -40,15 +40,15 @@ void Request::parseURL(const std::string& line) {
         error = 400;
         throw std::out_of_range("invalid http, request line! Missing or misplaced space");
     }
-    const std::string& tmp = line.substr(0, space);
-    const size_t  query_index = tmp.find('?');
-    values["url"] = tmp;
-    if (query_index != std::string::npos) {
-        values["path"] = '.' + tmp.substr(0, query_index - 1);
-        values["query"] = tmp.substr(query_index, -1);
-    }
-    else
-        values["path"] = '.' + tmp;
+    const std::string&  url = line.substr(0, space);
+    const size_t        pathIndex = url.find('/', 5); // hard coding. only /cgi/* can be parsed.
+    const size_t        queryIndex = url.find('?');
+    
+    values["script_name"] = url.substr(0, pathIndex);
+    if (pathIndex != std::string::npos)
+        values["path_info"] = url.substr(pathIndex, queryIndex - pathIndex);
+    if (queryIndex != std::string::npos)
+        values["query_string"] = url.substr(queryIndex + 1, -1);
 }
 
 void Request::parseVersion(const std::string& line, const size_t space) {

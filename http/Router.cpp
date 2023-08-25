@@ -3,6 +3,7 @@
 #include "Response.hpp"
 #include "Server.hpp"
 
+#include <netinet/in.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -16,15 +17,17 @@ Router::Router():
 	request(),
 	response(),
 	haveResponse(false),
-	server(NULL) {
+	server(NULL),
+	clientAddr() {
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server):
+Router::Router(Server* const server, const sockaddr_in& clientAddr):
 	request(),
 	response(),
 	haveResponse(false),
-	server(server) {
+	server(server),
+	clientAddr(clientAddr) {
 		initializeMimeMap();
 	}
 
@@ -34,7 +37,8 @@ Router::Router(const Router& copy):
 	request(copy.request),
 	response(copy.response),
 	haveResponse(copy.haveResponse),
-	server(copy.server) {
+	server(copy.server),
+	clientAddr(copy.clientAddr) {
 		initializeMimeMap();
 	}
 
@@ -43,6 +47,7 @@ Router& Router::operator=(const Router& copy) {
 	response = copy.response;
 	haveResponse = copy.haveResponse;
 	server = copy.server;
+	clientAddr = copy.clientAddr;
 	return *this;
 }
 
@@ -63,10 +68,8 @@ void Router::handleGet() {
 	std::map<std::string, std::string> envs;
 
 	try {
-		if (!filePath.compare(0, 5, "./cgi")) {
-			response.makeStatusLine("HTTP/1.1", "200", "OK");
+		if (!filePath.compare(0, 4, "/cgi"))
 			connectCGI();
-		}
 		else {
 			if (!resourceExists(filePath)) {
 				makeErrorPage();
@@ -105,6 +108,7 @@ void Router::handleDelete() {
 void Router::connectCGI(void) {
 	std::map<std::string, std::string> envs;
 
+	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	makeCGIenvs(envs);
     if (request.isHaveCookie()) {
         const std::string& cookie = request.findValue("Cookie");
@@ -122,4 +126,8 @@ void Router::connectCGI(void) {
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(envs);
 	server->addPipes(response.getWriteFd(), response.getReadFd(), this);
+}
+
+const sockaddr_in& Router::getClientAddr(void) const {
+	return clientAddr;
 }

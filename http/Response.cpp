@@ -16,8 +16,6 @@
 #define NULL_FD -1
 #define NULL_PID -1
 
-static const std::string g_PATH_INFO = "PATH_INFO";
-static const std::string g_QURY_STRING = "QURY_STRING";
 static const std::string g_COOKIE_KEY = "Cookie=";
 
 Response::Response():
@@ -87,7 +85,7 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
 
-	if (access(envs[g_PATH_INFO].c_str(), F_OK))
+	if (access(('.' + envs["SCRIPT_NAME"]).c_str(), F_OK))
 		throw std::runtime_error("getFromCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
 		throw std::runtime_error("getFromCGI2: " + std::string(strerror(errno)));
@@ -95,21 +93,25 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	if (cgiPid < 0)
 		throw std::runtime_error("getFromCGI3: " + std::string(strerror(errno)));
 	else if (cgiPid == CHILD_PID)
-		processCGI(readPipe, envs);
+		processCGI(readPipe, writePipe, envs);
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
 	writeFd = writePipe[WRITE];
 	readFd = readPipe[READ];
 }
 
-void Response::processCGI(int fd[2], std::map<std::string, std::string>& envs) {
+void Response::processCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) {
 	char**	envList = makeEnvList(envs);
 
-	if (dup2(fd[WRITE], STDOUT_FILENO) < 0)
+	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
-	close(fd[READ]);
-	close(fd[WRITE]);
-	if (execve(envs[g_PATH_INFO].c_str(), NULL, envList) < 0)
+	if (dup2(writePipe[READ], STDIN_FILENO) < 0)
+		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+	close(readPipe[READ]);
+	close(readPipe[WRITE]);
+	close(writePipe[READ]);
+	close(writePipe[WRITE]);
+	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
 		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
 }
 
@@ -124,7 +126,6 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 			envList[i][j] = tmp[j];
 		}
 		envList[i][tmp.size()] = '\0';
-// std::cout << "envList[" << i << "]: " << envList[i] << std::endl;
 		i++;
 	}
 	envList[i] = NULL;
@@ -149,6 +150,7 @@ void Response::readCGI(void) {
 void Response::writeCGI(const intptr_t fdBufferSize) {
 	intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
 	ssize_t		writeLength;
+
 	if (messageToCGI.size() == 0) {
 		close(writeFd);
 		writeFd = NULL_FD;

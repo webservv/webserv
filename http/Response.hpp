@@ -17,7 +17,7 @@ public:
 	Response(const Response& copy);
 	Response&	operator=(const Response& copy);
 private:
-	void				processCGI(int fd[2], std::map<std::string, std::string>& envs);
+	void				processCGI(int readPipe[2], int writePipe[2], std::map<std::string, std::string>& envs);
 	char**				makeEnvList(std::map<std::string, std::string>& envs) const;
 public:
 	void				makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);

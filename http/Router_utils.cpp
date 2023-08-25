@@ -67,42 +67,28 @@ const std::string& Router::getResponseStr(void) const {
 }
 
 void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
-    static const std::string requestHeaderList[] = {
-        "content-type",
-        "content-length",
-        "cookie",
-        "user-agent",
-        ""
-    };
-    static const std::string envHeaderNames[] = {
-        "CONTENT_TYPE",
-        "CONTENT_LENGTH",
-        "HTTP_COOKIE",
-        "HTTP_USER_AGENT",
-        "QUERY_STRING",
-        "REQUEST_METHOD",
-        "SCRIPT_NAME",
-        "PATH_INFO",
-        "SERVER_PROTOCOL"
-    };
-    int i = 0;
+    std::stringstream   ss;
+    const std::string&  host = request.findValue("host");
+    const size_t        portIndex = host.find(':');
 
-    while (!requestHeaderList[i].empty()) {
-        const std::string&  value = request.findValue(requestHeaderList[i]);
-        if (!value.empty()) {
-            envs[envHeaderNames[i]] = value;
-        }
-        i++;
-    }
-    
-    const std::string&  query = request.getQuery();
-    if (!query.empty())
-        envs["QUERY_STRING"] = query;
+    ss << intToIP(clientAddr.sin_addr.s_addr);
+    envs["AUTH_TYPE"] = request.findValue("AUTH_TYPE");
+    envs["CONTENT_LENGTH"] = request.findValue("content-length");
+    envs["CONTENT_TYPE"] = request.findValue("content-type");
+    envs["GATEWAY_INTERFACE"] = "CGI/1.1";
+    envs["PATH_INFO"] = request.findValue("PATH_INFO");
+    envs["PATH_TRANSLATED"] = request.findValue("PATH_TRANSLATED");
+    envs["QUERY_STRING"] = request.findValue("QUERY_STRING");
+    envs["REMOTE_ADDR"] = ss.str();
+    envs["REMOTE_HOST"] = request.findValue("REMOTE_HOST");
+    envs["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
+    envs["REMOTE_USER"] = request.findValue("REMOTE_USER");
     envs["REQUEST_METHOD"] = request.getStrMethod();
-    envs["PATH_INFO"] = request.getPath();
+    envs["SCRIPT_NAME"] = request.findValue("SCRIPT_NAME");
+    envs["SERVER_NAME"] = host.substr(0, portIndex);
+    envs["SERVER_HOST"] = host.substr(portIndex + 1, -1);
     envs["SERVER_PROTOCOL"] = request.getVersion();
-// std::cout << "version: " << request.getVersion() << std::endl;
-    //SEVER_NAME
+    envs["SERVER_SOFWARE"] = "webserv/0.42";
 }
 
 std::string Router::URLDecode(const std::string &input) {
@@ -312,4 +298,20 @@ int Router::getReadFd(void) const {
 
 int Router::getRequestError() const {
     return request.getError();
+}
+
+std::string Router::intToIP(in_addr_t ip) const {
+	std::string strIP;
+	std::stringstream ss;
+	int			tmp = 0;
+
+	for (int i = 0; i < 4; i++) {
+		tmp = ip % (1 << 8);
+		ip = ip >> 8;
+		ss << tmp;
+		strIP += ss.str() + '.';
+		ss.str("");
+	}
+	strIP.pop_back();
+	return strIP;
 }
