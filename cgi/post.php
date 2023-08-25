@@ -11,8 +11,7 @@ else {
     $title = "";
     $content = "";
 }
-
-$data_dir = "/Users/seonlim/subjects/rank5/webserv/DB";
+$data_dir = "../DB";
 $post_file = $data_dir . "/posts.txt";
 $id = 0;
 if (file_exists($post_file)) {

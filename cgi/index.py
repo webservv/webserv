@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import os
-data_dir = "/Users/seonlim/subjects/rank5/webserv/DB"
+data_dir = "../DB"
 post_file = os.path.join(data_dir, "posts.txt")
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)

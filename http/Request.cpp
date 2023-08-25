@@ -74,7 +74,7 @@ const std::string& Request::getBody(void) const {
 }
 
 void Request::addRequest(const std::string &request) {
-    this->requestStr += request; 
+    this->requestStr += request;
 }
 
 bool Request::isHeaderEnd(void) const {
