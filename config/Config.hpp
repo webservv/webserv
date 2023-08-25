@@ -30,7 +30,6 @@ struct server{
     std::string root_path;
     std::string index_file;
 	std::vector<location> locations;
-	int clinetMaxSize;
 };
 
 class Config {

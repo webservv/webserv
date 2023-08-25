@@ -116,7 +116,6 @@ void Config::parseClientMaxBodySize() {
 void Config::parseServer(void) {
 
 	server new_server;
-	new_server.clinetMaxSize = 1;
 	std::string buf;
 
     if (tokens.front() == "{") {
