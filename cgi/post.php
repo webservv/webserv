@@ -33,6 +33,18 @@ if ($title && $content) {
 } else {
     echo "            <p>No data received.</p>";
 }
+echo "        <section>";
+echo "            <h2>Create a New Post</h2>";
+echo "            <form action='/cgi/post.php' method='post'>";
+echo "                <label for='title'>Title:</label>";
+echo "                <input type='text' id='title' name='title' required><br><br>";
+echo "                ";
+echo "                <label for='content'>Content:</label>";
+echo "                <textarea id='content' name='content' rows='4' cols='50' required></textarea><br><br>";
+echo "                ";
+echo "                <input type='submit' value='Submit Post'>";
+echo "            </form>";
+echo "        </section>";
 echo "        </section>";
 echo "    </main>";
 echo "    <footer>";
