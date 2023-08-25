@@ -8,6 +8,7 @@
 static const std::string	g_dir = "./document";
 static const std::string    post_txt = g_dir + "/posts.txt";
 static const std::string    index_html = g_dir + "/index.html";
+#define MAX_POST_SIZE 100
 
 void Router::initializeMimeMap() {
     if (mimeMap.empty()) {
@@ -139,6 +140,10 @@ void Router::validateHeaderLength() {
             makeErrorResponse(400);
             throw std::runtime_error("Content-Length is not a valid integer");
         }
+        else if (contentLength > MAX_POST_SIZE) {
+            makeErrorResponse(413);
+            throw std::runtime_error("Content-Length is too large");
+        }
     } catch (const std::invalid_argument& e) {
         makeErrorResponse(400);
         throw std::runtime_error("Content-Length is not a valid integer");
@@ -181,7 +186,6 @@ void Router::parsePostData(std::string& title, std::string& postContent) {
             throw std::runtime_error("Invalid post data");
         }
 	}
-
     if (postContent.size() == 0) {
         makeErrorResponse(400);
         throw std::runtime_error("Post content cannot be empty");
@@ -247,6 +251,10 @@ bool Router::isHeaderEnd() {
 	return request.isHeaderEnd();
 }
 
+void Router::parse() {
+    request.parse();
+}
+
 bool Router::isRequestEnd() {
 	return request.isRequestEnd();
 }
@@ -261,14 +269,6 @@ const std::string& Router::getResponse(void) const {
 
 void Router::addRequest(const std::string &request) {
 	this->request.addRequest(request);
-}
-
-void Router::parseHeader(void) {
-	request.parseHeader();
-}
-
-void Router::parseBody(void) {
-	request.parseBody();
 }
 
 void Router::setResponse(const std::string &src) {

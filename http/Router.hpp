@@ -60,8 +60,6 @@ public:
     bool                getHaveResponse(void) const;
     const std::string&  getResponse(void) const;
     void                addRequest(const std::string& request);
-    void                parseHeader(void);
-    void                parseBody(void);
     void                setResponse(const std::string& src);
     void                makeErrorResponse(int statusCode);
     void                readCGI(void);
@@ -71,6 +69,7 @@ public:
     int                 getReadFd(void) const;
     int                 getRequestError(void) const;
     const sockaddr_in&  getClientAddr(void) const;
+    void                parse(void);
 };
 
 #endif

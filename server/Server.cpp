@@ -134,19 +134,17 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (sockets[client_sockfd].getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
-std::cout << buf << std::endl;
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
 	sockets[client_sockfd].addRequest(std::string(buf));
 	if (sockets[client_sockfd].isHeaderEnd()) {
         try {
-		    sockets[client_sockfd].parseHeader();
+		    sockets[client_sockfd].parse();
         } catch (const std::exception& e) {
             int error = getRequestError(client_sockfd);
             sockets[client_sockfd].makeErrorResponse(error);
             return;
         }
-		sockets[client_sockfd].parseBody();
 		if (sockets[client_sockfd].isRequestEnd())
 			sockets[client_sockfd].handleRequest();
 	}
