@@ -37,7 +37,7 @@ void Config::parseLine(std::fstream& configParser) {
 		if (commentPos != std::string::npos) {
 			line = line.substr(0, commentPos);
 		}
-		line = trim(line);
+		trim(line);
 		if (line.empty())
 			continue;
 		if (line.back() != ';' && line.back() != '{' && line.back() != '}') {
@@ -47,24 +47,24 @@ void Config::parseLine(std::fstream& configParser) {
     }
 }
 
-std::string Config::trim(const std::string &str)
-{
+void Config::trim(std::string &str) const {
     std::string::const_iterator start = str.begin();
     while (start != str.end() && std::isspace(*start)) {
-        start++;
+        ++start;
     }
 
     if (start == str.end()) {
-        return "";
+        str.clear();
+        return;
     }
 
     std::string::const_iterator end = str.end();
-    end--;
+    --end;
     while (end != start && std::isspace(*end)) {
-        end--;
+        --end;
     }
 
-    return std::string(start, end + 1);
+    str = std::string(start, end + 1);
 }
 
 
@@ -360,4 +360,12 @@ Config::Config(const Config& copy) {
 Config& Config::operator=(const Config& copy) {
 	static_cast<void>(copy);
 	return *this;
+}
+
+const std::vector<server>& Config::getServers() const {
+    return servers;
+}
+
+int Config::getClientMaxBodySize() const {
+    return clientMaxBodySize;
 }
