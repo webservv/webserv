@@ -95,14 +95,7 @@ void Router::handlePost() {
 }
 
 void Router::handleDelete() {
-	try {
-		response.makeStatusLine("HTTP/1.1", "501", "Not Implemented");
-		response.makeBody("Delete method not implemented.", 30, "text/plain");
-		haveResponse = true;
-	} catch (const std::exception& e) {
-		makeErrorResponse(500);
-		std::cerr << "Error: " << e.what() << std::endl;
-	}
+	connectCGI();
 }
 
 void Router::connectCGI(void) {
