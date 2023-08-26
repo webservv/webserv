@@ -8,7 +8,7 @@
 static const std::string	g_dir = "./document";
 static const std::string    post_txt = g_dir + "/posts.txt";
 static const std::string    index_html = g_dir + "/index.html";
-#define MAX_POST_SIZE 100
+#define MAX_POST_SIZE 500 * 1024 * 1024
 
 void Router::initializeMimeMap() {
     if (mimeMap.empty()) {
