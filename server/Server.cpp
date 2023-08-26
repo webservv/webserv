@@ -36,28 +36,32 @@ Server::Server(const Config& config)
       sockets(),
       pipes(),
       cookies(),
-      serverConfigs(config.getServers()) {
-    
+      serverConfigs(config.getServers())
+{
+    kqueue_fd = kqueue();
+    if (kqueue_fd < 0) {
+        throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
+    }
+
     const std::vector<server>& servers = config.getServers();
-    
     for (std::vector<server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
         const server& new_server = *it;
-
+        
         int new_socket_fd = createSocket();
-        socket_fds.push_back(new_socket_fd);
         setSocketOptions(new_socket_fd);
-        socket_fds.push_back(new_socket_fd);
-    
+
         bindSocket(new_server, new_socket_fd);
         listenSocket(new_socket_fd);
-    
-        int new_kqueue_fd = kqueue();
-        if (new_kqueue_fd < 0) {
-            throw std::runtime_error("kqueue error. " + std::string(strerror(errno)));
+
+        struct kevent change;
+        EV_SET(&change, new_socket_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+        if (kevent(kqueue_fd, &change, 1, NULL, 0, NULL) == -1) {
+            throw std::runtime_error("kevent register error: " + std::string(strerror(errno)));
         }
-        kqueue_fds.push_back(new_kqueue_fd);
-        std::cout << "Server started on " << new_server.server_name << ":" \
-            << new_server.listen_port << ", waiting for connections..." << std::endl;
+
+        socket_fds.push_back(new_socket_fd);
+        std::cout << "Server started on " << new_server.server_name << ":"
+                  << new_server.listen_port << ", waiting for connections..." << std::endl;
     }
 }
 
@@ -75,9 +79,7 @@ Server::~Server() {
     for (std::vector<int>::iterator it = socket_fds.begin(); it != socket_fds.end(); ++it) {
         close(*it);
     }
-    for (std::vector<int>::iterator it = kqueue_fds.begin(); it != kqueue_fds.end(); ++it) {
-        close(*it);
-    }
+    close(kqueue_fd);
 }
 
 Server& Server::getInstance(const Config& config) {

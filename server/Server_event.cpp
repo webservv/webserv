@@ -18,20 +18,16 @@
 #include <cstdio>
 #include <utility>
 
-void Server::waitEvents(void) {
-    for (std::vector<int>::const_iterator kq_it = kqueue_fds.begin(); kq_it != kqueue_fds.end(); ++kq_it) {
-        int current_kqueue_fd = *kq_it;
-        
-        const int events = kevent(current_kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-        IOchanges.clear();
-        
-        if (events < 0) {
-            throw std::runtime_error("kevent error! " + std::string(strerror(errno)));
-        }
-        
-        for (int i = 0; i < events; ++i) {
-            handleEvent(IOevents[i]);
-        }
+void Server::waitEvents() {
+    const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
+    IOchanges.clear();
+
+    if (events < 0) {
+        throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
+    }
+
+    for (int i = 0; i < events; ++i) {
+        handleEvent(IOevents[i]);  // Assume handleEvent is a method that handles an individual event
     }
 }
 
