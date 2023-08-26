@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <utility>
 #define NULL_FD -1
+#define BUFFER_SIZE 100
+#define EVENTS_SIZE 100
 
 static int backlog = 5;
 static const std::string    post_txt = "./document/posts.txt";
@@ -129,7 +131,7 @@ void Server::addFd(void) {
 
 void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
-	char buf[BUFFER_SIZE] = {0, };
+	char buf[BUFFER_SIZE + 1] = {0, };
 
 	if (sockets[client_sockfd].getHaveResponse())
 		return;
@@ -145,8 +147,10 @@ void Server::receiveBuffer(const int client_sockfd) {
             sockets[client_sockfd].makeErrorResponse(error);
             return;
         }
-		if (sockets[client_sockfd].isRequestEnd())
+		if (sockets[client_sockfd].isRequestEnd()) {
 			sockets[client_sockfd].handleRequest();
+std::cout << std::endl; //end line for HTTP requset print
+		}
 	}
 }
 
@@ -196,7 +200,7 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::string& message = sockets[client_sockfd].getResponse();
-// std::cout << message << std::endl;
+std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
