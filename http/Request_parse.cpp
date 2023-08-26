@@ -43,8 +43,11 @@ void Request::parseURL(const std::string& line) {
     const std::string&  url = line.substr(0, space);
     const size_t        pathIndex = url.find('/', 5); // hard coding. only /cgi/* can be parsed.
     const size_t        queryIndex = url.find('?');
-    
-    values["script_name"] = url.substr(0, pathIndex);
+
+    if (pathIndex != std::string::npos)
+        values["script_name"] = url.substr(0, pathIndex);
+    else
+        values["script_name"] = url.substr(0, queryIndex);
     if (pathIndex != std::string::npos)
         values["path_info"] = url.substr(pathIndex, queryIndex - pathIndex);
     if (queryIndex != std::string::npos)
@@ -78,7 +81,7 @@ void Request::addRequestLines(void) {
     } else {
         handleNonChunkedTransferEncoding(parser);
     }
-std::cout << requestStr << std::endl;
+std::cout << requestStr;
     requestStr.clear();
 }
 

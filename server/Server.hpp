@@ -15,8 +15,6 @@
 #include <map>
 #include "Router.hpp"
 #include "Config.hpp"
-#define BUFFER_SIZE 1042
-#define EVENTS_SIZE 100
 
 class Server
 {

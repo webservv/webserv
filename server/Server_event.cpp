@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
+#define BUFFER_SIZE 100
 
 void Server::waitEvents() {
     const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
@@ -97,7 +98,7 @@ void Server::disconnect(const int client_sockfd) {
 
 void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
-	char buf[BUFFER_SIZE] = {0, };
+	char buf[BUFFER_SIZE + 1] = {0, };
 
 	if (sockets[client_sockfd].getHaveResponse())
 		return;
@@ -113,8 +114,10 @@ void Server::receiveBuffer(const int client_sockfd) {
             sockets[client_sockfd].makeErrorResponse(error);
             return;
         }
-		if (sockets[client_sockfd].isRequestEnd())
+		if (sockets[client_sockfd].isRequestEnd()) {
 			sockets[client_sockfd].handleRequest();
+std::cout << std::endl; //for request print
+        }
 	}
 }
 

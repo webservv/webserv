@@ -78,6 +78,8 @@ void Request::addRequest(const std::string &request) {
 }
 
 bool Request::isHeaderEnd(void) const {
+    if (haveHeader)
+        return true;
     size_t pos = requestStr.rfind("\r\n\r\n");
     if (pos != std::string::npos) {
         return true;
@@ -103,9 +105,9 @@ bool Request::isRequestEnd(void) {
         }
         return false;
     }
-    it = values.find("Content-Length");
+    it = values.find("content-length");
     if (it != values.end()) {
-        size_t len = std::atoi(values["Content-Length"].c_str());
+        size_t len = std::atoi(values["content-length"].c_str());
         if (values.find("body") != values.end() && values["body"].length() == len)
             return true;
         else

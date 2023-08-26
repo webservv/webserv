@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import os
-data_dir = "../DB"
+data_dir = "./DB"
 post_file = os.path.join(data_dir, "posts.txt")
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
@@ -36,9 +36,10 @@ if os.path.exists(post_file):
         lines = file.readlines()
         lines.reverse()
         for line in lines:
-            title, content, _, _ = line.strip().split('\t')
+            title, content, post_id, cookie = line.strip().split('\t')
             print("<p>Title: {}</p>".format(title))
             print("<p>Content: {}</p>".format(content))
+            print("<button id='deleteButton{}' onclick='deletePost({})'>Delete</button>".format(post_id, post_id))
             print("")
 print("            </ul>")
 print("        </section>")
@@ -47,4 +48,16 @@ print("    <footer>")
 print("        <p>&copy; 2023 My Website. All rights reserved.</p>")
 print("    </footer>")
 print("</body>")
+print('<script>')
+print('function deletePost(post_id) {')
+print('    if (confirm("Delete this post?")) {')
+print('        fetch(`/cgi/delete.pl?post_id=${post_id}`, {')
+print('            method: \'DELETE\',')
+print('            headers: {')
+print('                \'Content-Type\': \'application/json\'')
+print('            },')
+print('        })')
+print('    }')
+print('}')
+print('</script>')
 print("</html>")

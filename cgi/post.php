@@ -11,7 +11,7 @@ else {
     $title = "";
     $content = "";
 }
-$data_dir = "../DB";
+$data_dir = "./DB";
 $post_file = $data_dir . "/posts.txt";
 $id = 0;
 if (file_exists($post_file)) {
@@ -62,9 +62,10 @@ if (file_exists($post_file)) {
     $lines = file($post_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $lines = array_reverse($lines);
     foreach ($lines as $line) {
-        list($title, $content) = explode("\t", $line);
+        list($title, $content, $post_id, $cookie) = explode("\t", $line);
         echo "                <p>Title: $title</p>\n";
         echo "                <p>Content: $content</p>\n";
+        echo "                <button id='deleteButton$post_id' onclick='deletePost($post_id)'>Delete</button>\n";
         echo "\n";
     }
 }
@@ -75,5 +76,17 @@ echo "    <footer>\n";
 echo "        <p>&copy; 2023 My Website. All rights reserved.</p>\n";
 echo "    </footer>\n";
 echo "</body>\n";
+echo '<script>' . "\n";
+echo 'function deletePost(post_id) {' . "\n";
+echo '    if (confirm("Delete this post?")) {' . "\n";
+echo '        fetch(`/cgi/delete.pl?post_id=${post_id}`, {' . "\n";
+echo '            method: \'DELETE\',' . "\n";
+echo '            headers: {' . "\n";
+echo '                \'Content-Type\': \'application/json\'' . "\n";
+echo '            }' . "\n";
+echo '        })' . "\n";
+echo '    }' . "\n";
+echo '}' . "\n";
+echo '</script>' . "\n";
 echo "</html>\n";
 ?>

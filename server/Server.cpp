@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <utility>
 #define NULL_FD -1
+#define BUFFER_SIZE 100
+#define EVENTS_SIZE 100
 
 static const std::string    post_txt = "./document/posts.txt";
 
