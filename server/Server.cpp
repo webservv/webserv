@@ -205,37 +205,50 @@ void Server::waitEvents(void) {
         }
         
         for (int i = 0; i < events; ++i) {
-            const struct kevent& cur = IOevents[i];
-            
-            if (cur.flags & EV_ERROR) {
-                throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
-            }
-            
-            if (std::find(socket_fds.begin(), socket_fds.end(), static_cast<int>(cur.ident)) != socket_fds.end()) {
-                acceptConnection(static_cast<int>(cur.ident));
-            } else if (sockets.find(cur.ident) != sockets.end()) {
-                if (cur.flags & EV_EOF) {
-                    disconnect(cur.ident);
-                } else if (cur.filter == EVFILT_READ) {
-                    receiveBuffer(cur.ident);
-                } else if (cur.filter == EVFILT_WRITE && sockets[cur.ident].getHaveResponse()) {
-                    sendBuffer(cur.ident, cur.data);
-                }
-            }
-            else if (pipes.find(cur.ident) != pipes.end()) {
-                Router& tmp = *pipes[cur.ident];
-                if (cur.flags & EV_EOF) {
-                    tmp.disconnectCGI();
-                } else if (cur.filter == EVFILT_READ) {
-                    tmp.readCGI();
-                } else if (cur.filter == EVFILT_WRITE) {
-                    tmp.writeCGI(cur.data);
-                }
-            }
+            handleEvent(IOevents[i]);
         }
     }
 }
 
+void Server::handleEvent(const struct kevent& cur) {
+    if (cur.flags & EV_ERROR) {
+        throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
+    }
+
+    int identifier = static_cast<int>(cur.ident);
+    if (std::find(socket_fds.begin(), socket_fds.end(), identifier) != socket_fds.end()) {
+        handleSocketEvent(identifier);
+    } else if (sockets.find(identifier) != sockets.end()) {
+        handleIOEvent(identifier, cur);
+    } else if (pipes.find(identifier) != pipes.end()) {
+        handlePipeEvent(identifier, cur);
+    }
+}
+
+void Server::handleSocketEvent(int identifier) {
+    acceptConnection(identifier);
+}
+
+void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
+    Router& tmp = *pipes[identifier];
+    if (cur.flags & EV_EOF) {
+        tmp.disconnectCGI();
+    } else if (cur.filter == EVFILT_READ) {
+        tmp.readCGI();
+    } else if (cur.filter == EVFILT_WRITE) {
+        tmp.writeCGI(cur.data);
+    }
+}
+
+void Server::handleIOEvent(int identifier, const struct kevent& cur) {
+    if (cur.flags & EV_EOF) {
+        disconnect(identifier);
+    } else if (cur.filter == EVFILT_READ) {
+        receiveBuffer(identifier);
+    } else if (cur.filter == EVFILT_WRITE && sockets[identifier].getHaveResponse()) {
+        sendBuffer(identifier, cur.data);
+    }
+}
 
 void Server::disconnect(const int client_sockfd) {
 	close(client_sockfd);

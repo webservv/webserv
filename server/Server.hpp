@@ -46,6 +46,10 @@ private:
 	void disconnect(const int client_sockfd);
 	void sendBuffer(const int client_sockfd, const intptr_t bufSize);
 	in_addr_t IPToInt(const std::string& ip) const;
+    void handleEvent(const struct kevent& cur);
+    void handleSocketEvent(int identifier);
+    void handlePipeEvent(int identifier, const struct kevent& cur);
+    void handleIOEvent(int identifier, const struct kevent& cur);
 public:
 	static Server& getInstance(const Config& config);
     const std::vector<server>& getServerConfigs() const;
