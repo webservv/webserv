@@ -361,3 +361,11 @@ Config& Config::operator=(const Config& copy) {
 	static_cast<void>(copy);
 	return *this;
 }
+
+const std::vector<server>& Config::getServers() const {
+    return servers;
+}
+
+int Config::getClientMaxBodySize() const {
+    return clientMaxBodySize;
+}

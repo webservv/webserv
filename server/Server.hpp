@@ -14,23 +14,26 @@
 #include <vector>
 #include <map>
 #include "Router.hpp"
+#include "Config.hpp"
 #define BUFFER_SIZE 1042
 #define EVENTS_SIZE 100
+
 class Server
 {
 private:
 	static Server* instance;
 private:
-	int socket_fd;
-	int kqueue_fd;
-	std::vector<struct kevent> IOchanges;
-	std::vector<struct kevent> IOevents;
-	std::map<int, Router> sockets;
-	std::map<int, Router*> pipes;
+    std::vector<int> socket_fds;
+    std::vector<int> kqueue_fds;
+    std::vector<struct kevent> IOchanges;
+    std::vector<struct kevent> IOevents;
+    std::map<int, Router> sockets;
+    std::map<int, Router*> pipes;
     std::map<std::string, std::string> cookies;
+    std::vector<server> serverConfigs;
 private:
 	Server();
-	Server(const int port, const char* host);
+	Server(const Config& config);
 	Server(const Server& copy);
 	Server& operator=(const Server& copy);
 public:
@@ -44,12 +47,13 @@ private:
 	void sendBuffer(const int client_sockfd, const intptr_t bufSize);
 	in_addr_t IPToInt(const std::string& ip) const;
 public:
-	static Server& getInstance(const int port, const char* host);
-	void createSocket();
-	void setSocketOptions();
-	void bindSocket(int port, const char* host);
-	void listenSocket();
-	void acceptConnection();
+	static Server& getInstance(const Config& config);
+    const std::vector<server>& getServerConfigs() const;
+	int createSocket();
+	void setSocketOptions(int socket_fd);
+	void bindSocket(const server& server, int socket_fd);
+	void listenSocket(int socket_fd);
+	void acceptConnection(int socket_fd);
 	void addFd(void);
 	void waitEvents(void);
 	void addPipes(const int writeFd, const int readFd, Router* const router);

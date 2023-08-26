@@ -67,6 +67,8 @@ private:
 
 public:
 	Config(const std::string& config_file);
+    const std::vector<server>& getServers() const;
+    int getClientMaxBodySize() const;
 	~Config();
 
 };
