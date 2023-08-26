@@ -7,7 +7,7 @@ my $request_method = $ENV{'REQUEST_METHOD'};
 my $query_string = $ENV{'QUERY_STRING'};
 
 # 데이터 디렉토리와 게시물 파일 경로 설정
-my $data_dir = "../DB";
+my $data_dir = "./DB";
 my $post_file = "$data_dir/posts.txt";
 
 if ($request_method eq 'DELETE' && $query_string =~ /id=(\d+)/) {
@@ -67,10 +67,11 @@ if (-e $post_file) {
     close $file;
     
     foreach my $line (@lines) {
-        my ($title, $content, $id, $cookie) = split("\t", $line);
+        my ($title, $content, $post_id, $cookie) = split("\t", $line);
         print("                <li>\n");
         print("                    <p>Title: $title</p>\n");
         print("                    <p>Content: $content</p>\n");
+        # print("                    <button id='deleteButton$post_id' onclick='deletePost($post_id)'>Delete</button>");
         print("                </li>\n");
     }
 }
@@ -81,4 +82,16 @@ print("    <footer>\n");
 print("        <p>&copy; 2023 My Website. All rights reserved.</p>\n");
 print("    </footer>\n");
 print("</body>\n");
+# print("<script>\n");
+# print("function deletePost(post_id) {\n");
+# print("    if (confirm(\"Delete this post?\")) {\n");
+# print("        fetch(`/cgi/delete.pl?post_id=post_id`, {\n");
+# print("            method: 'DELETE',\n");
+# print("            headers: {\n");
+# print("                'Content-Type': 'application/json'\n");
+# print("            }\n");
+# print("        })\n");
+# print("    }\n");
+# print("}\n");
+print("</script>\n");
 print("</html>\n");
