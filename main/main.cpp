@@ -1,6 +1,7 @@
 
 #include "Server.hpp"
 #include "Config.hpp"
+#include <cstdlib>
 
 int main(int argc, char** argv) {
 	const int port = 8080;
@@ -8,7 +9,7 @@ int main(int argc, char** argv) {
 
     if (argc != 2) {
         std::cout << "Usage: ./webserv <config_file>" << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
 	try {
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
             Config config(argv[1]);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
-            return 1;
+            return EXIT_FAILURE;
         }
 		Server& server = Server::getInstance(port, host);
 		while (true) {
@@ -24,8 +25,8 @@ int main(int argc, char** argv) {
 		}
 	} catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
-		return 1;
+		return EXIT_FAILURE;
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }
