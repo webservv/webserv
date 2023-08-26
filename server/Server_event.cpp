@@ -37,7 +37,8 @@ void Server::handleEvent(const struct kevent& cur) {
     }
 
     int identifier = static_cast<int>(cur.ident);
-    if (std::find(socket_fds.begin(), socket_fds.end(), identifier) != socket_fds.end()) {
+    if (socket_fds.find(identifier) != socket_fds.end()) {
+        std::cout << "socket event" << std::endl;
         handleSocketEvent(identifier);
     } else if (sockets.find(identifier) != sockets.end()) {
         handleIOEvent(identifier, cur);

@@ -23,7 +23,7 @@ class Server
 private:
 	static Server* instance;
 private:
-    std::vector<int> socket_fds;
+    std::map<int, int> socket_fds;
     int kqueue_fd;
     std::vector<struct kevent> IOchanges;
     std::vector<struct kevent> IOevents;

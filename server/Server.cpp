@@ -59,7 +59,7 @@ Server::Server(const Config& config)
             throw std::runtime_error("kevent register error: " + std::string(strerror(errno)));
         }
 
-        socket_fds.push_back(new_socket_fd);
+        socket_fds[new_socket_fd] = new_socket_fd;
         std::cout << "Server started on " << new_server.server_name << ":"
                   << new_server.listen_port << ", waiting for connections..." << std::endl;
     }
@@ -76,8 +76,8 @@ Server::~Server() {
     for (std::map<int, Router>::iterator it = sockets.begin(); it != sockets.end(); ++it) {
         disconnect(it->first);
     }
-    for (std::vector<int>::iterator it = socket_fds.begin(); it != socket_fds.end(); ++it) {
-        close(*it);
+    for (std::map<int, int>::iterator it = socket_fds.begin(); it != socket_fds.end(); ++it) {
+        close(it->second);
     }
     close(kqueue_fd);
 }
