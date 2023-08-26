@@ -129,8 +129,6 @@ std::cout << "Binding to address: " << host << " Port: " << port << std::endl;
     }
 }
 
-
-
 void Server::listenSocket(int socket_fd)  {
 	if (listen(socket_fd, backlog) < 0) {
 		throw std::runtime_error("ERROR on listening");
