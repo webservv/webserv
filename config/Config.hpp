@@ -63,10 +63,12 @@ private:
     void parseFastcgiPass(location& location);
     void parseFastcgiParam(location& location);
     void parseReturn(location& location);
-    std::string trim(const std::string &str);
+    void trim(std::string &str) const;
 
 public:
 	Config(const std::string& config_file);
+    const std::vector<server>& getServers() const;
+    int getClientMaxBodySize() const;
 	~Config();
 
 };
