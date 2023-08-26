@@ -5,11 +5,23 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "config parsing",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/config/a.out",
+			"args": ["subject.conf"],
+			"stopAtEntry": false,
+			"cwd": "${fileDirname}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "lldb"
+		},
+		{
 			"type": "lldb",
 			"request": "launch",
 			"name": "Debug",
 			"program": "${workspaceFolder}/webserv",
-			"args": [],
+			"args": ["config/server.conf"],
 			"cwd": "${workspaceFolder}"
 		}
 	]
