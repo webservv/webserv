@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 1000 // we should put it 100 
 
 void Server::waitEvents() {
     const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
@@ -28,7 +28,7 @@ void Server::waitEvents() {
     }
 
     for (int i = 0; i < events; ++i) {
-        handleEvent(IOevents[i]);  // Assume handleEvent is a method that handles an individual event
+        handleEvent(IOevents[i]);
     }
 }
 
@@ -47,11 +47,7 @@ void Server::handleEvent(const struct kevent& cur) {
     }
 }
 
-void Server::handleSocketEvent(int identifier) {
-    acceptConnection(identifier);
-}
-
-void Server::acceptConnection(int socket_fd) {
+void Server::handleSocketEvent(int socket_fd) {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
     const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
@@ -63,10 +59,10 @@ void Server::acceptConnection(int socket_fd) {
     if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
-
-    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    sockets.insert(std::make_pair(client_sockfd, Router(this, client_addr)));
+    int *listenSocket = new int(socket_fd);
+    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, listenSocket);
+    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, listenSocket);
+    sockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, &listenConfigs[socket_fd])));
 }
 
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
@@ -133,7 +129,8 @@ std::cout << message << std::endl;
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
 		
 		const sockaddr_in	tmp = sockets[client_sockfd].getClientAddr();
+        const server*       config = sockets[client_sockfd].getConfig();
 		sockets.erase(client_sockfd);
-		sockets.insert(std::make_pair(client_sockfd, Router(this, tmp)));
+		sockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
 	}
 }

@@ -28,8 +28,8 @@ private:
     std::map<int, Router> sockets;
     std::map<int, Router*> pipes;
     std::map<std::string, std::string> cookies;
-    std::vector<server> serverConfigs;
-private:
+    std::map<int, server> listenConfigs;
+private: 
 	Server();
 	Server(const Config& config);
 	Server(const Server& copy);
@@ -45,18 +45,15 @@ private:
 	void sendBuffer(const int client_sockfd, const intptr_t bufSize);
 	in_addr_t IPToInt(const std::string& ip) const;
     void handleEvent(const struct kevent& cur);
-    void handleSocketEvent(int identifier);
+    void handleSocketEvent(int socket_fd);
     void handlePipeEvent(int identifier, const struct kevent& cur);
     void handleIOEvent(int identifier, const struct kevent& cur);
 public:
 	static Server& getInstance(const Config& config);
-    const std::vector<server>& getServerConfigs() const;
 	int createSocket();
 	void setSocketOptions(int socket_fd);
 	void bindSocket(const server& server, int socket_fd);
 	void listenSocket(int socket_fd);
-	void acceptConnection(int socket_fd);
-	void addFd(void);
 	void waitEvents(void);
 	void addPipes(const int writeFd, const int readFd, Router* const router);
     int getRequestError(const int client_sockfd);

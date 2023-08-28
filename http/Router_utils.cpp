@@ -1,4 +1,5 @@
 #include "Router.hpp"
+#include "Server.hpp"
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -267,7 +268,7 @@ bool Router::isHeaderEnd() {
 	return request.isHeaderEnd();
 }
 
-void Router::parse() {
+void Router::parse(void) {
     request.parse();
 }
 

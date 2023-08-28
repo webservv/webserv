@@ -3,23 +3,25 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
+#include "Config.hpp"
 
 #include <netinet/in.h>
 #include <string>
 #include <map>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <vector>
 
 class Server;
 
 class Router {
 private:
-	Request		request;
-	Response	response;
-    bool        haveResponse;
-    Server*     server;
-    sockaddr_in clientAddr;
-    std::map<std::string, std::string>  CgiVariables;
+	Request		                        request;
+	Response	                        response;
+    bool                                haveResponse;
+    Server*                             server;
+    sockaddr_in                         clientAddr;
+    const struct server*                config;
 private:
     static std::map<std::string, std::string> mimeMap;
     static void initializeMimeMap();
@@ -42,7 +44,7 @@ private:
     void makeCgiVariables(void) const;
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr);
+    Router(Server* const server, const sockaddr_in& clientAddr, const struct server* config);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -61,6 +63,7 @@ public:
     bool                isRequestEnd(void);
     bool                getHaveResponse(void) const;
     const std::string&  getResponse(void) const;
+    const struct server* getConfig(void) const;
     void                addRequest(const std::string& request);
     void                setResponse(const std::string& src);
     void                makeErrorResponse(int statusCode);
