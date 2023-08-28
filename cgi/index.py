@@ -1,8 +1,5 @@
 #!/usr/bin/python
 import os
-import cgi
-
-form = cgi.FieldStorage()
 
 data_dir = "./DB"
 post_file = os.path.join(data_dir, "posts.txt")

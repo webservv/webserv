@@ -42,14 +42,6 @@ const std::string& Request::getUrl(void) const {
 	return findValue("url");
 }
 
-const std::string& Request::getPath(void) const {
-    return findValue("SCRIPT_NAME");
-}
-
-const std::string& Request::getQuery(void) const {
-    return findValue("query");
-}
-
 const std::string& Request::getVersion(void) const {
     return findValue("version");
 }

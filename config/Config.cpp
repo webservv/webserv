@@ -35,7 +35,7 @@ void Config::parseLine(std::fstream& configParser) {
 	while (std::getline(configParser, line)) {
 		size_t commentPos = line.find('#');
 		if (commentPos != std::string::npos) {
-			line = line.substr(0, commentPos);
+			line.resize(commentPos);
 		}
 		trim(line);
 		if (line.empty())
@@ -362,7 +362,7 @@ Config& Config::operator=(const Config& copy) {
 	return *this;
 }
 
-const std::vector<server>& Config::getServers() const {
+const std::vector<Config::server>& Config::getServers() const {
     return servers;
 }
 
