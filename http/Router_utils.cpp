@@ -93,6 +93,21 @@ void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
     envs["HTTP_COOKIE"] = request.findValue("cookie");
 }
 
+void Router::makeCgiVariables(void) const {
+    const std::string&  url = getParsedUrl();
+    const size_t        pathIndex = url.find('/', 5); // hard coding. only /cgi/* can be parsed.
+    const size_t        queryIndex = url.find('?');
+
+    if (pathIndex != std::string::npos)
+        values["script_name"] = url.substr(0, pathIndex);
+    else
+        values["script_name"] = url.substr(0, queryIndex);
+    if (pathIndex != std::string::npos)
+        values["path_info"] = url.substr(pathIndex, queryIndex - pathIndex);
+    if (queryIndex != std::string::npos)
+        values["query_string"] = url.substr(queryIndex + 1, -1);
+}
+
 std::string Router::URLDecode(const std::string &input) {
     std::ostringstream oss;
     for (std::size_t i = 0; i < input.length(); ++i) {

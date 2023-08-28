@@ -19,6 +19,7 @@ private:
     bool        haveResponse;
     Server*     server;
     sockaddr_in clientAddr;
+    std::map<std::string, std::string>  CgiVariables;
 private:
     static std::map<std::string, std::string> mimeMap;
     static void initializeMimeMap();
@@ -38,6 +39,7 @@ private:
     void appendPostToFile(const std::string& title, const std::string& postContent);
     void readAndModifyHTML(std::string& htmlResponse);
     void makeHTMLResponse(const std::string& htmlResponse);
+    void makeCgiVariables(void) const;
 public:
 	Router();
     Router(Server* const server, const sockaddr_in& clientAddr);
