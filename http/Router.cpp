@@ -22,12 +22,13 @@ Router::Router():
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, const struct server* config):
 	request(),
 	response(),
 	haveResponse(false),
 	server(server),
-	clientAddr(clientAddr) {
+	clientAddr(clientAddr),
+	config(config) {
 		initializeMimeMap();
 	}
 
@@ -121,4 +122,8 @@ void Router::connectCGI(void) {
 
 const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
+}
+
+const struct server* Router::getConfig(void) const {
+	return config;
 }

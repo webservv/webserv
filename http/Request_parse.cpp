@@ -167,7 +167,7 @@ void Request::parseHeader(void) {
     haveHeader = true;
 }
 
-void Request::parse(void) {
+void Request::parse() {
     addRequestLines();
     parseHeader();
     parseBody();
