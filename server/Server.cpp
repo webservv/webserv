@@ -37,8 +37,7 @@ Server::Server(const Config& config)
       IOevents(EVENTS_SIZE),
       sockets(),
       pipes(),
-      cookies(),
-      serverConfigs(config.getServers())
+      cookies()
 {
     kqueue_fd = kqueue();
     if (kqueue_fd < 0) {
@@ -89,14 +88,6 @@ Server& Server::getInstance(const Config& config) {
 		instance = new Server(config);
 	}
 	return *instance;
-}
-
-const std::vector<server>& Server::getServerConfigs() const {
-    return serverConfigs;
-}
-
-void Server::addFd(void) {
-
 }
 
 void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata) {
