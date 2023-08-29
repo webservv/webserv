@@ -7,8 +7,8 @@ class Response {
 private:
 	std::string	responseStr;
 	std::string	messageToCGI;
-	int			writeFd;
-	int			readFd;
+	int			writeFD;
+	int			readFD;
 	pid_t		cgiPid;
     std::string cookieValue;
 public:
@@ -17,20 +17,20 @@ public:
 	Response(const Response& copy);
 	Response&	operator=(const Response& copy);
 private:
-	void				processCGI(int readPipe[2], int writePipe[2], std::map<std::string, std::string>& envs);
+	void				bootCGI(int readPipe[2], int writePipe[2], std::map<std::string, std::string>& envs) const;
 	char**				makeEnvList(std::map<std::string, std::string>& envs) const;
 public:
 	void				makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);
 	void				makeHeader(const std::string& key, const std::string& value);
 	void				makeBody(const std::string& data, const size_t len, const std::string& type);
 	const std::string&	getResponseStr(void) const;
-	int					getWriteFd(void) const;
-	int					getReadFd(void) const;
+	int					getWriteFD(void) const;
+	int					getReadFD(void) const;
 	void				setResponse(const std::string& src);
 	void				setMessageToCGI(const std::string& src);
 	void				connectCGI(std::map<std::string, std::string>& envs);
-	void				readCGI(void);
-	void				writeCGI(const intptr_t fdBufferSize);
+	void				readFromCGI(void);
+	void				writeToCGI(const intptr_t fdBufferSize);
 	void				disconnectCGI(void);
 };
 

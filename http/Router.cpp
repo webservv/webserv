@@ -119,7 +119,7 @@ void Router::connectCGI(void) {
 	}
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(CgiVariables);
-	server->addPipes(response.getWriteFd(), response.getReadFd(), this);
+	server->addPipes(response.getWriteFD(), response.getReadFD(), this);
 }
 
 const sockaddr_in& Router::getClientAddr(void) const {

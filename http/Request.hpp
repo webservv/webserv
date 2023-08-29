@@ -33,13 +33,12 @@ private:
     void	parseMethod(std::string& line);
     void	parseURL(const std::string& line);
     void	parseVersion(const std::string& line, const size_t space);
-	void	parseRequestLine();
-	void	parseKeyValues();
+	void	parseRequestLine(void);
+	void	parseKeyValues(void);
 	void	addRequestLines(void);
     void	readHeadersAndInitialRequestLines(std::stringstream& parser);
     void	handleChunkedTransferEncoding(std::stringstream& parser);
     void	handleNonChunkedTransferEncoding(std::stringstream& parser);
-    void	handleFirstLineOfBody(std::stringstream& parser, std::string& line);
 	void	parseHeader(void);
 	void	parseBody(void);
 public:

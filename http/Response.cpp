@@ -19,22 +19,22 @@
 Response::Response():
 	responseStr(""),
 	messageToCGI(""),
-	writeFd(NULL_FD),
-	readFd(NULL_FD),
+	writeFD(NULL_FD),
+	readFD(NULL_FD),
 	cgiPid(NULL_PID) {}
 
 Response::Response(const Response& copy):
 	responseStr(copy.responseStr),
 	messageToCGI(copy.messageToCGI),
-	writeFd(copy.writeFd),
-	readFd(copy.readFd),
+	writeFD(copy.writeFD),
+	readFD(copy.readFD),
 	cgiPid(copy.cgiPid) {}
 
 Response& Response::operator=(const Response& copy) {
 	responseStr = copy.responseStr;
 	messageToCGI = copy.messageToCGI;
-	writeFd = copy.writeFd;
-	readFd = copy.readFd;
+	writeFD = copy.writeFD;
+	readFD = copy.readFD;
 	cgiPid = copy.cgiPid;
 	return *this;
 }
@@ -63,12 +63,12 @@ const std::string& Response::getResponseStr(void) const {
 	return responseStr;
 }
 
-int Response::getWriteFd(void) const {
-	return writeFd;
+int Response::getWriteFD(void) const {
+	return writeFD;
 }
 
-int Response::getReadFd(void) const {
-	return readFd;
+int Response::getReadFD(void) const {
+	return readFD;
 }
 
 void Response::setResponse(const std::string &src) {
@@ -91,14 +91,14 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	if (cgiPid < 0)
 		throw std::runtime_error("getFromCGI3: " + std::string(strerror(errno)));
 	else if (cgiPid == CHILD_PID)
-		processCGI(readPipe, writePipe, envs);
+		bootCGI(readPipe, writePipe, envs);
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
-	writeFd = writePipe[WRITE];
-	readFd = readPipe[READ];
+	writeFD = writePipe[WRITE];
+	readFD = readPipe[READ];
 }
 
-void Response::processCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) {
+void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) const {
 	char**	envList = makeEnvList(envs);
 
 	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
@@ -130,12 +130,12 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 	return envList;
 }
 
-void Response::readCGI(void) {
+void Response::readFromCGI(void) {
 	ssize_t	read_size;
 	char	buf[BUFFER_SIZE + 1];
 
 	while (true) {
-		read_size = read(readFd, buf, BUFFER_SIZE);
+		read_size = read(readFD, buf, BUFFER_SIZE);
 		if (read_size < 0)
 			throw std::runtime_error("readCGI: " + std::string(strerror(errno)));
 		else if (read_size == 0)
@@ -145,23 +145,23 @@ void Response::readCGI(void) {
 	}
 }
 
-void Response::writeCGI(const intptr_t fdBufferSize) {
+void Response::writeToCGI(const intptr_t fdBufferSize) {
 	intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
 	ssize_t		writeLength;
 
 	if (messageToCGI.size() == 0) {
-		close(writeFd);
-		writeFd = NULL_FD;
+		close(writeFD);
+		writeFD = NULL_FD;
 		return;
 	}
 	if (static_cast<intptr_t>(messageToCGI.size()) <= bufSize) {
-		writeLength = write(writeFd, messageToCGI.c_str(), messageToCGI.size());
+		writeLength = write(writeFD, messageToCGI.c_str(), messageToCGI.size());
 		if (writeLength < 0)
 			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
 		if (writeLength == static_cast<ssize_t>(messageToCGI.size())) {
 			messageToCGI.clear();
-			close(writeFd);
-			writeFd = NULL_FD;
+			close(writeFD);
+			writeFD = NULL_FD;
 		}
 		else
 			messageToCGI = messageToCGI.substr(writeLength, -1);
@@ -169,7 +169,7 @@ void Response::writeCGI(const intptr_t fdBufferSize) {
 	else {
 		const std::string writeMessage = messageToCGI.substr(0, bufSize);
 		messageToCGI = messageToCGI.substr(bufSize, -1);
-		if (write(writeFd, writeMessage.c_str(), writeMessage.size()) < 0)
+		if (write(writeFD, writeMessage.c_str(), writeMessage.size()) < 0)
 			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
 	}
 }
@@ -177,10 +177,10 @@ void Response::writeCGI(const intptr_t fdBufferSize) {
 void Response::disconnectCGI(void) {
 	int	stat;
 
-	if (writeFd != NULL_FD)
-		close(writeFd);
-	if (readFd != NULL_FD)
-		close(readFd);
+	if (writeFD != NULL_FD)
+		close(writeFD);
+	if (readFD != NULL_FD)
+		close(readFD);
 	if (cgiPid != NULL_PID) {
 		if (waitpid(cgiPid, &stat, 0) < 0)
 			throw std::runtime_error("disconnectCGI: " + std::string(strerror(errno)));

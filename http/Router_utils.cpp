@@ -178,11 +178,11 @@ void Router::setResponse(const std::string &src) {
 }
 
 void Router::readCGI(void) {
-	response.readCGI();
+	response.readFromCGI();
 }
 
 void Router::writeCGI(const intptr_t fdBufferSize) {
-	response.writeCGI(fdBufferSize);
+	response.writeToCGI(fdBufferSize);
 }
 
 void Router::disconnectCGI(void) {
@@ -191,11 +191,11 @@ void Router::disconnectCGI(void) {
 }
 
 int Router::getWriteFD(void) const {
-	return response.getWriteFd();
+	return response.getWriteFD();
 }
 
 int Router::getReadFD(void) const {
-	return response.getReadFd();
+	return response.getReadFD();
 }
 
 int Router::getRequestError() const {
