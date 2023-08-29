@@ -6,9 +6,6 @@
 #include <sstream>
 #include <iomanip>
 
-static const std::string	g_dir = "./document";
-static const std::string    post_txt = g_dir + "/posts.txt";
-static const std::string    index_html = g_dir + "/index.html";
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
 void Router::initializeMimeMap() {
@@ -62,7 +59,14 @@ void Router::readFile(const std::string& filePath, std::string& content) const {
     if (!ifs.is_open()) {
         throw std::ios_base::failure("File open error.");
     }
-    content.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    std::string line;
+    content.clear();
+    while (std::getline(ifs, line)) {
+        content += line;
+        content += "\n";
+    }
+    ifs.close();
 }
 
 void Router::makeCgiVariables(void) {
@@ -135,12 +139,37 @@ void Router::validateContentType() {
     }
 }
 
-void Router::setParsedURL(void) {
-    const std::string& URL = request.getURL();
+void Router::setParsedURL() {
+    const std::string& URLFromRequest = request.getURL();
+    std::string bestMatchURL;
+    std::string bestMatchRoot;
 
-    //WIP: get real path from server.conf
-    parsedURL = URL; //temporary
+    for (iter it = config->locations.begin(); it != config->locations.end(); ++it) {
+        const std::string& url = it->url;
+        if (URLFromRequest.find(url) == 0) {
+            if (url.length() > bestMatchURL.length()) {
+                bestMatchURL = url;
+                bestMatchRoot = it->root;
+            }
+        }
+    }
+    if (!bestMatchURL.empty()) {
+        configURL = bestMatchRoot + URLFromRequest.substr(bestMatchURL.length());
+    } else {
+        if (URLFromRequest == "/") {
+            for (size_t i = 0; i < config->index.size(); ++i) {
+                std::string potentialIndexPath = config->root_path + config->index[i];
+                if (access(potentialIndexPath.c_str(), R_OK)) {
+                    configURL = potentialIndexPath;
+                    break;
+                }
+            }
+        }  else {
+            configURL = config->root_path + URLFromRequest;
+        }
+    }
 }
+
 
 void Router::parseURL(void) {
     const std::string&  url = getParsedURL();

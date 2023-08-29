@@ -21,7 +21,7 @@ Router::Router():
 	clientAddr(),
 	config(NULL),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -33,7 +33,7 @@ Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config
 	clientAddr(clientAddr),
 	config(config),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -46,7 +46,7 @@ Router::Router(const Router& copy):
 	clientAddr(copy.clientAddr),
 	config(copy.config),
 	CgiVariables(copy.CgiVariables),
-	parsedURL(copy.parsedURL) {
+	configURL(copy.configURL) {
 		initializeMimeMap();
 	}
 
@@ -58,7 +58,7 @@ Router& Router::operator=(const Router& copy) {
 	clientAddr = copy.clientAddr;
 	config = copy.config;
 	CgiVariables = copy.CgiVariables;
-	parsedURL = copy.parsedURL;
+	configURL = copy.configURL;
 	return *this;
 }
 
@@ -72,7 +72,7 @@ void Router::handleGet() {
 			connectCGI();
 		else {
 			if (!resourceExists(filePath)) {
-				makeErrorPage();
+				makeErrorResponse(404);
 				return;
 			}
 			std::string content;
@@ -132,7 +132,7 @@ const std::string& Router::getResponseStr(void) const {
 }
 
 const std::string& Router::getParsedURL(void) const {
-    return parsedURL;
+    return configURL;
 }
 
 void Router::handleRequest() {

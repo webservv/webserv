@@ -14,6 +14,8 @@
 
 class Server;
 
+typedef std::vector<Config::location>::const_iterator iter;
+
 class Router {
 private:
     static std::map<std::string, std::string>   mimeMap;
@@ -25,10 +27,9 @@ private:
     sockaddr_in                         clientAddr;
     const Config::server*               config;
     std::map<std::string, std::string>  CgiVariables;
-    std::string                         parsedURL;
+    std::string                         configURL;
 //Router_error.cpp
 private:
-	void                makeErrorPage(void);
     std::pair<std::string, std::string> \
                         defaultErrorPage(int statusCode);
     void                setCustomErrorPage(const std::string& customPath);

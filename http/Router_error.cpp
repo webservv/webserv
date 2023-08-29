@@ -1,18 +1,6 @@
 #include "Router.hpp"
 #include <utility>
 
-static const std::string	g_dir = "./document";
-static const std::string    g_error_dir = g_dir + "/error.html";
-
-void Router::makeErrorPage(void) {
-    makeErrorResponse(404);
-    if (resourceExists(g_error_dir)) {
-        std::string data;
-        readFile(g_error_dir, data);
-        response.makeBody(data, data.length(), getMIME(g_error_dir));
-    }
-}
-
 std::pair<std::string, std::string> Router::defaultErrorPage(int statusCode) {
     std::string reasonPhrase;
     std::string body;
@@ -80,21 +68,13 @@ std::pair<std::string, std::string> Router::defaultErrorPage(int statusCode) {
 }
 
 void Router::setCustomErrorPage(const std::string& customPath) {
-    std::ifstream file(customPath.c_str());
     std::string body;
-
-    if (file.is_open()) {
-        std::string line;
-        while (getline(file, line)) {
-            body += line;
-            body += "\n";
-        }
-        file.close();
+    try {
+        readFile(customPath, body);
         haveResponse = true;
-    } else {
-        body = "Custom error page not found or not readable.";
+    } catch (const std::exception& e) {
+        return ;
     }
-
     response.makeBody(body, body.length(), "text/html");
 }
 
