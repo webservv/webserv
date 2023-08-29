@@ -28,9 +28,9 @@ private:
     std::string                         parsedURL;
 //Router_error.cpp
 private:
-	void                makeErrorPage(void);
+	void    makeErrorPage(void);
 public:
-    void                makeErrorResponse(int statusCode);
+    void    makeErrorResponse(int statusCode);
 //Router_utils.cpp
 private:
     static void         initializeMimeMap();
