@@ -98,16 +98,13 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
         size_t chunkSize;
         std::stringstream chunkSizeStream(line);
         chunkSizeStream >> std::hex >> chunkSize;
-
         if (chunkSizeStream.fail() || chunkSize == 0) {
             break;
         }
-
         if (chunkSize > MAX_CHUNK_SIZE) {
             error = 413;
             throw std::out_of_range("invalid http, chunk size is too big!");
         }
-
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
         std::string chunkData(buffer.begin(), buffer.end());

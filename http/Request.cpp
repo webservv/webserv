@@ -88,7 +88,7 @@ bool Request::isHeaderEnd(void) const {
 
 bool Request::isRequestEnd(void) const {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
-    
+
     if (it != values.end() && it->second == "chunked") {
         it = values.find("body");
         if (it != values.end()) {

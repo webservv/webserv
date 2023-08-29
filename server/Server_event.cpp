@@ -113,11 +113,11 @@ std::cout << message << std::endl;
 	else {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		
-		const sockaddr_in	        tmp = clientSockets[client_sockfd].getClientAddr();
-        const Config::server*       config = clientSockets[client_sockfd].getConfig();
-		clientSockets.erase(client_sockfd);
-		clientSockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
+		disconnect(client_sockfd);
+		// const sockaddr_in	        tmp = clientSockets[client_sockfd].getClientAddr();
+        // const Config::server*       config = clientSockets[client_sockfd].getConfig();
+		// clientSockets.erase(client_sockfd);
+		// clientSockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
 	}
 }
 

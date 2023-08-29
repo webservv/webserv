@@ -34,7 +34,7 @@ private:
                         defaultErrorPage(int statusCode);
     void                setCustomErrorPage(const std::string& customPath);
 public:
-    void                makeErrorResponse(int statusCode);
+    void    makeErrorResponse(int statusCode);
 //Router_utils.cpp
 private:
     static void         initializeMimeMap();

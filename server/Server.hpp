@@ -31,21 +31,21 @@ private:
     std::map<int, const Config::server*>    configs;
 //Server_event.cpp
 private:
-    void        handleEvent(const struct kevent& cur);
-    void        handleSocketEvent(int socket_fd);
-    void        handlePipeEvent(int identifier, const struct kevent& cur);
-    void        handleIOEvent(int identifier, const struct kevent& cur);
-	void        disconnect(const int client_sockfd);
-    void        receiveBuffer(const int client_sockfd);
-	void        sendBuffer(const int client_sockfd, const intptr_t bufSize);
+    void	handleEvent(const struct kevent& cur);
+    void	handleSocketEvent(int socket_fd);
+    void	handlePipeEvent(int identifier, const struct kevent& cur);
+    void	handleIOEvent(int identifier, const struct kevent& cur);
+	void	disconnect(const int client_sockfd);
+    void	receiveBuffer(const int client_sockfd);
+	void	sendBuffer(const int client_sockfd, const intptr_t bufSize);
 public:
-	void        waitEvents(void);
+	void	waitEvents(void);
 //Server_listen.cpp
 private:
-	int         createSocket();
-	void        setSocketOptions(int socket_fd) const;
-	void        bindSocket(const Config::server& server, int socket_fd) const;
-	void        listenSocket(int socket_fd) const;
+	int 	createSocket();
+	void	setSocketOptions(int socket_fd) const;
+	void	bindSocket(const Config::server& server, int socket_fd) const;
+	void	listenSocket(int socket_fd) const;
 //Server.cpp
 private: 
 	Server();

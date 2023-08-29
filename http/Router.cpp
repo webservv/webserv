@@ -68,8 +68,10 @@ void Router::handleGet() {
 	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
 
 	try {
-		if (!filePath.compare(0, 4, "/cgi"))
+		if (!filePath.compare(0, 4, "/cgi")) {
+			response.makeStatusLine("HTTP/1.1", "200", "OK");
 			connectCGI();
+		}
 		else {
 			if (!resourceExists(filePath)) {
 				makeErrorResponse(404);
@@ -91,15 +93,16 @@ void Router::handleGet() {
 void Router::handlePost() {
 	validateHeaderLength();
 	validateContentType();
+	response.makeStatusLine("HTTP/1.1", "201", "OK");
 	connectCGI();
 }
 
 void Router::handleDelete() {
+	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	connectCGI();
 }
 
 void Router::connectCGI(void) {
-	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	makeCgiVariables();
     if (needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
