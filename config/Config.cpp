@@ -7,7 +7,7 @@
 
 
 Config::Config(const std::string& config_file){
-    checkArgv.hasHttp = false;
+    hasHttp = false;
     std::fstream configParser;
     configParser.open(config_file.c_str());
     if (!configParser.is_open()) {
@@ -19,10 +19,10 @@ Config::Config(const std::string& config_file){
         tokens.pop();
 
         if (token == "http") {
-            if (checkArgv.hasHttp) {
+            if (hasHttp) {
                 throw std::runtime_error("http block already exists");
             }
-            checkArgv.hasHttp = true;
+            hasHttp = true;
 
             if (tokens.front() == "{") {
                 tokens.pop();
@@ -87,6 +87,8 @@ void Config::tokenization(const std::string& line) {
 
 
 void Config::parseHTTP(void) {
+    bool hasServer = false;
+
     if (tokens.empty()) {
         throw std::out_of_range("Unexpected end of file: Expected a http block");
     }
@@ -95,7 +97,7 @@ void Config::parseHTTP(void) {
         tokens.pop();
 
         if (title == "server") {
-            checkArgv.hasServer = true;
+            hasServer = true;
             parseServer();
         } else if (title == "client_max_body_size") {
             parseClientMaxBodySize();
@@ -108,7 +110,7 @@ void Config::parseHTTP(void) {
         throw std::out_of_range("missing '}' in http block");
     }
 
-    if (!checkArgv.hasServer) {
+    if (!hasServer) {
         throw std::out_of_range("missing server block in http");
     }
 
@@ -155,6 +157,12 @@ void Config::parseClientMaxBodySize() {
 void Config::parseServer(void) {
     server new_server;
     std::string buf;
+    bool hasListen = false;
+    bool hasServerName = false;
+    bool hasErrorPage = false;
+    bool hasRoot = false;
+    bool hasIndex = false;
+    bool hasLocation = false;
 
     if (tokens.empty()) {
         throw std::out_of_range("Unexpected end of file: Expected a server block");
@@ -170,35 +178,35 @@ void Config::parseServer(void) {
         tokens.pop();
 
         if (title == "listen") {
-            if (checkArgv.hasListen) {
+            if (hasListen) {
                 throw std::out_of_range("duplicate listen entry in server");
             }
             parseListen(new_server);
-            checkArgv.hasListen = true;
+            hasListen = true;
         } else if (title == "server_name") {
-            if (checkArgv.hasServerName) {
+            if (hasServerName) {
                 throw std::out_of_range("duplicate server_name entry in server");
             }
             parseServerName(new_server);
-            checkArgv.hasServerName = true;
+            hasServerName = true;
         } else if (title == "error_page") {
             parseErrorPage(new_server);
-            checkArgv.hasErrorPage = true;
+            hasErrorPage = true;
         } else if (title == "root") {
-            if (checkArgv.hasRoot) {
+            if (hasRoot) {
                 throw std::out_of_range("duplicate root entry in server");
             }
             parseRoot(new_server);
-            checkArgv.hasRoot = true;
+            hasRoot = true;
         } else if (title == "index") {
-            if (checkArgv.hasIndex) {
+            if (hasIndex) {
                 throw std::out_of_range("duplicate index entry in server");
             }
             parseIndex(new_server);
-            checkArgv.hasIndex = true;
+            hasIndex = true;
         } else if (title == "location") {
             parseLocation(new_server);
-            checkArgv.hasLocation = true;
+            hasLocation = true;
         } else {
             throw std::out_of_range("invalid config - server");
         }
@@ -207,10 +215,10 @@ void Config::parseServer(void) {
         }
     }
 
-    if (!checkArgv.hasListen) {
+    if (!hasListen) {
         throw std::out_of_range("missing listen entry in server");
     }
-    if (!checkArgv.hasLocation) {
+    if (!hasLocation) {
         throw std::out_of_range("missing location entry in server");
     }
 
