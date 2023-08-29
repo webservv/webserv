@@ -34,7 +34,7 @@ int Server::createSocket() {
     return new_socket_fd;
 }
 
-void Server::setSocketOptions(int socket_fd) {
+void Server::setSocketOptions(int socket_fd) const {
     int opt = 1;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         throw std::runtime_error("ERROR setting socket options");
@@ -42,7 +42,7 @@ void Server::setSocketOptions(int socket_fd) {
 }
 
 
-void Server::bindSocket(const Config::server& server, int socket_fd) {
+void Server::bindSocket(const Config::server& server, int socket_fd) const {
     sockaddr_in server_addr;
     const int port = server.listen_port;
     const std::string& host = default_host;
@@ -61,7 +61,7 @@ void Server::bindSocket(const Config::server& server, int socket_fd) {
     }
 }
 
-void Server::listenSocket(int socket_fd)  {
+void Server::listenSocket(int socket_fd) const {
 	if (listen(socket_fd, backlog) < 0) {
 		throw std::runtime_error("ERROR on listening");
 	}

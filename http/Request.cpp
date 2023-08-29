@@ -9,22 +9,24 @@ Request::Request():
     requestLines(),
     method(OTHER),
     values(),
-    haveHeader(false) {}
+    haveHeader(false),
+    error(0) {}
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
     requestLines(copy.requestLines),
     method(copy.method),
     values(copy.values),
-    haveHeader(copy.haveHeader) {}
+    haveHeader(copy.haveHeader),
+    error(copy.error) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
 	requestLines = copy.requestLines;
 	method = copy.method;
 	values = copy.values;
-
     haveHeader = copy.haveHeader;
+    error = copy.error;
 	return *this;
 }
 
@@ -38,12 +40,20 @@ const std::string& Request::getStrMethod(void) const {
     return findValue("method");
 }
 
-const std::string& Request::getUrl(void) const {
+const std::string& Request::getURL(void) const {
 	return findValue("url");
+}
+
+const std::string& Request::getBody(void) const {
+	return findValue("body");
 }
 
 const std::string& Request::getVersion(void) const {
     return findValue("version");
+}
+
+int Request::getError(void) const {
+    return error;
 }
 
 static char tolower_char(unsigned char c) {
@@ -61,10 +71,6 @@ const std::string& Request::findValue(const std::string& headerName) const {
     return emptyString;
 }
 
-const std::string& Request::getBody(void) const {
-	return findValue("body");
-}
-
 void Request::addRequest(const std::string &request) {
     this->requestStr += request;
 }
@@ -80,12 +86,13 @@ bool Request::isHeaderEnd(void) const {
     }
 }
 
-bool Request::isRequestEnd(void) {
-    std::map<std::string, std::string>::iterator it = values.find("transfer-encoding");
+bool Request::isRequestEnd(void) const {
+    std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
     
     if (it != values.end() && it->second == "chunked") {
-        if (values.find("body") != values.end()) {
-            const std::string&  body = values["body"];
+        it = values.find("body");
+        if (it != values.end()) {
+            const std::string&  body = it->second;
             for (size_t i = body.size() - 1; i >= 0; i--) {
                 if (body[i] == '\r' || body[i] == '\n')
                     continue;
@@ -99,24 +106,13 @@ bool Request::isRequestEnd(void) {
     }
     it = values.find("content-length");
     if (it != values.end()) {
-        size_t len = std::atoi(values["content-length"].c_str());
-        if (values.find("body") != values.end() && values["body"].length() == len)
+        size_t len = std::atoi(it->second.c_str());
+        it = values.find("body");
+        if (it != values.end() && it->second.size() == len)
             return true;
         else
             return false;
     }
     else
         return true;
-}
-
-bool Request::needCookie(void) const {
-    const std::string&  scriptName = findValue("script_name");
-
-    if (scriptName == "/cgi/index.py")
-        return true;
-    return false;
-}
-
-int Request::getError(void) const {
-    return error;
 }

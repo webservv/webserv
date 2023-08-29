@@ -19,7 +19,9 @@ Router::Router():
 	haveResponse(false),
 	server(NULL),
 	clientAddr(),
-	config(NULL) {
+	config(NULL),
+	CgiVariables(),
+	parsedURL() {
 		initializeMimeMap();
 	}
 
@@ -29,11 +31,12 @@ Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config
 	haveResponse(false),
 	server(server),
 	clientAddr(clientAddr),
-	config(config) {
+	config(config),
+	CgiVariables(),
+	parsedURL() {
 		initializeMimeMap();
 	}
 
-Router::~Router() {}
 
 Router::Router(const Router& copy):
 	request(copy.request),
@@ -41,7 +44,9 @@ Router::Router(const Router& copy):
 	haveResponse(copy.haveResponse),
 	server(copy.server),
 	clientAddr(copy.clientAddr),
-	config(copy.config) {
+	config(copy.config),
+	CgiVariables(copy.CgiVariables),
+	parsedURL(copy.parsedURL) {
 		initializeMimeMap();
 	}
 
@@ -52,22 +57,12 @@ Router& Router::operator=(const Router& copy) {
 	server = copy.server;
 	clientAddr = copy.clientAddr;
 	config = copy.config;
+	CgiVariables = copy.CgiVariables;
+	parsedURL = copy.parsedURL;
 	return *this;
 }
 
-void Router::handleRequest() {
-    Request::METHOD method = request.getMethod();
-	
-	setParsedURL();
-	parseURL();
-	if (method == Request::GET) {
-        handleGet();
-	} else if (method == Request::POST) {
-		handlePost();
-	} else if (method == Request::DELETE) {
-		handleDelete();
-	}
-}
+Router::~Router() {}
 
 void Router::handleGet() {
 	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
@@ -106,7 +101,7 @@ void Router::handleDelete() {
 void Router::connectCGI(void) {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	makeCgiVariables();
-    if (request.needCookie()) {
+    if (needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
         if (cookie.empty()) {
             cookieId++;
@@ -119,13 +114,98 @@ void Router::connectCGI(void) {
 	}
 	response.setMessageToCGI(request.getBody());
 	response.connectCGI(CgiVariables);
-	server->addPipes(response.getWriteFd(), response.getReadFd(), this);
+	server->addPipes(response.getWriteFD(), response.getReadFD(), this);
+}
+
+bool Router::isBodyRequired(void) const {
+    Request::METHOD method = request.getMethod();
+    switch (method) {
+        case Request::POST:
+            return true;
+        default:
+            return false;
+    }
+}
+
+const std::string& Router::getResponseStr(void) const {
+	return response.getResponseStr();
+}
+
+const std::string& Router::getParsedURL(void) const {
+    return parsedURL;
+}
+
+void Router::handleRequest() {
+    Request::METHOD method = request.getMethod();
+	
+	setParsedURL();
+	parseURL();
+	if (method == Request::GET) {
+        handleGet();
+	} else if (method == Request::POST) {
+		handlePost();
+	} else if (method == Request::DELETE) {
+		handleDelete();
+	}
+}
+
+const Config::server* Router::getConfig(void) const {
+	return config;
 }
 
 const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
 }
 
-const Config::server* Router::getConfig(void) const {
-	return config;
+bool Router::isHeaderEnd(void) const {
+	return request.isHeaderEnd();
+}
+
+bool Router::isRequestEnd() const {
+	return request.isRequestEnd();
+}
+
+void Router::parseRequest(void) {
+    request.parse();
+}
+
+bool Router::getHaveResponse(void) const {
+	return haveResponse;
+}
+
+const std::string& Router::getResponse(void) const {
+	return response.getResponseStr();
+}
+
+void Router::addRequest(const std::string &request) {
+	this->request.addRequest(request);
+}
+
+void Router::setResponse(const std::string &src) {
+	response.setResponse(src);
+}
+
+void Router::readFromCGI(void) {
+	response.readFromCGI();
+}
+
+void Router::writeToCGI(const intptr_t fdBufferSize) {
+	response.writeToCGI(fdBufferSize);
+}
+
+void Router::disconnectCGI(void) {
+	response.disconnectCGI();
+	haveResponse = true;
+}
+
+int Router::getWriteFD(void) const {
+	return response.getWriteFD();
+}
+
+int Router::getReadFD(void) const {
+	return response.getReadFD();
+}
+
+int Router::getRequestError() const {
+    return request.getError();
 }

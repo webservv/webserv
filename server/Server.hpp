@@ -29,6 +29,24 @@ private:
     std::map<int, Router*>                  pipes;
     std::map<std::string, std::string>      cookies;
     std::map<int, const Config::server*>    configs;
+//Server_event.cpp
+private:
+    void        handleEvent(const struct kevent& cur);
+    void        handleSocketEvent(int socket_fd);
+    void        handlePipeEvent(int identifier, const struct kevent& cur);
+    void        handleIOEvent(int identifier, const struct kevent& cur);
+	void        disconnect(const int client_sockfd);
+    void        receiveBuffer(const int client_sockfd);
+	void        sendBuffer(const int client_sockfd, const intptr_t bufSize);
+public:
+	void        waitEvents(void);
+//Server_listen.cpp
+private:
+	int         createSocket();
+	void        setSocketOptions(int socket_fd) const;
+	void        bindSocket(const Config::server& server, int socket_fd) const;
+	void        listenSocket(int socket_fd) const;
+//Server.cpp
 private: 
 	Server();
 	Server(const Config& config);
@@ -37,28 +55,14 @@ private:
 public:
 	~Server();
 private:
-    void        receiveBuffer(const int client_sockfd);
-    void        writeToFile(const char* buf);
-    void        processRequest(const std::string& buf, const int client_sockfd);
 	void        addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
-	void        disconnect(const int client_sockfd);
-	void        sendBuffer(const int client_sockfd, const intptr_t bufSize);
 	in_addr_t   IPToInt(const std::string& ip) const;
-    void        handleEvent(const struct kevent& cur);
-    void        handleSocketEvent(int socket_fd);
-    void        handlePipeEvent(int identifier, const struct kevent& cur);
-    void        handleIOEvent(int identifier, const struct kevent& cur);
+    int         getRequestError(const int clientSocketFD) const;
 public:
 	static Server&      getInstance(const Config& config);
-	int                 createSocket();
-	void                setSocketOptions(int socket_fd);
-	void                bindSocket(const Config::server& server, int socket_fd);
-	void                listenSocket(int socket_fd);
-	void                waitEvents(void);
 	void                addPipes(const int writeFd, const int readFd, Router* const router);
-    int                 getRequestError(const int client_sockfd);
     void                addCookie(const std::string& key, const std::string& value);
-    const std::string&  getCookie(const std::string& key);
+    const std::string&  getCookie(const std::string& key) const;
 };
 
 #endif

@@ -5,9 +5,27 @@
 #include <algorithm>
 #include <sstream>
 
+Config::Config()
+    : tokens()
+    , servers()
+    , clientMaxBodySize()
+    , hasHTTP() {}
 
-Config::Config(const std::string& config_file){
-    hasHttp = false;
+Config::Config(const Config& copy) {
+    static_cast<void>(copy);
+}
+
+Config& Config::operator=(const Config& copy) {
+	static_cast<void>(copy);
+	return *this;
+}
+
+Config::Config(const std::string& config_file)
+    : tokens()
+    , servers()
+    , clientMaxBodySize()
+    , hasHTTP(false)
+    {
     std::fstream configParser;
     configParser.open(config_file.c_str());
     if (!configParser.is_open()) {
@@ -19,10 +37,10 @@ Config::Config(const std::string& config_file){
         tokens.pop();
 
         if (token == "http") {
-            if (hasHttp) {
+            if (hasHTTP) {
                 throw std::runtime_error("http block already exists");
             }
-            hasHttp = true;
+            hasHTTP = true;
 
             if (tokens.front() == "{") {
                 tokens.pop();
@@ -35,6 +53,8 @@ Config::Config(const std::string& config_file){
         }
     }
 }
+
+Config::~Config() {}
 
 void Config::parseLine(std::fstream& configParser) {
 	std::string line;
@@ -52,39 +72,6 @@ void Config::parseLine(std::fstream& configParser) {
 		tokenization(line);
     }
 }
-
-void Config::trim(std::string &str) const {
-    std::string::const_iterator start = str.begin();
-    while (start != str.end() && std::isspace(*start)) {
-        ++start;
-    }
-
-    if (start == str.end()) {
-        str.clear();
-        return;
-    }
-
-    std::string::const_iterator end = str.end();
-    --end;
-    while (end != start && std::isspace(*end)) {
-        --end;
-    }
-
-    str = std::string(start, end + 1);
-}
-
-
-void Config::tokenization(const std::string& line) {
-
-	std::istringstream tokenStream(line);
-	std::string token;
-	while (std::getline(tokenStream, token, ' ')) {
-		if (!token.empty()) {
-			tokens.push(token);
-		}
-	}
-}
-
 
 void Config::parseHTTP(void) {
     bool hasServer = false;
@@ -115,43 +102,6 @@ void Config::parseHTTP(void) {
     }
 
     tokens.pop();
-}
-
-void Config::parseClientMaxBodySize() {
-    if (tokens.empty()) {
-        throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
-    }
-    std::string valueStr = tokens.front();
-    tokens.pop();
-
-    if (valueStr.back() != ';') {
-        throw std::out_of_range("missing ';' after client_max_body_size");
-    }
-    valueStr.pop_back();
-
-    int multiplier = 1;
-    if (valueStr.back() == 'M') {
-        multiplier = 1024 * 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'K') {
-        multiplier = 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'G') {
-        multiplier = 1024 * 1024 * 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'B') {
-        valueStr.pop_back();
-    } else {
-        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
-    }
-
-    std::stringstream ss(valueStr);
-    ss >> clientMaxBodySize;
-    if (ss.fail() || clientMaxBodySize < 0) {
-        throw std::out_of_range("invalid client_max_body_size, must be non-negative");
-    }
-
-    clientMaxBodySize *= multiplier;
 }
 
 void Config::parseServer(void) {
@@ -276,54 +226,6 @@ void Config::parseServerName(server &new_server) {
     new_server.server_name = name;
 }
 
-void Config::parseErrorPage(server& new_server) {
-    if (tokens.size() < 2) {
-        throw std::out_of_range("error_page expects at least 2 arguments");
-    }
-    std::string token = tokens.front();
-    tokens.pop();
-
-    std::vector<int> errorCodes;
-
-    if (token == "/" || token.back() == ';') {
-        throw std::out_of_range("missing error codes");
-    }
-
-    while (token.back() != ';') {
-        int errorCode;
-        std::stringstream ss1(token);
-        ss1 >> errorCode;
-        if (ss1.fail()) {
-            throw std::out_of_range("invalid error code");
-        }
-        if (errorCode < 100 || errorCode > 599) {
-            throw std::out_of_range("error code out of range");
-        }
-        errorCodes.push_back(errorCode);
-
-        token = tokens.front();
-        tokens.pop();
-    }
-
-    if (tokens.empty()) {
-        throw std::out_of_range("missing error page");
-    }
-    std::string errorPage = token;
-
-    if (errorPage[errorPage.size() - 1] != ';') {
-        throw std::out_of_range("missing ';' after error page");
-    }
-    errorPage.erase(errorPage.size() - 1);
-
-    if (errorPage.empty()) {
-        throw std::out_of_range("error page cannot be empty");
-    }
-
-    for (std::vector<int>::iterator it = errorCodes.begin(); it != errorCodes.end(); ++it) {
-        new_server.errorPages.insert(std::make_pair(*it, errorPage));
-    }
-}
-
 void Config::parseRoot(server &new_server) {
     if (tokens.size() < 2) {
         throw std::out_of_range("root expects exactly 2 arguments");
@@ -356,6 +258,42 @@ void Config::parseIndex(server &new_server) {
     tokens.pop();
 }
 
+void Config::parseClientMaxBodySize() {
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
+    }
+    std::string valueStr = tokens.front();
+    tokens.pop();
+
+    if (valueStr.back() != ';') {
+        throw std::out_of_range("missing ';' after client_max_body_size");
+    }
+    valueStr.pop_back();
+
+    int multiplier = 1;
+    if (valueStr.back() == 'M') {
+        multiplier = 1024 * 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'K') {
+        multiplier = 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'G') {
+        multiplier = 1024 * 1024 * 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'B') {
+        valueStr.pop_back();
+    } else {
+        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
+    }
+
+    std::stringstream ss(valueStr);
+    ss >> clientMaxBodySize;
+    if (ss.fail() || clientMaxBodySize < 0) {
+        throw std::out_of_range("invalid client_max_body_size, must be non-negative");
+    }
+
+    clientMaxBodySize *= multiplier;
+}
 
 void Config::parseLocation(server& server) {
     location new_location;
@@ -422,6 +360,54 @@ void Config::parseLocation(server& server) {
     }
 
     server.locations.push_back(new_location);
+}
+
+void Config::parseErrorPage(server& new_server) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("error_page expects at least 2 arguments");
+    }
+    std::string token = tokens.front();
+    tokens.pop();
+
+    std::vector<int> errorCodes;
+
+    if (token == "/" || token.back() == ';') {
+        throw std::out_of_range("missing error codes");
+    }
+
+    while (token.back() != ';') {
+        int errorCode;
+        std::stringstream ss1(token);
+        ss1 >> errorCode;
+        if (ss1.fail()) {
+            throw std::out_of_range("invalid error code");
+        }
+        if (errorCode < 100 || errorCode > 599) {
+            throw std::out_of_range("error code out of range");
+        }
+        errorCodes.push_back(errorCode);
+
+        token = tokens.front();
+        tokens.pop();
+    }
+
+    if (tokens.empty()) {
+        throw std::out_of_range("missing error page");
+    }
+    std::string errorPage = token;
+
+    if (errorPage[errorPage.size() - 1] != ';') {
+        throw std::out_of_range("missing ';' after error page");
+    }
+    errorPage.erase(errorPage.size() - 1);
+
+    if (errorPage.empty()) {
+        throw std::out_of_range("error page cannot be empty");
+    }
+
+    for (std::vector<int>::iterator it = errorCodes.begin(); it != errorCodes.end(); ++it) {
+        new_server.errorPages.insert(std::make_pair(*it, errorPage));
+    }
 }
 
 void Config::parseLimitExcept(location& loc) {
@@ -539,7 +525,6 @@ void Config::parseFastcgiParam(location& loc) {
     tokens.pop();
 }
 
-
 void Config::parseReturn(location& loc) {
     if (tokens.size() < 3) {
         throw std::out_of_range("return expects exactly 3 arguments");
@@ -563,14 +548,36 @@ void Config::parseReturn(location& loc) {
     }
 }
 
-Config::~Config() {}
-Config::Config(const Config& copy) {
-    static_cast<void>(copy);
+void Config::trim(std::string &str) const {
+    std::string::const_iterator start = str.begin();
+    while (start != str.end() && std::isspace(*start)) {
+        ++start;
+    }
+
+    if (start == str.end()) {
+        str.clear();
+        return;
+    }
+
+    std::string::const_iterator end = str.end();
+    --end;
+    while (end != start && std::isspace(*end)) {
+        --end;
+    }
+
+    str = std::string(start, end + 1);
 }
 
-Config& Config::operator=(const Config& copy) {
-	static_cast<void>(copy);
-	return *this;
+
+void Config::tokenization(const std::string& line) {
+
+	std::istringstream tokenStream(line);
+	std::string token;
+	while (std::getline(tokenStream, token, ' ')) {
+		if (!token.empty()) {
+			tokens.push(token);
+		}
+	}
 }
 
 const std::vector<Config::server>& Config::getServers() const {

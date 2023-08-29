@@ -30,7 +30,7 @@ void Router::initializeMimeMap() {
     }
 }
 
-std::string Router::getExtension(const std::string& url) {
+std::string Router::getExtension(const std::string& url) const {
     size_t extensionStart = url.find_last_of('.');
     if (extensionStart == std::string::npos) {
         return "";
@@ -38,34 +38,31 @@ std::string Router::getExtension(const std::string& url) {
     return url.substr(extensionStart + 1);
 }
 
-std::string Router::findMimeType(const std::string& extension) {
+const std::string& Router::findMimeType(const std::string& extension) const {
     std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
+    static const std::string    octet_stream = "application/octet-stream";
     if (it != mimeMap.end()) {
         return it->second;
     } else {
-        return "application/octet-stream";
+        return octet_stream;
     }
 }
 
-std::string Router::getMIME(const std::string& url) {
+const std::string& Router::getMIME(const std::string& url) const {
     const std::string& extension = getExtension(url);
     return findMimeType(extension);
 }
 
-bool Router::resourceExists(const std::string& filePath) {
+bool Router::resourceExists(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
-void Router::readFile(const std::string& filePath, std::string& content) {
+void Router::readFile(const std::string& filePath, std::string& content) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
         throw std::ios_base::failure("File open error.");
     }
     content.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-}
-
-const std::string& Router::getResponseStr(void) const {
-	return response.getResponseStr();
 }
 
 void Router::makeCgiVariables(void) {
@@ -89,34 +86,6 @@ void Router::makeCgiVariables(void) {
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
-}
-
-std::string Router::URLDecode(const std::string &input) {
-    std::ostringstream oss;
-    for (std::size_t i = 0; i < input.length(); ++i) {
-        if (input[i] == '%') {
-            int value;
-            std::istringstream is(input.substr(i + 1, 2));
-            is >> std::hex >> value;
-            oss << static_cast<char>(value);
-            i += 2;
-        } else if (input[i] == '+') {
-            oss << ' ';
-        } else {
-            oss << input[i];
-        }
-    }
-    return oss.str();
-}
-
-bool Router::isBodyRequired() {
-    Request::METHOD method = request.getMethod();
-    switch (method) {
-        case Request::POST:
-            return true;
-        default:
-            return false;
-    }
 }
 
 void Router::validateHeaderLength() {
@@ -166,141 +135,8 @@ void Router::validateContentType() {
     }
 }
 
-void Router::parsePostData(std::string& title, std::string& postContent) {
-	const std::string& content = request.getBody();
-	std::stringstream ss(content);
-	std::string key;
-	std::string value;
-
-    if (content == "0" || content.size() == 0) {
-        makeErrorResponse(405);
-        throw std::runtime_error("Post data cannot be empty");
-    }
-	while (std::getline(ss, key, '=')) {
-		std::getline(ss, value, '&');
-		if (key == "title") title = URLDecode(value);
-		else if (key == "content") postContent = URLDecode(value);
-        else {
-            makeErrorResponse(400);
-            throw std::runtime_error("Invalid post data");
-        }
-	}
-    if (postContent.size() == 0) {
-        makeErrorResponse(400);
-        throw std::runtime_error("Post content cannot be empty");
-    }
-}
-
-void Router::appendPostToFile(const std::string& title, const std::string& postContent) {
-    std::ofstream outFile(post_txt.c_str(), std::ios::app);
-    if (!outFile) {
-        std::cerr << "Could not open or create posts.txt" << std::endl;
-        makeErrorResponse(500);
-        throw std::runtime_error("File error");
-    }
-    outFile << "Title: " << title << "\nContent: " << postContent << "\n\n";
-    outFile.close();
-}
-
-void Router::readAndModifyHTML(std::string& htmlResponse) {
-    std::ifstream inFile(index_html.c_str());
-    if (!inFile.is_open()) {
-        std::cerr << "Error opening " << index_html << std::endl;
-        makeErrorResponse(500);
-        throw std::runtime_error("File open error");
-    }
-
-    std::ostringstream oss;
-    char c;
-    while (inFile.get(c)) {
-        oss.put(c);
-    }
-    htmlResponse = oss.str();
-    inFile.close();
-
-    std::string commentStr = "<!-- You can add forums, threads, posts, etc. here -->";
-    std::size_t commentPos = htmlResponse.find(commentStr);
-    if (commentPos != std::string::npos) {
-        std::string postsHtml = readPosts();
-        htmlResponse.replace(commentPos, commentStr.length(), postsHtml);
-    } else {
-        std::cerr << "Placeholder comment not found in HTML file." << std::endl;
-    }
-}
-
-void Router::makeHTMLResponse(const std::string& htmlResponse) {
-	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	response.makeBody(htmlResponse, htmlResponse.size(), "text/html");
-}
-
-std::string Router::readPosts() {
-	std::ifstream file(post_txt);
-	std::string postHtml;
-	std::string line;
-
-	while (std::getline(file, line)) {
-		postHtml += "<p>" + line + "</p>";
-	}
-
-	file.close();
-	return postHtml;
-}
-
-bool Router::isHeaderEnd() {
-	return request.isHeaderEnd();
-}
-
-void Router::parse(void) {
-    request.parse();
-}
-
-bool Router::isRequestEnd() {
-	return request.isRequestEnd();
-}
-
-bool Router::getHaveResponse(void) const {
-	return haveResponse;
-}
-
-const std::string& Router::getResponse(void) const {
-	return response.getResponseStr();
-}
-
-void Router::addRequest(const std::string &request) {
-	this->request.addRequest(request);
-}
-
-void Router::setResponse(const std::string &src) {
-	response.setResponse(src);
-}
-
-void Router::readCGI(void) {
-	response.readCGI();
-}
-
-void Router::writeCGI(const intptr_t fdBufferSize) {
-	response.writeCGI(fdBufferSize);
-}
-
-void Router::disconnectCGI(void) {
-	response.disconnectCGI();
-	haveResponse = true;
-}
-
-int Router::getWriteFd(void) const {
-	return response.getWriteFd();
-}
-
-int Router::getReadFd(void) const {
-	return response.getReadFd();
-}
-
-int Router::getRequestError() const {
-    return request.getError();
-}
-
 void Router::setParsedURL(void) {
-    const std::string& URL = request.getUrl();
+    const std::string& URL = request.getURL();
 
     //WIP: get real path from server.conf
     parsedURL = URL; //temporary
@@ -321,10 +157,6 @@ void Router::parseURL(void) {
         CgiVariables["QUERY_STRING"] = url.substr(queryIndex + 1, -1);
 }
 
-const std::string& Router::getParsedURL(void) const {
-    return parsedURL;
-}
-
 std::string Router::intToIP(in_addr_t ip) const {
 	std::string strIP;
 	std::stringstream ss;
@@ -339,4 +171,12 @@ std::string Router::intToIP(in_addr_t ip) const {
 	}
 	strIP.pop_back();
 	return strIP;
+}
+
+bool Router::needCookie(void) const {
+    std::map<std::string, std::string>::const_iterator it = CgiVariables.find("SCRIPT_NAME");
+    
+    if (it->second == "/cgi/index.py") //hard coding until config file.
+        return true;
+    return false;
 }

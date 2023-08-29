@@ -19,19 +19,6 @@
 #include <utility>
 #define BUFFER_SIZE 1000 // we should put it 100 
 
-void Server::waitEvents() {
-    const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-    IOchanges.clear();
-
-    if (events < 0) {
-        throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
-    }
-
-    for (int i = 0; i < events; ++i) {
-        handleEvent(IOevents[i]);
-    }
-}
-
 void Server::handleEvent(const struct kevent& cur) {
     if (cur.flags & EV_ERROR) {
         throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
@@ -69,9 +56,9 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
     if (cur.flags & EV_EOF) {
         tmp.disconnectCGI();
     } else if (cur.filter == EVFILT_READ) {
-        tmp.readCGI();
+        tmp.readFromCGI();
     } else if (cur.filter == EVFILT_WRITE) {
-        tmp.writeCGI(cur.data);
+        tmp.writeToCGI(cur.data);
     }
 }
 
@@ -102,7 +89,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 	clientSockets[client_sockfd].addRequest(buf);
 	if (clientSockets[client_sockfd].isHeaderEnd()) {
         try {
-		    clientSockets[client_sockfd].parse();
+		    clientSockets[client_sockfd].parseRequest();
         } catch (const std::exception& e) {
             int error = getRequestError(client_sockfd);
             clientSockets[client_sockfd].makeErrorResponse(error);
@@ -132,4 +119,17 @@ std::cout << message << std::endl;
 		clientSockets.erase(client_sockfd);
 		clientSockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
 	}
+}
+
+void Server::waitEvents() {
+    const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
+    IOchanges.clear();
+
+    if (events < 0) {
+        throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
+    }
+
+    for (int i = 0; i < events; ++i) {
+        handleEvent(IOevents[i]);
+    }
 }
