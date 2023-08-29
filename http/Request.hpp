@@ -52,8 +52,7 @@ public:
 	const std::string&				getVersion(void) const;
 	void							addRequest(const std::string& request);
     bool							isHeaderEnd(void) const;
-	bool							isRequestEnd(void);
-	bool							needCookie(void) const;
+	bool							isRequestEnd(void) const;
     int								getError(void) const;
     void							parse(void);
 };

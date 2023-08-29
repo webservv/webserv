@@ -106,7 +106,7 @@ void Router::handleDelete() {
 void Router::connectCGI(void) {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	makeCgiVariables();
-    if (request.needCookie()) {
+    if (needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
         if (cookie.empty()) {
             cookieId++;

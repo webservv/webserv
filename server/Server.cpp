@@ -103,8 +103,9 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
-int Server::getRequestError(const int client_sockfd) const {
-    return clientSockets[client_sockfd].getRequestError();
+int Server::getRequestError(const int clientSocketFD) const {
+    std::map<int, Router>::const_iterator it = clientSockets.find(clientSocketFD);
+    return it->second.getRequestError();
 }
 
 in_addr_t Server::IPToInt(const std::string& ip) const {
@@ -129,6 +130,7 @@ void Server::addCookie(const std::string& key, const std::string& value) {
     cookies[key] = value;
 }
 
-const std::string& Server::getCookie(const std::string& key) {
-    return cookies[key];
+const std::string& Server::getCookie(const std::string& key) const {
+    std::map<std::string, std::string>::const_iterator it = cookies.find(key);
+    return it->second;
 }

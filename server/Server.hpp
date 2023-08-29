@@ -50,7 +50,7 @@ private:
 	void        setSocketOptions(int socket_fd) const;
 	void        bindSocket(const Config::server& server, int socket_fd) const;
 	void        listenSocket(int socket_fd) const;
-    int         getRequestError(const int client_sockfd) const;
+    int         getRequestError(const int clientSocketFD) const;
 public:
 	static Server&      getInstance(const Config& config);
 	void                waitEvents(void);
