@@ -37,14 +37,13 @@ private:
 	void				handleGet(void);
     void				handlePost(void);
     void				handleDelete(void);
-	std::string         getMIME(const std::string& url);
+	const std::string&  getMIME(const std::string& url) const;
 	const std::string&	getResponseStr(void) const;
     void                connectCGI(void);
     std::string         intToIP(in_addr_t ip) const;
-    std::string         getExtension(const std::string& url);
-    std::string         findMimeType(const std::string& extension);
-    bool                resourceExists(const std::string& filePath);
-    void                parseURL(std::string& filePath);
+    std::string         getExtension(const std::string& url) const;
+    const std::string&  findMimeType(const std::string& extension) const;
+    bool                resourceExists(const std::string& filePath) const;
     void                readFile(const std::string& filePath, std::string& content);
 	void                makeErrorPage(void);
     std::string         readPosts(void);
@@ -77,7 +76,7 @@ public:
     int                     getReadFd(void) const;
     int                     getRequestError(void) const;
     const sockaddr_in&      getClientAddr(void) const;
-    void                    parse(void);
+    void                    parseRequest(void);
 };
 
 #endif

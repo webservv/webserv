@@ -102,7 +102,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 	clientSockets[client_sockfd].addRequest(buf);
 	if (clientSockets[client_sockfd].isHeaderEnd()) {
         try {
-		    clientSockets[client_sockfd].parse();
+		    clientSockets[client_sockfd].parseRequest();
         } catch (const std::exception& e) {
             int error = getRequestError(client_sockfd);
             clientSockets[client_sockfd].makeErrorResponse(error);

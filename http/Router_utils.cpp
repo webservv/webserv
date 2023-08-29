@@ -30,7 +30,7 @@ void Router::initializeMimeMap() {
     }
 }
 
-std::string Router::getExtension(const std::string& url) {
+std::string Router::getExtension(const std::string& url) const {
     size_t extensionStart = url.find_last_of('.');
     if (extensionStart == std::string::npos) {
         return "";
@@ -38,21 +38,22 @@ std::string Router::getExtension(const std::string& url) {
     return url.substr(extensionStart + 1);
 }
 
-std::string Router::findMimeType(const std::string& extension) {
+const std::string& Router::findMimeType(const std::string& extension) const {
     std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
+    static const std::string    octet_stream = "application/octet-stream";
     if (it != mimeMap.end()) {
         return it->second;
     } else {
-        return "application/octet-stream";
+        return octet_stream;
     }
 }
 
-std::string Router::getMIME(const std::string& url) {
+const std::string& Router::getMIME(const std::string& url) const {
     const std::string& extension = getExtension(url);
     return findMimeType(extension);
 }
 
-bool Router::resourceExists(const std::string& filePath) {
+bool Router::resourceExists(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
@@ -250,7 +251,7 @@ bool Router::isHeaderEnd() {
 	return request.isHeaderEnd();
 }
 
-void Router::parse(void) {
+void Router::parseRequest(void) {
     request.parse();
 }
 

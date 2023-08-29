@@ -38,8 +38,6 @@ public:
 	~Server();
 private:
     void        receiveBuffer(const int client_sockfd);
-    void        writeToFile(const char* buf);
-    void        processRequest(const std::string& buf, const int client_sockfd);
 	void        addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
 	void        disconnect(const int client_sockfd);
 	void        sendBuffer(const int client_sockfd, const intptr_t bufSize);
@@ -48,17 +46,17 @@ private:
     void        handleSocketEvent(int socket_fd);
     void        handlePipeEvent(int identifier, const struct kevent& cur);
     void        handleIOEvent(int identifier, const struct kevent& cur);
+	int         createSocket();
+	void        setSocketOptions(int socket_fd) const;
+	void        bindSocket(const Config::server& server, int socket_fd) const;
+	void        listenSocket(int socket_fd) const;
+    int         getRequestError(const int client_sockfd) const;
 public:
 	static Server&      getInstance(const Config& config);
-	int                 createSocket();
-	void                setSocketOptions(int socket_fd);
-	void                bindSocket(const Config::server& server, int socket_fd);
-	void                listenSocket(int socket_fd);
 	void                waitEvents(void);
 	void                addPipes(const int writeFd, const int readFd, Router* const router);
-    int                 getRequestError(const int client_sockfd);
     void                addCookie(const std::string& key, const std::string& value);
-    const std::string&  getCookie(const std::string& key);
+    const std::string&  getCookie(const std::string& key) const;
 };
 
 #endif

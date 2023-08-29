@@ -103,7 +103,7 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
-int Server::getRequestError(const int client_sockfd) {
+int Server::getRequestError(const int client_sockfd) const {
     return clientSockets[client_sockfd].getRequestError();
 }
 
