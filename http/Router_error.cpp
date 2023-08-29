@@ -3,6 +3,15 @@
 static const std::string	g_dir = "./document";
 static const std::string    g_error_dir = g_dir + "/error.html";
 
+void Router::makeErrorPage(void) {
+    makeErrorResponse(404);
+    if (resourceExists(g_error_dir)) {
+        std::string data;
+        readFile(g_error_dir, data);
+        response.makeBody(data, data.length(), getMIME(g_error_dir));
+    }
+}
+
 void Router::makeErrorResponse(int statusCode) {
     std::string reasonPhrase;
     std::string body;
@@ -70,13 +79,4 @@ void Router::makeErrorResponse(int statusCode) {
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
     response.makeBody(body, body.length(), "text/plain");
     haveResponse = true;
-}
-
-void Router::makeErrorPage(void) {
-    makeErrorResponse(404);
-    if (resourceExists(g_error_dir)) {
-        std::string data;
-        readFile(g_error_dir, data);
-        response.makeBody(data, data.length(), getMIME(g_error_dir));
-    }
 }
