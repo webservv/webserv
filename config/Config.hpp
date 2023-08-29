@@ -28,13 +28,24 @@ struct server{
 	std::string server_name;
 	std::map<int, std::string> errorPages;
     std::string root_path;
-    std::string index_file;
+    std::vector<std::string> index;
 	std::vector<Config::location> locations;
     };
+struct check_argv {
+    bool hasHttp;
+    bool hasServer;
+    bool hasListen;
+    bool hasServerName;
+    bool hasErrorPage;
+    bool hasRoot;
+    bool hasIndex;
+    bool hasLocation;
+};
 private:
 	std::queue<std::string>		tokens;
-	std::vector<Config::server>			servers;
+	std::vector<Config::server> servers;
     int                         clientMaxBodySize;
+    check_argv                  checkArgv;
 private:
 	Config(const Config& copy);
 	Config&	operator=(const Config& copy);
