@@ -65,10 +65,6 @@ void Router::readFile(const std::string& filePath, std::string& content) const {
     content.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
-const std::string& Router::getResponseStr(void) const {
-	return response.getResponseStr();
-}
-
 void Router::makeCgiVariables(void) {
     std::stringstream   ss;
     const std::string&  host = request.findValue("host");
@@ -90,16 +86,6 @@ void Router::makeCgiVariables(void) {
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
-}
-
-bool Router::isBodyRequired(void) const {
-    Request::METHOD method = request.getMethod();
-    switch (method) {
-        case Request::POST:
-            return true;
-        default:
-            return false;
-    }
 }
 
 void Router::validateHeaderLength() {
@@ -149,61 +135,8 @@ void Router::validateContentType() {
     }
 }
 
-bool Router::isHeaderEnd(void) const {
-	return request.isHeaderEnd();
-}
-
-void Router::parseRequest(void) {
-    request.parse();
-}
-
-bool Router::isRequestEnd() const {
-	return request.isRequestEnd();
-}
-
-bool Router::getHaveResponse(void) const {
-	return haveResponse;
-}
-
-const std::string& Router::getResponse(void) const {
-	return response.getResponseStr();
-}
-
-void Router::addRequest(const std::string &request) {
-	this->request.addRequest(request);
-}
-
-void Router::setResponse(const std::string &src) {
-	response.setResponse(src);
-}
-
-void Router::readCGI(void) {
-	response.readFromCGI();
-}
-
-void Router::writeCGI(const intptr_t fdBufferSize) {
-	response.writeToCGI(fdBufferSize);
-}
-
-void Router::disconnectCGI(void) {
-	response.disconnectCGI();
-	haveResponse = true;
-}
-
-int Router::getWriteFD(void) const {
-	return response.getWriteFD();
-}
-
-int Router::getReadFD(void) const {
-	return response.getReadFD();
-}
-
-int Router::getRequestError() const {
-    return request.getError();
-}
-
 void Router::setParsedURL(void) {
-    const std::string& URL = request.getUrl();
+    const std::string& URL = request.getURL();
 
     //WIP: get real path from server.conf
     parsedURL = URL; //temporary
@@ -222,10 +155,6 @@ void Router::parseURL(void) {
         CgiVariables["PATH_INFO"] = url.substr(pathIndex, queryIndex - pathIndex);
     if (queryIndex != std::string::npos)
         CgiVariables["QUERY_STRING"] = url.substr(queryIndex + 1, -1);
-}
-
-const std::string& Router::getParsedURL(void) const {
-    return parsedURL;
 }
 
 std::string Router::intToIP(in_addr_t ip) const {

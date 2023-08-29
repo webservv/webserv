@@ -41,6 +41,38 @@ Response& Response::operator=(const Response& copy) {
 
 Response::~Response() {}
 
+void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) const {
+	char**	envList = makeEnvList(envs);
+
+	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
+		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+	if (dup2(writePipe[READ], STDIN_FILENO) < 0)
+		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+	close(readPipe[READ]);
+	close(readPipe[WRITE]);
+	close(writePipe[READ]);
+	close(writePipe[WRITE]);
+	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
+		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+}
+
+char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
+	char**	envList = new char*[envs.size() + 1];
+	int				i = 0;
+
+	for (std::map<std::string, std::string>::const_iterator it = envs.begin(); it != envs.end(); it++) {
+		std::string	tmp = it->first + "=" + it->second;
+		envList[i] = new char[tmp.size() + 1];
+		for (size_t j = 0; j < tmp.size(); j++) {
+			envList[i][j] = tmp[j];
+		}
+		envList[i][tmp.size()] = '\0';
+		i++;
+	}
+	envList[i] = NULL;
+	return envList;
+}
+
 void Response::makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage) {
 	responseStr += version + " " + statusCode + " " + statusMessage + "\r\n";
 }
@@ -96,38 +128,6 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	close(writePipe[READ]);
 	writeFD = writePipe[WRITE];
 	readFD = readPipe[READ];
-}
-
-void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, std::string>& envs) const {
-	char**	envList = makeEnvList(envs);
-
-	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
-	if (dup2(writePipe[READ], STDIN_FILENO) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
-	close(readPipe[READ]);
-	close(readPipe[WRITE]);
-	close(writePipe[READ]);
-	close(writePipe[WRITE]);
-	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
-}
-
-char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
-	char**	envList = new char*[envs.size() + 1];
-	int				i = 0;
-
-	for (std::map<std::string, std::string>::const_iterator it = envs.begin(); it != envs.end(); it++) {
-		std::string	tmp = it->first + "=" + it->second;
-		envList[i] = new char[tmp.size() + 1];
-		for (size_t j = 0; j < tmp.size(); j++) {
-			envList[i][j] = tmp[j];
-		}
-		envList[i][tmp.size()] = '\0';
-		i++;
-	}
-	envList[i] = NULL;
-	return envList;
 }
 
 void Response::readFromCGI(void) {
