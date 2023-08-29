@@ -26,41 +26,40 @@ static const std::string    post_txt = "./document/posts.txt";
 Server* Server::instance = NULL;
 
 Server::Server():
+    kqueueFd(NULL_FD),
+    listenSockets(),
 	IOchanges(),
 	IOevents(EVENTS_SIZE),
-	sockets(),
+	clientSockets(),
 	pipes(),
-    cookies() {}
+    cookies(),
+    configs() {}
 
-Server::Server(const Config& config)
-    : IOchanges(),
-      IOevents(EVENTS_SIZE),
-      sockets(),
-      pipes(),
-      cookies()
+Server::Server(const Config& config):
+    kqueueFd(NULL_FD),
+    listenSockets(),
+    IOchanges(),
+    IOevents(EVENTS_SIZE),
+    clientSockets(),
+    pipes(),
+    cookies(),
+    configs()
 {
-    kqueue_fd = kqueue();
-    if (kqueue_fd < 0) {
+    kqueueFd = kqueue();
+    if (kqueueFd < 0) {
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
 
-    const std::vector<server>& servers = config.getServers();
-    for (std::vector<server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        const server& new_server = *it;
+    const std::vector<Config::server>& servers = config.getServers();
+    for (std::vector<Config::server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        const Config::server& new_server = *it;
         
         int new_socket_fd = createSocket();
         setSocketOptions(new_socket_fd);
-
         bindSocket(new_server, new_socket_fd);
         listenSocket(new_socket_fd);
-
-        struct kevent change;
-        EV_SET(&change, new_socket_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-        if (kevent(kqueue_fd, &change, 1, NULL, 0, NULL) == -1) {
-            throw std::runtime_error("kevent register error: " + std::string(strerror(errno)));
-        }
-
-        socket_fds[new_socket_fd] = new_socket_fd;
+        listenSockets[new_socket_fd] = new_socket_fd;
+        configs[new_socket_fd] = &new_server;
         std::cout << "Server started on " << new_server.server_name << ":"
                   << new_server.listen_port << ", waiting for connections..." << std::endl;
     }
@@ -74,13 +73,13 @@ Server& Server::operator=(const Server& copy) {
 }
 
 Server::~Server() {
-    for (std::map<int, Router>::iterator it = sockets.begin(); it != sockets.end(); ++it) {
+    for (std::map<int, Router>::iterator it = clientSockets.begin(); it != clientSockets.end(); ++it) {
         disconnect(it->first);
     }
-    for (std::map<int, int>::iterator it = socket_fds.begin(); it != socket_fds.end(); ++it) {
+    for (std::map<int, int>::iterator it = listenSockets.begin(); it != listenSockets.end(); ++it) {
         close(it->second);
     }
-    close(kqueue_fd);
+    close(kqueueFd);
 }
 
 Server& Server::getInstance(const Config& config) {
@@ -105,7 +104,7 @@ void Server::addPipes(const int writeFd, const int readFd, Router* const router)
 }
 
 int Server::getRequestError(const int client_sockfd) {
-    return sockets[client_sockfd].getRequestError();
+    return clientSockets[client_sockfd].getRequestError();
 }
 
 in_addr_t Server::IPToInt(const std::string& ip) const {

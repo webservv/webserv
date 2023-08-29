@@ -20,7 +20,7 @@
 #define BUFFER_SIZE 1000 // we should put it 100 
 
 void Server::waitEvents() {
-    const int events = kevent(kqueue_fd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
+    const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
     IOchanges.clear();
 
     if (events < 0) {
@@ -38,10 +38,9 @@ void Server::handleEvent(const struct kevent& cur) {
     }
 
     int identifier = static_cast<int>(cur.ident);
-    if (socket_fds.find(identifier) != socket_fds.end()) {
-        std::cout << "socket event" << std::endl;
+    if (listenSockets.find(identifier) != listenSockets.end()) {
         handleSocketEvent(identifier);
-    } else if (sockets.find(identifier) != sockets.end()) {
+    } else if (clientSockets.find(identifier) != clientSockets.end()) {
         handleIOEvent(identifier, cur);
     } else if (pipes.find(identifier) != pipes.end()) {
         handlePipeEvent(identifier, cur);
@@ -60,10 +59,9 @@ void Server::handleSocketEvent(int socket_fd) {
     if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
-    int *listenSocket = new int(socket_fd);
-    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, listenSocket);
-    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, listenSocket);
-    sockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, &listenConfigs[socket_fd])));
+    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
 }
 
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
@@ -82,56 +80,56 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
         disconnect(identifier);
     } else if (cur.filter == EVFILT_READ) {
         receiveBuffer(identifier);
-    } else if (cur.filter == EVFILT_WRITE && sockets[identifier].getHaveResponse()) {
+    } else if (cur.filter == EVFILT_WRITE && clientSockets[identifier].getHaveResponse()) {
         sendBuffer(identifier, cur.data);
     }
 }
 
 void Server::disconnect(const int client_sockfd) {
 	close(client_sockfd);
-	sockets.erase(client_sockfd);
+	clientSockets.erase(client_sockfd);
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
     int recvByte;
 	char buf[BUFFER_SIZE + 1] = {0, };
 
-	if (sockets[client_sockfd].getHaveResponse())
+	if (clientSockets[client_sockfd].getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-	sockets[client_sockfd].addRequest(std::string(buf));
-	if (sockets[client_sockfd].isHeaderEnd()) {
+	clientSockets[client_sockfd].addRequest(buf);
+	if (clientSockets[client_sockfd].isHeaderEnd()) {
         try {
-		    sockets[client_sockfd].parse();
+		    clientSockets[client_sockfd].parse();
         } catch (const std::exception& e) {
             int error = getRequestError(client_sockfd);
-            sockets[client_sockfd].makeErrorResponse(error);
+            clientSockets[client_sockfd].makeErrorResponse(error);
             return;
         }
-		if (sockets[client_sockfd].isRequestEnd()) {
-			sockets[client_sockfd].handleRequest();
+		if (clientSockets[client_sockfd].isRequestEnd()) {
+			clientSockets[client_sockfd].handleRequest();
 std::cout << std::endl; //for request print
         }
 	}
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
-	const std::string& message = sockets[client_sockfd].getResponse();
-// std::cout << message << std::endl;
+	const std::string& message = clientSockets[client_sockfd].getResponse();
+std::cout << message << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.length())) {
 		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		sockets[client_sockfd].setResponse(message.substr(bufSize));
+		clientSockets[client_sockfd].setResponse(message.substr(bufSize));
 	}
 	else {
 		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
 		
-		const sockaddr_in	tmp = sockets[client_sockfd].getClientAddr();
-        const server*       config = sockets[client_sockfd].getConfig();
-		sockets.erase(client_sockfd);
-		sockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
+		const sockaddr_in	        tmp = clientSockets[client_sockfd].getClientAddr();
+        const Config::server*       config = clientSockets[client_sockfd].getConfig();
+		clientSockets.erase(client_sockfd);
+		clientSockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
 	}
 }

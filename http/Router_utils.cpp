@@ -68,30 +68,27 @@ const std::string& Router::getResponseStr(void) const {
 	return response.getResponseStr();
 }
 
-void Router::makeCGIenvs(std::map<std::string, std::string>& envs) const {
+void Router::makeCgiVariables(void) {
     std::stringstream   ss;
     const std::string&  host = request.findValue("host");
     const size_t        portIndex = host.find(':');
 
     ss << intToIP(clientAddr.sin_addr.s_addr);
-    envs["AUTH_TYPE"] = request.findValue("AUTH_TYPE");
-    envs["CONTENT_LENGTH"] = request.findValue("content-length");
-    envs["CONTENT_TYPE"] = request.findValue("content-type");
-    envs["GATEWAY_INTERFACE"] = "CGI/1.1";
-    envs["PATH_INFO"] = request.findValue("PATH_INFO");
-    envs["PATH_TRANSLATED"] = request.findValue("PATH_TRANSLATED");
-    envs["QUERY_STRING"] = request.findValue("QUERY_STRING");
-    envs["REMOTE_ADDR"] = ss.str();
-    envs["REMOTE_HOST"] = request.findValue("REMOTE_HOST");
-    envs["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
-    envs["REMOTE_USER"] = request.findValue("REMOTE_USER");
-    envs["REQUEST_METHOD"] = request.getStrMethod();
-    envs["SCRIPT_NAME"] = request.findValue("SCRIPT_NAME");
-    envs["SERVER_NAME"] = host.substr(0, portIndex);
-    envs["SERVER_HOST"] = host.substr(portIndex + 1, -1);
-    envs["SERVER_PROTOCOL"] = request.getVersion();
-    envs["SERVER_SOFWARE"] = "webserv/0.42";
-    envs["HTTP_COOKIE"] = request.findValue("cookie");
+    CgiVariables["AUTH_TYPE"] = request.findValue("AUTH_TYPE");
+    CgiVariables["CONTENT_LENGTH"] = request.findValue("content-length");
+    CgiVariables["CONTENT_TYPE"] = request.findValue("content-type");
+    CgiVariables["GATEWAY_INTERFACE"] = "CGI/1.1";
+    CgiVariables["PATH_TRANSLATED"] = request.findValue("PATH_TRANSLATED");
+    CgiVariables["REMOTE_ADDR"] = ss.str();
+    CgiVariables["REMOTE_HOST"] = request.findValue("REMOTE_HOST");
+    CgiVariables["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
+    CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
+    CgiVariables["REQUEST_METHOD"] = request.getStrMethod();
+    CgiVariables["SERVER_NAME"] = config->server_name;
+    CgiVariables["SERVER_HOST"] = host.substr(portIndex + 1, -1);
+    CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
+    CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
+    CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
 }
 
 std::string Router::URLDecode(const std::string &input) {
@@ -300,6 +297,32 @@ int Router::getReadFd(void) const {
 
 int Router::getRequestError() const {
     return request.getError();
+}
+
+void Router::setParsedURL(void) {
+    const std::string& URL = request.getUrl();
+
+    //WIP: get real path from server.conf
+    parsedURL = URL; //temporary
+}
+
+void Router::parseURL(void) {
+    const std::string&  url = getParsedURL();
+    const size_t        pathIndex = url.find('/', 5);
+    const size_t        queryIndex = url.find('?');
+
+    if (pathIndex != std::string::npos)
+        CgiVariables["SCRIPT_NAME"] = url.substr(0, pathIndex);
+    else
+        CgiVariables["SCRIPT_NAME"] = url.substr(0, queryIndex);
+    if (pathIndex != std::string::npos)
+        CgiVariables["PATH_INFO"] = url.substr(pathIndex, queryIndex - pathIndex);
+    if (queryIndex != std::string::npos)
+        CgiVariables["QUERY_STRING"] = url.substr(queryIndex + 1, -1);
+}
+
+const std::string& Router::getParsedURL(void) const {
+    return parsedURL;
 }
 
 std::string Router::intToIP(in_addr_t ip) const {

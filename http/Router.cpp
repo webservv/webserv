@@ -18,11 +18,12 @@ Router::Router():
 	response(),
 	haveResponse(false),
 	server(NULL),
-	clientAddr() {
+	clientAddr(),
+	config(NULL) {
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr, const struct server* config):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config):
 	request(),
 	response(),
 	haveResponse(false),
@@ -39,7 +40,8 @@ Router::Router(const Router& copy):
 	response(copy.response),
 	haveResponse(copy.haveResponse),
 	server(copy.server),
-	clientAddr(copy.clientAddr) {
+	clientAddr(copy.clientAddr),
+	config(copy.config) {
 		initializeMimeMap();
 	}
 
@@ -49,12 +51,15 @@ Router& Router::operator=(const Router& copy) {
 	haveResponse = copy.haveResponse;
 	server = copy.server;
 	clientAddr = copy.clientAddr;
+	config = copy.config;
 	return *this;
 }
 
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
-
+	
+	setParsedURL();
+	parseURL();
 	if (method == Request::GET) {
         handleGet();
 	} else if (method == Request::POST) {
@@ -65,8 +70,7 @@ void Router::handleRequest() {
 }
 
 void Router::handleGet() {
-	const std::string& filePath = request.getPath();
-	std::map<std::string, std::string> envs;
+	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
 
 	try {
 		if (!filePath.compare(0, 4, "/cgi"))
@@ -100,10 +104,8 @@ void Router::handleDelete() {
 }
 
 void Router::connectCGI(void) {
-	std::map<std::string, std::string> envs;
-
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	makeCGIenvs(envs);
+	makeCgiVariables();
     if (request.needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
         if (cookie.empty()) {
@@ -116,7 +118,7 @@ void Router::connectCGI(void) {
     	}
 	}
 	response.setMessageToCGI(request.getBody());
-	response.connectCGI(envs);
+	response.connectCGI(CgiVariables);
 	server->addPipes(response.getWriteFd(), response.getReadFd(), this);
 }
 
@@ -124,6 +126,6 @@ const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
 }
 
-const struct server* Router::getConfig(void) const {
+const Config::server* Router::getConfig(void) const {
 	return config;
 }

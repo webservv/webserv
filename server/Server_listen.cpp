@@ -27,10 +27,9 @@ int Server::createSocket() {
         throw std::runtime_error("ERROR opening socket");
     }
 
-    if (fcntl(new_socket_fd, F_SETFL, fcntl(new_socket_fd, F_GETFL, 0) | O_NONBLOCK) < 0) {
+    if (fcntl(new_socket_fd, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
-
     addIOchanges(new_socket_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
     return new_socket_fd;
 }
@@ -43,7 +42,7 @@ void Server::setSocketOptions(int socket_fd) {
 }
 
 
-void Server::bindSocket(const server& server, int socket_fd) {
+void Server::bindSocket(const Config::server& server, int socket_fd) {
     sockaddr_in server_addr;
     const int port = server.listen_port;
     const std::string& host = default_host;
@@ -60,7 +59,6 @@ void Server::bindSocket(const server& server, int socket_fd) {
     if (bind(socket_fd, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
         throw std::runtime_error("ERROR on binding: " + std::string(strerror(errno)));
     }
-    listenConfigs[socket_fd] = server;
 }
 
 void Server::listenSocket(int socket_fd)  {

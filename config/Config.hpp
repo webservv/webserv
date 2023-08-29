@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <map>
 
-struct location {
+class Config {
+public:
+    struct location {
     std::string url;
     bool is_regex;
     std::vector<std::string> allowedMethod;
@@ -20,23 +22,18 @@ struct location {
     std::map<std::string, std::string> fastcgi_params;
     int return_code;
     std::string return_url;
-};
-
-
+    };
 struct server{
 	int listen_port;
 	std::string server_name;
 	std::map<int, std::string> errorPages;
     std::string root_path;
     std::string index_file;
-	std::vector<location> locations;
-};
-
-class Config {
-
+	std::vector<Config::location> locations;
+    };
 private:
 	std::queue<std::string>		tokens;
-	std::vector<server>			servers;
+	std::vector<Config::server>			servers;
     int                         clientMaxBodySize;
 private:
 	Config(const Config& copy);

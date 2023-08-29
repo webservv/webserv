@@ -2,15 +2,13 @@
 #include "Server.hpp"
 #include "Config.hpp"
 #include <cstdlib>
+#include <string>
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cout << "Usage: ./webserv <config_file>" << std::endl;
-        return EXIT_FAILURE;
-    }
-
+	static_cast<void>(argc);
+	const std::string configPath(argv[1] ? argv[1] : "server.conf");
 	try {
-        Config config(argv[1]);
+        Config config(configPath);
         Server& server = Server::getInstance(config);
 		while (true) {
 			server.waitEvents();
