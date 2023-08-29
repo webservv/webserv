@@ -10,7 +10,7 @@ private:
 	int			writeFD;
 	int			readFD;
 	pid_t		cgiPid;
-    std::string cookieValue;
+//Response.cpp
 public:
 	Response();
 	~Response();
