@@ -29,6 +29,9 @@ private:
 //Router_error.cpp
 private:
 	void                makeErrorPage(void);
+    std::pair<std::string, std::string> \
+                        defaultErrorPage(int statusCode);
+    void                setCustomErrorPage(const std::string& customPath);
 public:
     void                makeErrorResponse(int statusCode);
 //Router_utils.cpp
