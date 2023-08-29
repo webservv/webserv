@@ -5,29 +5,35 @@
 #include <algorithm>
 #include <sstream>
 
-Config::Config(const std::string& config_file) 
-{
-	std::fstream configParser;
-	configParser.open(config_file);
+
+Config::Config(const std::string& config_file){
+    hasHttp = false;
+    std::fstream configParser;
+    configParser.open(config_file.c_str());
     if (!configParser.is_open()) {
         throw std::runtime_error("config file open error");
     }
     parseLine(configParser);
-	while (!tokens.empty()) {
-		std::string token = tokens.front();
-		tokens.pop();
+    while (!tokens.empty()) {
+        std::string token = tokens.front();
+        tokens.pop();
 
-		if (token == "http") {
-			if (tokens.front() == "{") {
-				tokens.pop();
-				parseHTTP();
-			} else {
+        if (token == "http") {
+            if (hasHttp) {
+                throw std::runtime_error("http block already exists");
+            }
+            hasHttp = true;
+
+            if (tokens.front() == "{") {
+                tokens.pop();
+                parseHTTP();
+            } else {
                 throw std::out_of_range("missing '{' after http");
             }
-		} else {
-			throw std::out_of_range("invalid config - constructor");
-		}
-	}
+        } else {
+            throw std::out_of_range("invalid config - constructor");
+        }
+    }
 }
 
 void Config::parseLine(std::fstream& configParser) {
@@ -41,7 +47,7 @@ void Config::parseLine(std::fstream& configParser) {
 		if (line.empty())
 			continue;
 		if (line.back() != ';' && line.back() != '{' && line.back() != '}') {
-			throw std::out_of_range("invalid config - line");
+			throw std::out_of_range("missing ';' after " + line);
 		}
 		tokenization(line);
     }
@@ -81,21 +87,40 @@ void Config::tokenization(const std::string& line) {
 
 
 void Config::parseHTTP(void) {
-	while (tokens.front() != "}") {
+    bool hasServer = false;
+
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a http block");
+    }
+    while (!tokens.empty() && tokens.front() != "}") {
         std::string title = tokens.front();
         tokens.pop();
-		if (title == "server")
-			parseServer();
-		else if (title == "client_max_body_size")
+
+        if (title == "server") {
+            hasServer = true;
+            parseServer();
+        } else if (title == "client_max_body_size") {
             parseClientMaxBodySize();
-		else {
-			throw std::out_of_range("invalid config - http");
-		}
-	}
-	tokens.pop();
+        } else {
+            throw std::out_of_range("invalid config - http");
+        }
+    }
+
+    if (tokens.empty()) {
+        throw std::out_of_range("missing '}' in http block");
+    }
+
+    if (!hasServer) {
+        throw std::out_of_range("missing server block in http");
+    }
+
+    tokens.pop();
 }
 
 void Config::parseClientMaxBodySize() {
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
+    }
     std::string valueStr = tokens.front();
     tokens.pop();
 
@@ -108,6 +133,16 @@ void Config::parseClientMaxBodySize() {
     if (valueStr.back() == 'M') {
         multiplier = 1024 * 1024;
         valueStr.pop_back();
+    } else if (valueStr.back() == 'K') {
+        multiplier = 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'G') {
+        multiplier = 1024 * 1024 * 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'B') {
+        valueStr.pop_back();
+    } else {
+        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
     }
 
     std::stringstream ss(valueStr);
@@ -120,40 +155,81 @@ void Config::parseClientMaxBodySize() {
 }
 
 void Config::parseServer(void) {
+    server new_server;
+    std::string buf;
+    bool hasListen = false;
+    bool hasServerName = false;
+    bool hasErrorPage = false;
+    bool hasRoot = false;
+    bool hasIndex = false;
+    bool hasLocation = false;
 
-	server new_server;
-	std::string buf;
-
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a server block");
+    }
     if (tokens.front() == "{") {
         tokens.pop();
     } else {
         throw std::out_of_range("missing '{' after server");
     }
-	while (tokens.front() != "}") {
+
+    while (!tokens.empty() && tokens.front() != "}") {
         std::string title = tokens.front();
         tokens.pop();
-		if (title == "listen")
-            parseListen(new_server);
-		else if (title == "server_name")
-            parseServerName(new_server);
-		else if (title == "error_page")
-			parseErrorPage(new_server);
-        else if (title == "root")
-            parseRoot(new_server);
-        else if (title == "index")
-            parseIndex(new_server);
-		else if (title == "location")
-            parseLocation(new_server);
-		else {
 
-			throw std::out_of_range("invalid config - server");
+        if (title == "listen") {
+            if (hasListen) {
+                throw std::out_of_range("duplicate listen entry in server");
+            }
+            parseListen(new_server);
+            hasListen = true;
+        } else if (title == "server_name") {
+            if (hasServerName) {
+                throw std::out_of_range("duplicate server_name entry in server");
+            }
+            parseServerName(new_server);
+            hasServerName = true;
+        } else if (title == "error_page") {
+            parseErrorPage(new_server);
+            hasErrorPage = true;
+        } else if (title == "root") {
+            if (hasRoot) {
+                throw std::out_of_range("duplicate root entry in server");
+            }
+            parseRoot(new_server);
+            hasRoot = true;
+        } else if (title == "index") {
+            if (hasIndex) {
+                throw std::out_of_range("duplicate index entry in server");
+            }
+            parseIndex(new_server);
+            hasIndex = true;
+        } else if (title == "location") {
+            parseLocation(new_server);
+            hasLocation = true;
+        } else {
+            throw std::out_of_range("invalid config - server");
         }
-	}
-	servers.push_back(new_server);
-	tokens.pop();
+        if (tokens.empty()) {
+            throw std::out_of_range("missing '}' in server block");
+        }
+    }
+
+    if (!hasListen) {
+        throw std::out_of_range("missing listen entry in server");
+    }
+    if (!hasLocation) {
+        throw std::out_of_range("missing location entry in server");
+    }
+
+    servers.push_back(new_server);
+    tokens.pop();
 }
 
 void Config::parseListen(server &new_server) {
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a port number");
+    }
     std::string port = tokens.front();
     tokens.pop();
     if (port.back() != ';') {
@@ -165,41 +241,93 @@ void Config::parseListen(server &new_server) {
     if (ss.fail()) {
         throw std::out_of_range("invalid port number");
     }
+    if (new_server.listen_port < 0 || new_server.listen_port > 65535) {
+        throw std::out_of_range("port number out of range");
+    }
 }
 
 void Config::parseServerName(server &new_server) {
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a server name");
+    }
     std::string name = tokens.front();
     tokens.pop();
     if (name.back() != ';') {
         throw std::out_of_range("missing ';' after server name");
     }
     name.pop_back();
+    if (name.empty()) {
+        throw std::out_of_range("server name must not be empty");
+    } else if (name.front() == '.' || name.back() == '.') {
+        throw std::out_of_range("server name must not start or end with '.'");
+    } else if (name.find("..") != std::string::npos) {
+        throw std::out_of_range("server name must not contain '..'");
+    } else if (name.find(" ") != std::string::npos) {
+        throw std::out_of_range("server name must not contain spaces");
+    } else if (name.find("\t") != std::string::npos) {
+        throw std::out_of_range("server name must not contain tabs");
+    } else if (name.find("\r") != std::string::npos) {
+        throw std::out_of_range("server name must not contain carriage returns");
+    } else if (name.find("\n") != std::string::npos) {
+        throw std::out_of_range("server name must not contain newlines");
+    } else if (name.size() > 253) {
+        throw std::out_of_range("server name must not be longer than 253 characters");
+    }
     new_server.server_name = name;
 }
 
-
 void Config::parseErrorPage(server& new_server) {
-    std::string errorCodeStr = tokens.front();
+    if (tokens.size() < 2) {
+        throw std::out_of_range("error_page expects at least 2 arguments");
+    }
+    std::string token = tokens.front();
     tokens.pop();
 
-    int errorCode;
-    std::stringstream ss1(errorCodeStr);
-    ss1 >> errorCode;
-    if (ss1.fail()) {
-        throw std::out_of_range("invalid error code");
+    std::vector<int> errorCodes;
+
+    if (token == "/" || token.back() == ';') {
+        throw std::out_of_range("missing error codes");
     }
 
-    std::string errorPage = tokens.front();
-    tokens.pop();
-    if (errorPage.back() != ';') {
+    while (token.back() != ';') {
+        int errorCode;
+        std::stringstream ss1(token);
+        ss1 >> errorCode;
+        if (ss1.fail()) {
+            throw std::out_of_range("invalid error code");
+        }
+        if (errorCode < 100 || errorCode > 599) {
+            throw std::out_of_range("error code out of range");
+        }
+        errorCodes.push_back(errorCode);
+
+        token = tokens.front();
+        tokens.pop();
+    }
+
+    if (tokens.empty()) {
+        throw std::out_of_range("missing error page");
+    }
+    std::string errorPage = token;
+
+    if (errorPage[errorPage.size() - 1] != ';') {
         throw std::out_of_range("missing ';' after error page");
     }
-    errorPage.pop_back();
+    errorPage.erase(errorPage.size() - 1);
 
-    new_server.errorPages.insert(std::make_pair(errorCode, errorPage));
+    if (errorPage.empty()) {
+        throw std::out_of_range("error page cannot be empty");
+    }
+
+    for (std::vector<int>::iterator it = errorCodes.begin(); it != errorCodes.end(); ++it) {
+        new_server.errorPages.insert(std::make_pair(*it, errorPage));
+    }
 }
 
 void Config::parseRoot(server &new_server) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("root expects exactly 2 arguments");
+    }
     std::string path = tokens.front();
     if (path.back() != ';') {
         throw std::out_of_range("missing ';' after root path");
@@ -210,37 +338,59 @@ void Config::parseRoot(server &new_server) {
 }
 
 void Config::parseIndex(server &new_server) {
-    std::string indexFile = tokens.front();
-    if (indexFile.back() != ';') {
-        throw std::out_of_range("missing ';' after index file");
+    if (tokens.empty()) {
+        throw std::out_of_range("index expects at least one argument");
     }
-    indexFile.pop_back();
-    new_server.index_file = indexFile;
+
+    while (tokens.front().back() != ';') {
+        new_server.index.push_back(tokens.front());
+        tokens.pop();
+        if (tokens.empty()) {
+            throw std::out_of_range("missing ';' after last index");
+        }
+    }
+
+    std::string lastIndex = tokens.front();
+    lastIndex.pop_back();  // Remove the trailing ';'
+    new_server.index.push_back(lastIndex);
     tokens.pop();
 }
 
+
 void Config::parseLocation(server& server) {
-	
-	location new_location;
-	
-    if (tokens.front() == "~") {
-        tokens.pop();
-        new_location.is_regex = true;
-    } else {
-        new_location.is_regex = false;
+    location new_location;
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a location block");
     }
 
-    new_location.url = tokens.front();
+    std::string firstToken = tokens.front();
     tokens.pop();
 
-    if (tokens.front() != "{") {
+    if (firstToken == "~") {
+        new_location.is_regex = true;
+        
+        if (tokens.empty()) {
+            throw std::out_of_range("missing url in regex location");
+        }
+        new_location.url = tokens.front();
+        tokens.pop();
+    } else {
+        new_location.is_regex = false;
+        new_location.url = firstToken;
+    }
+    if (tokens.empty() || tokens.front() != "{") {
         throw std::out_of_range("missing '{' after location");
     }
     tokens.pop();
-	std::string buf;
-	while (tokens.front() != "}") {
-		std::string key = tokens.front();
+
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file within location block");
+    }
+
+    while (!tokens.empty() && tokens.front() != "}") {
+        std::string key = tokens.front();
         tokens.pop();
+
         if (key == "limit_except") {
             parseLimitExcept(new_location);
         } else if (key == "try_files") {
@@ -258,17 +408,35 @@ void Config::parseLocation(server& server) {
         } else if (key == "return") {
             parseReturn(new_location);
         } else {
-            std::cout << key << std::endl;
             throw std::out_of_range("invalid config - location");
         }
-	}
-	tokens.pop();
-	server.locations.push_back(new_location);
+    }
+
+    if (tokens.empty()) {
+        throw std::out_of_range("missing '}' in location block");
+    }
+    tokens.pop();
+
+    if (new_location.url.empty()) {
+        throw std::out_of_range("URL pattern for location cannot be empty");
+    }
+
+    server.locations.push_back(new_location);
 }
 
 void Config::parseLimitExcept(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("limit_except expects at least 2 arguments");
+    }
     while (tokens.front().back() != ';') {
-        loc.allowedMethod.push_back(tokens.front());
+        std::string method = tokens.front();
+        if (method != "GET" && method != "POST" && method != "DELETE") {
+            throw std::out_of_range("Invalid method: " + method);
+        }
+        if (std::find(loc.allowedMethod.begin(), loc.allowedMethod.end(), method) != loc.allowedMethod.end()) {
+            throw std::out_of_range("Duplicate method found: " + method);
+        }
+        loc.allowedMethod.push_back(method);
         tokens.pop();
     }
     std::string lastMethod = tokens.front();
@@ -276,12 +444,20 @@ void Config::parseLimitExcept(location& loc) {
         throw std::out_of_range("missing ';' after last method");
     }
     lastMethod.pop_back();
+    if (lastMethod != "GET" && lastMethod != "POST" && lastMethod != "DELETE") {
+        throw std::out_of_range("Invalid method: " + lastMethod);
+    }
+    if (std::find(loc.allowedMethod.begin(), loc.allowedMethod.end(), lastMethod) != loc.allowedMethod.end()) {
+        throw std::out_of_range("Duplicate method found: " + lastMethod);
+    }
     loc.allowedMethod.push_back(lastMethod);
     tokens.pop();
 }
 
-
 void Config::parseTryFiles(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("try_files expects at least 2 arguments");
+    }
     while (tokens.front().back() != ';') {
         loc.try_files.push_back(tokens.front());
         tokens.pop();
@@ -293,6 +469,9 @@ void Config::parseTryFiles(location& loc) {
 }
 
 void Config::parseRoot(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("root expects exactly 2 arguments");
+    }
     std::string path = tokens.front();
     if (path.back() != ';') {
         throw std::out_of_range("missing ';' after root path");
@@ -303,13 +482,31 @@ void Config::parseRoot(location& loc) {
 }
 
 void Config::parseAutoIndex(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("autoindex expects exactly 2 arguments");
+    }
+
     std::string value = tokens.front();
-    value.pop_back();
-    loc.autoindex = (value == "on");
     tokens.pop();
+
+    if (value.back() != ';') {
+        throw std::out_of_range("missing ';' after autoindex value");
+    }
+
+    value.erase(value.size() - 1);
+
+    if (value != "on" && value != "off") {
+        throw std::out_of_range("invalid value for autoindex, expected 'on' or 'off'");
+    }
+
+    loc.autoindex = (value == "on");
 }
 
+
 void Config::parseInclude(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("include expects exactly 2 arguments");
+    }
     std::string file = tokens.front();
     file.pop_back();
     loc.include_file = file;
@@ -317,6 +514,9 @@ void Config::parseInclude(location& loc) {
 }
 
 void Config::parseFastcgiPass(location& loc) {
+    if (tokens.size() < 2) {
+        throw std::out_of_range("fastcgi_pass expects exactly 2 arguments");
+    }
     std::string path = tokens.front();
     path.pop_back();
     loc.fastcgi_pass = path;
@@ -324,15 +524,26 @@ void Config::parseFastcgiPass(location& loc) {
 }
 
 void Config::parseFastcgiParam(location& loc) {
+    if (tokens.size() < 3) {
+        throw std::out_of_range("fastcgi_param expects exactly 3 arguments");
+    }
+
     std::string key = tokens.front();
     tokens.pop();
     std::string value = tokens.front();
+    if (tokens.front().back() != ';') {
+        throw std::out_of_range("missing ';' after fastcgi_param value");
+    }
     value.pop_back();
     loc.fastcgi_params[key] = value;
     tokens.pop();
 }
 
+
 void Config::parseReturn(location& loc) {
+    if (tokens.size() < 3) {
+        throw std::out_of_range("return expects exactly 3 arguments");
+    }
     std::stringstream ss(tokens.front());
     ss >> loc.return_code;
     if (ss.fail() || loc.return_code < 100 || loc.return_code > 599) {
