@@ -82,30 +82,11 @@ Server::~Server() {
     close(kqueueFd);
 }
 
-Server& Server::getInstance(const Config& config) {
-	if (instance == NULL) {
-		instance = new Server(config);
-	}
-	return *instance;
-}
-
 void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata) {
 	struct kevent	newEvents;
 
 	EV_SET(&newEvents, ident, filter, flags, fflags, data, udata);
 	IOchanges.push_back(newEvents);
-}
-
-void Server::addPipes(const int writeFd, const int readFd, Router* const router) {
-	pipes[writeFd] = router;
-	pipes[readFd] = router;
-	addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-}
-
-int Server::getRequestError(const int clientSocketFD) const {
-    std::map<int, Router>::const_iterator it = clientSockets.find(clientSocketFD);
-    return it->second.getRequestError();
 }
 
 in_addr_t Server::IPToInt(const std::string& ip) const {
@@ -124,6 +105,25 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	}
 	ret += tmp << bitShift;
 	return ret;
+}
+
+int Server::getRequestError(const int clientSocketFD) const {
+    std::map<int, Router>::const_iterator it = clientSockets.find(clientSocketFD);
+    return it->second.getRequestError();
+}
+
+Server& Server::getInstance(const Config& config) {
+	if (instance == NULL) {
+		instance = new Server(config);
+	}
+	return *instance;
+}
+
+void Server::addPipes(const int writeFd, const int readFd, Router* const router) {
+	pipes[writeFd] = router;
+	pipes[readFd] = router;
+	addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
 void Server::addCookie(const std::string& key, const std::string& value) {
