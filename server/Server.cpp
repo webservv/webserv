@@ -21,8 +21,6 @@
 #define BUFFER_SIZE 100
 #define EVENTS_SIZE 100
 
-static const std::string    post_txt = "./document/posts.txt";
-
 Server* Server::instance = NULL;
 
 Server::Server():
@@ -49,11 +47,9 @@ Server::Server(const Config& config):
     if (kqueueFd < 0) {
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
-
     const std::vector<Config::server>& servers = config.getServers();
     for (std::vector<Config::server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
         const Config::server& new_server = *it;
-        
         int new_socket_fd = createSocket();
         setSocketOptions(new_socket_fd);
         bindSocket(new_server, new_socket_fd);
