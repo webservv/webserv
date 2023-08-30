@@ -65,7 +65,7 @@ public:
 	void				    handleRequest(void);
     const Config::server*   getConfig(void) const;
     const sockaddr_in&      getClientAddr(void) const;
-    bool                    isHeaderEnd(void) const;
+    bool                    isHeaderEnd(void);
     bool                    isRequestEnd(void) const;
     void                    parseRequest(void);
     bool                    getHaveResponse(void) const;

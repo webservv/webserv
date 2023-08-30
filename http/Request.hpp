@@ -24,16 +24,15 @@ private:
 	std::map<std::string, std::string>	values;
 	bool								haveHeader;
     int									error;
+	size_t								bodyPos;
 //Reqeust_parse.cpp
 private:
     void	parseMethod(std::string& line);
     void	parseURL(const std::string& line);
     void	parseVersion(const std::string& line, const size_t space);
 	void	parseBody(void);
-	void	addRequestLines(void);
-    void	readHeadersAndInitialRequestLines(std::stringstream& parser);
-    void	handleNonChunkedTransferEncoding(std::stringstream& parser);
-    void	handleChunkedTransferEncoding(std::stringstream& parser);
+    void	addRequestLines(void);
+    void	parseChunkedBody(void);
 	void	parseRequestLine(void);
 	void	parseKeyValues(void);
 	void	parseHeader(void);
@@ -54,7 +53,7 @@ public:
     int					getError(void) const;
 	const std::string&	findValue(const std::string& headerName) const;
 	void				addRequest(const std::string& request);
-    bool				isHeaderEnd(void) const;
+    bool				isHeaderEnd(void);
 	bool				isRequestEnd(void) const;
 };
 

@@ -160,7 +160,7 @@ const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
 }
 
-bool Router::isHeaderEnd(void) const {
+bool Router::isHeaderEnd(void) {
 	return request.isHeaderEnd();
 }
 

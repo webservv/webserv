@@ -10,7 +10,8 @@ Request::Request():
     method(OTHER),
     values(),
     haveHeader(false),
-    error(0) {}
+    error(0),
+    bodyPos(0) {}
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
@@ -18,7 +19,8 @@ Request::Request(const Request& copy):
     method(copy.method),
     values(copy.values),
     haveHeader(copy.haveHeader),
-    error(copy.error) {}
+    error(copy.error),
+    bodyPos(0) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -27,6 +29,7 @@ Request& Request::operator=(const Request& copy) {
 	values = copy.values;
     haveHeader = copy.haveHeader;
     error = copy.error;
+    haveHeader = copy.bodyPos;
 	return *this;
 }
 
@@ -75,11 +78,12 @@ void Request::addRequest(const std::string &request) {
     this->requestStr += request;
 }
 
-bool Request::isHeaderEnd(void) const {
+bool Request::isHeaderEnd(void) {
     if (haveHeader)
         return true;
-    size_t pos = requestStr.rfind("\r\n\r\n");
+    size_t pos = requestStr.find("\r\n\r\n");
     if (pos != std::string::npos) {
+        bodyPos = pos + 4;
         return true;
     } else {
         return false;
@@ -108,7 +112,6 @@ bool Request::isRequestEnd(void) const {
     if (it != values.end()) {
         size_t len = std::atoi(it->second.c_str());
         it = values.find("body");
-std::cout << it->second.size() << std::endl;
         if (it != values.end() && it->second.size() == len)
             return true;
         else

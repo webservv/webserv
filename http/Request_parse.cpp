@@ -52,32 +52,19 @@ void Request::parseVersion(const std::string& line, const size_t space) {
 }
 
 void Request::parseBody(void) {
-    addRequestLines();
-    while (!requestLines.empty()) {
-        values["body"] += requestLines.front() + "\r\n";
-std::cout << requestLines.front().size() << std::endl;
-        requestLines.pop();
-    }
+    std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
+    
+    if (it != values.end() && it->second == "chunked")
+        parseChunkedBody();
+    else
+        values["body"] += requestStr.substr(bodyPos, -1);
+    bodyPos = requestStr.size();
 }
 
 void Request::addRequestLines(void) {
-    std::stringstream parser(requestStr);
-    bool isChunked = false;
+    std::stringstream   parser(requestStr.substr(0, bodyPos));
+    std::string         line;
 
-    if (values.find("transfer-encoding") != values.end() && values["transfer-encoding"] == "chunked")
-        isChunked = true;
-    readHeadersAndInitialRequestLines(parser);
-    if (isChunked) {
-        handleChunkedTransferEncoding(parser);
-    } else {
-        handleNonChunkedTransferEncoding(parser);
-    }
-std::cout << requestStr;
-    requestStr.clear();
-}
-
-void Request::readHeadersAndInitialRequestLines(std::stringstream& parser) {
-    std::string line;
     while (std::getline(parser, line) && !line.empty()) {
         if (line.back() == '\r')
             line.pop_back();
@@ -85,20 +72,13 @@ void Request::readHeadersAndInitialRequestLines(std::stringstream& parser) {
     }
 }
 
-void Request::handleNonChunkedTransferEncoding(std::stringstream& parser) {
-    std::string line;
-    while (std::getline(parser, line)) {
-        if (line.back() == '\r') line.pop_back();
-        requestLines.push(line);
-    }
-}
+void Request::parseChunkedBody(void) {
+    std::stringstream   parser(requestStr.substr(bodyPos, -1));
+    std::string         line;
+    size_t              chunkSize;
 
-void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
-    std::string line;
-    while (true) {
-        std::getline(parser, line);
-        if (line.back() == '\r') line.pop_back();
-        size_t chunkSize;
+    while (std::getline(parser, line)) {
+        line += '\n';
         std::stringstream chunkSizeStream(line);
         chunkSizeStream >> std::hex >> chunkSize;
         if (chunkSizeStream.fail() || chunkSize == 0) {
@@ -111,8 +91,7 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
         std::string chunkData(buffer.begin(), buffer.end());
-        requestLines.push(chunkData);
-        parser.ignore(2); // Ignore the \r\n after the chunk
+        values["body"] += line;
     }
 }
 
