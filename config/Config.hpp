@@ -16,6 +16,7 @@ public:
     std::vector<std::string>            try_files;
     std::string                         url;
     std::string                         root;
+    std::vector<std::string>            index;
     std::string                         include_file;
     std::string                         fastcgi_pass;
     std::string                         return_url;
@@ -59,6 +60,7 @@ private:
     void    parseLimitExcept(location& location);
     void    parseTryFiles(location& location);
     void    parseRoot(location& location);
+    void    parseIndex(location& location);
     void    parseAutoIndex(location& location);
     void    parseInclude(location& location);
     void    parseFastcgiPass(location& location);

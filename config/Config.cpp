@@ -171,7 +171,7 @@ void Config::parseServer(void) {
     if (!hasLocation) {
         throw std::out_of_range("missing location entry in server");
     }
-
+    (void)(hasErrorPage); // temporal line 
     servers.push_back(new_server);
     tokens.pop();
 }
@@ -339,6 +339,8 @@ void Config::parseLocation(server& server) {
             parseAutoIndex(new_location);
         } else if (key == "include") {
             parseInclude(new_location);
+        } else if (key == "index") {
+            parseIndex(new_location);
         } else if (key == "fastcgi_pass") {
             parseFastcgiPass(new_location);
         } else if (key == "fastcgi_param") {
@@ -464,6 +466,25 @@ void Config::parseRoot(location& loc) {
     }
     path.pop_back();
     loc.root = path;
+    tokens.pop();
+}
+
+void Config::parseIndex(location& loc) {
+    if (tokens.empty()) {
+        throw std::out_of_range("index expects at least one argument");
+    }
+
+    while (tokens.front().back() != ';') {
+        loc.index.push_back(tokens.front());
+        tokens.pop();
+        if (tokens.empty()) {
+            throw std::out_of_range("missing ';' after last index");
+        }
+    }
+
+    std::string lastIndex = tokens.front();
+    lastIndex.pop_back();  // Remove the trailing ';'
+    loc.index.push_back(lastIndex);
     tokens.pop();
 }
 
