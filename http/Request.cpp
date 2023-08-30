@@ -39,6 +39,10 @@ Request::METHOD Request::getMethod(void) const {
 	return method;
 }
 
+const std::string& Request::getRequestStr(void) const {
+    return requestStr;
+}
+
 const std::string& Request::getStrMethod(void) const {
     return findValue("method");
 }

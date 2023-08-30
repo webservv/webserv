@@ -46,6 +46,7 @@ public:
 	Request&	operator=(const Request& copy);
 public:
 	Request::METHOD		getMethod(void) const;
+	const std::string&	getRequestStr(void) const;
 	const std::string&	getStrMethod(void) const;
 	const std::string&	getURL(void) const;
 	const std::string&	getBody(void) const;
