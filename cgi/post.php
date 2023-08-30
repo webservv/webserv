@@ -1,5 +1,11 @@
 #!/usr/bin/php
 <?php
+if ($_SERVER['CONTENT_TYPE'] === 'multipart/form-data') {
+    // 모든 POST 데이터 출력
+    foreach ($_POST as $key => $value) {
+        echo "$key: $value<br>";
+    }
+}
 $data = fread(STDIN, $_SERVER["CONTENT_LENGTH"]);
 if ($data !== false) {
     parse_str($data, $postData);

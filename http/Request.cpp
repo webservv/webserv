@@ -108,6 +108,7 @@ bool Request::isRequestEnd(void) const {
     if (it != values.end()) {
         size_t len = std::atoi(it->second.c_str());
         it = values.find("body");
+std::cout << it->second.size() << std::endl;
         if (it != values.end() && it->second.size() == len)
             return true;
         else

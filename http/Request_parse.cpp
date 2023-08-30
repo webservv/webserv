@@ -52,8 +52,10 @@ void Request::parseVersion(const std::string& line, const size_t space) {
 }
 
 void Request::parseBody(void) {
+    addRequestLines();
     while (!requestLines.empty()) {
-        values["body"] += requestLines.front();
+        values["body"] += requestLines.front() + "\r\n";
+std::cout << requestLines.front().size() << std::endl;
         requestLines.pop();
     }
 }
@@ -77,7 +79,8 @@ std::cout << requestStr;
 void Request::readHeadersAndInitialRequestLines(std::stringstream& parser) {
     std::string line;
     while (std::getline(parser, line) && !line.empty()) {
-        if (line.back() == '\r') line.pop_back();
+        if (line.back() == '\r')
+            line.pop_back();
         requestLines.push(line);
     }
 }
@@ -147,14 +150,13 @@ void Request::parseKeyValues(void) {
 void Request::parseHeader(void) {
     if (haveHeader)
         return;
-
+    addRequestLines();
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
 }
 
 void Request::parse() {
-    addRequestLines();
     parseHeader();
     parseBody();
 }
