@@ -147,9 +147,6 @@ void Config::parseServer(void) {
             parseRoot(new_server);
             hasRoot = true;
         } else if (title == "index") {
-            if (hasIndex) {
-                throw std::out_of_range("duplicate index entry in server");
-            }
             parseIndex(new_server);
             hasIndex = true;
         } else if (title == "location") {
@@ -164,7 +161,7 @@ void Config::parseServer(void) {
     }
 
     if (!hasListen)
-        new_server.listen_port = 80;
+        new_server.listen_port = 8080;
     if (!hasIndex)
         new_server.index.push_back("index.html");
     if (!hasRoot)
@@ -352,7 +349,7 @@ void Config::parseLocation(server& server) {
     tokens.pop();
     if (new_location.url.empty()) {
         throw std::out_of_range("URL pattern for location cannot be empty");
-
+    }
     if (tokens.empty() || tokens.front() != "{") {
         throw std::out_of_range("missing '{' after location");
     }
@@ -381,8 +378,6 @@ void Config::parseLocation(server& server) {
         }
     }
     
-    if (new_location.index.empty())
-        new_location.index.push_back("index.html");
     if (tokens.empty() || tokens.front() != "}") {
         throw std::out_of_range("missing '}' in location block");
     }
@@ -390,7 +385,6 @@ void Config::parseLocation(server& server) {
 
     if (new_location.index.empty())
         new_location.index.push_back("index.html");
-    }
     server.locations[new_location.url] = new_location;  
 }
 

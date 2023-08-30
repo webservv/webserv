@@ -157,14 +157,15 @@ void Router::setParsedURL() {
         if (URLFromRequest.find(url) == 0) {
             if (url.length() > bestMatchURL.length()) {
                 bestMatchURL = url;
-                bestMatchRoot = it->first;
+                bestMatchRoot = it->second.root;
                 bestLocation = it->second;
             }
         }
     }
     if (!bestMatchURL.empty()) {
-        // when we find best match -> location block 
-        // if client ask for directory -> index 
+        if (bestLocation.root.empty()) {
+            configURL = "." + config->root + URLFromRequest;
+        }
         if (URLFromRequest == bestMatchRoot) {
             for (size_t i = 0; i < config->index.size(); ++i) {
                 std::string potentialIndexPath = findPotentialIndexPath(bestLocation.root, bestLocation.index);
