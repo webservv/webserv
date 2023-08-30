@@ -109,7 +109,6 @@ void Config::parseServer(void) {
     std::string buf;
     bool hasListen = false;
     bool hasServerName = false;
-    bool hasErrorPage = false;
     bool hasRoot = false;
     bool hasIndex = false;
     bool hasLocation = false;
@@ -141,7 +140,6 @@ void Config::parseServer(void) {
             hasServerName = true;
         } else if (title == "error_page") {
             parseErrorPage(new_server);
-            hasErrorPage = true;
         } else if (title == "root") {
             if (hasRoot) {
                 throw std::out_of_range("duplicate root entry in server");
@@ -165,13 +163,15 @@ void Config::parseServer(void) {
         }
     }
 
-    if (!hasListen) {
-        throw std::out_of_range("missing listen entry in server");
-    }
-    if (!hasLocation) {
+    if (!hasListen)
+        new_server.listen_port = 80;
+    if (!hasIndex)
+        new_server.index.push_back("index.html");
+    if (!hasRoot)
+        throw std::out_of_range("missing root directory of server");
+    if (!hasLocation)
         throw std::out_of_range("missing location entry in server");
-    }
-    (void)(hasErrorPage); // temporal line 
+
     servers.push_back(new_server);
     tokens.pop();
 }
@@ -235,7 +235,7 @@ void Config::parseRoot(server &new_server) {
         throw std::out_of_range("missing ';' after root path");
     }
     path.pop_back();
-    new_server.root_path = path;
+    new_server.root = path;
     tokens.pop();
 }
 
@@ -253,114 +253,9 @@ void Config::parseIndex(server &new_server) {
     }
 
     std::string lastIndex = tokens.front();
-    lastIndex.pop_back();  // Remove the trailing ';'
+    lastIndex.pop_back();
     new_server.index.push_back(lastIndex);
     tokens.pop();
-}
-
-void Config::parseClientMaxBodySize() {
-    if (tokens.empty()) {
-        throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
-    }
-    std::string valueStr = tokens.front();
-    tokens.pop();
-
-    if (valueStr.back() != ';') {
-        throw std::out_of_range("missing ';' after client_max_body_size");
-    }
-    valueStr.pop_back();
-
-    int multiplier = 1;
-    if (valueStr.back() == 'M') {
-        multiplier = 1024 * 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'K') {
-        multiplier = 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'G') {
-        multiplier = 1024 * 1024 * 1024;
-        valueStr.pop_back();
-    } else if (valueStr.back() == 'B') {
-        valueStr.pop_back();
-    } else {
-        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
-    }
-
-    std::stringstream ss(valueStr);
-    ss >> clientMaxBodySize;
-    if (ss.fail() || clientMaxBodySize < 0) {
-        throw std::out_of_range("invalid client_max_body_size, must be non-negative");
-    }
-
-    clientMaxBodySize *= multiplier;
-}
-
-void Config::parseLocation(server& server) {
-    location new_location;
-    if (tokens.empty()) {
-        throw std::out_of_range("Unexpected end of file: Expected a location block");
-    }
-
-    std::string firstToken = tokens.front();
-    tokens.pop();
-
-    if (firstToken == "~") {
-        new_location.is_regex = true;
-        
-        if (tokens.empty()) {
-            throw std::out_of_range("missing url in regex location");
-        }
-        new_location.url = tokens.front();
-        tokens.pop();
-    } else {
-        new_location.is_regex = false;
-        new_location.url = firstToken;
-    }
-    if (tokens.empty() || tokens.front() != "{") {
-        throw std::out_of_range("missing '{' after location");
-    }
-    tokens.pop();
-
-    if (tokens.empty()) {
-        throw std::out_of_range("Unexpected end of file within location block");
-    }
-
-    while (!tokens.empty() && tokens.front() != "}") {
-        std::string key = tokens.front();
-        tokens.pop();
-
-        if (key == "limit_except") {
-            parseLimitExcept(new_location);
-        } else if (key == "try_files") {
-            parseTryFiles(new_location);
-        } else if (key == "root") {
-            parseRoot(new_location);
-        } else if (key == "autoindex") {
-            parseAutoIndex(new_location);
-        } else if (key == "include") {
-            parseInclude(new_location);
-        } else if (key == "index") {
-            parseIndex(new_location);
-        } else if (key == "fastcgi_pass") {
-            parseFastcgiPass(new_location);
-        } else if (key == "fastcgi_param") {
-            parseFastcgiParam(new_location);
-        } else if (key == "return") {
-            parseReturn(new_location);
-        } else {
-            throw std::out_of_range("invalid config - location");
-        }
-    }
-
-    if (tokens.empty()) {
-        throw std::out_of_range("missing '}' in location block");
-    }
-    tokens.pop();
-
-    if (new_location.url.empty()) {
-        throw std::out_of_range("URL pattern for location cannot be empty");
-    }
-    server.locations[new_location.url] = new_location;  
 }
 
 void Config::parseErrorPage(server& new_server) {
@@ -411,6 +306,94 @@ void Config::parseErrorPage(server& new_server) {
     }
 }
 
+void Config::parseClientMaxBodySize() {
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
+    }
+    std::string valueStr = tokens.front();
+    tokens.pop();
+
+    if (valueStr.back() != ';') {
+        throw std::out_of_range("missing ';' after client_max_body_size");
+    }
+    valueStr.pop_back();
+
+    int multiplier = 1;
+    if (valueStr.back() == 'M') {
+        multiplier = 1024 * 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'K') {
+        multiplier = 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'G') {
+        multiplier = 1024 * 1024 * 1024;
+        valueStr.pop_back();
+    } else if (valueStr.back() == 'B') {
+        valueStr.pop_back();
+    } else {
+        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
+    }
+
+    std::stringstream ss(valueStr);
+    ss >> clientMaxBodySize;
+    if (ss.fail() || clientMaxBodySize < 0) {
+        throw std::out_of_range("invalid client_max_body_size, must be non-negative");
+    }
+
+    clientMaxBodySize *= multiplier;
+}
+
+void Config::parseLocation(server& server) {
+    location new_location;
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file: Expected a location block");
+    }
+    new_location.url = tokens.front();
+    tokens.pop();
+    if (new_location.url.empty()) {
+        throw std::out_of_range("URL pattern for location cannot be empty");
+
+    if (tokens.empty() || tokens.front() != "{") {
+        throw std::out_of_range("missing '{' after location");
+    }
+    tokens.pop();
+
+    if (tokens.empty()) {
+        throw std::out_of_range("Unexpected end of file within location block");
+    }
+
+    while (!tokens.empty() && tokens.front() != "}") {
+        std::string key = tokens.front();
+        tokens.pop();
+
+        if (key == "limit_except") {
+            parseLimitExcept(new_location);
+        } else if (key == "root") {
+            parseRoot(new_location);
+        } else if (key == "autoindex") {
+            parseAutoIndex(new_location);
+        } else if (key == "index") {
+            parseIndex(new_location);
+        } else if (key == "return") {
+            parseReturn(new_location);
+        } else {
+            throw std::out_of_range("invalid config - location");
+        }
+    }
+    
+    if (new_location.index.empty())
+        new_location.index.push_back("index.html");
+    if (tokens.empty() || tokens.front() != "}") {
+        throw std::out_of_range("missing '}' in location block");
+    }
+    tokens.pop();
+
+    if (new_location.index.empty())
+        new_location.index.push_back("index.html");
+    }
+    server.locations[new_location.url] = new_location;  
+}
+
 void Config::parseLimitExcept(location& loc) {
     if (tokens.size() < 2) {
         throw std::out_of_range("limit_except expects at least 2 arguments");
@@ -441,20 +424,6 @@ void Config::parseLimitExcept(location& loc) {
     tokens.pop();
 }
 
-void Config::parseTryFiles(location& loc) {
-    if (tokens.size() < 2) {
-        throw std::out_of_range("try_files expects at least 2 arguments");
-    }
-    while (tokens.front().back() != ';') {
-        loc.try_files.push_back(tokens.front());
-        tokens.pop();
-    }
-    std::string lastFile = tokens.front();
-    lastFile.pop_back(); // Removing trailing ';'
-    loc.try_files.push_back(lastFile);
-    tokens.pop();
-}
-
 void Config::parseRoot(location& loc) {
     if (tokens.size() < 2) {
         throw std::out_of_range("root expects exactly 2 arguments");
@@ -482,7 +451,7 @@ void Config::parseIndex(location& loc) {
     }
 
     std::string lastIndex = tokens.front();
-    lastIndex.pop_back();  // Remove the trailing ';'
+    lastIndex.pop_back();
     loc.index.push_back(lastIndex);
     tokens.pop();
 }
@@ -506,43 +475,6 @@ void Config::parseAutoIndex(location& loc) {
     }
 
     loc.autoindex = (value == "on");
-}
-
-
-void Config::parseInclude(location& loc) {
-    if (tokens.size() < 2) {
-        throw std::out_of_range("include expects exactly 2 arguments");
-    }
-    std::string file = tokens.front();
-    file.pop_back();
-    loc.include_file = file;
-    tokens.pop();
-}
-
-void Config::parseFastcgiPass(location& loc) {
-    if (tokens.size() < 2) {
-        throw std::out_of_range("fastcgi_pass expects exactly 2 arguments");
-    }
-    std::string path = tokens.front();
-    path.pop_back();
-    loc.fastcgi_pass = path;
-    tokens.pop();
-}
-
-void Config::parseFastcgiParam(location& loc) {
-    if (tokens.size() < 3) {
-        throw std::out_of_range("fastcgi_param expects exactly 3 arguments");
-    }
-
-    std::string key = tokens.front();
-    tokens.pop();
-    std::string value = tokens.front();
-    if (tokens.front().back() != ';') {
-        throw std::out_of_range("missing ';' after fastcgi_param value");
-    }
-    value.pop_back();
-    loc.fastcgi_params[key] = value;
-    tokens.pop();
 }
 
 void Config::parseReturn(location& loc) {
@@ -587,7 +519,6 @@ void Config::trim(std::string &str) const {
 
     str = std::string(start, end + 1);
 }
-
 
 void Config::tokenization(const std::string& line) {
 

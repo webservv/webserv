@@ -181,14 +181,14 @@ void Router::setParsedURL() {
         // also when we fail in location block 
         if (URLFromRequest == "/") {
             for (size_t i = 0; i < config->index.size(); ++i) {
-                std::string potentialIndexPath = findPotentialIndexPath(config->root_path, config->index);
+                std::string potentialIndexPath = findPotentialIndexPath(config->root, config->index);
                 if (!potentialIndexPath.empty()) {
                     configURL = potentialIndexPath;
                     return;
                 }
             }
         }  else {
-            configURL = config->root_path + URLFromRequest; //404 error
+            configURL = config->root + URLFromRequest; //404 error
         }
     }
 }
@@ -196,14 +196,14 @@ void Router::setParsedURL() {
 void Router::parseURL() {
     const std::string& url = configURL;
     std::cout << "url: " << url << std::endl;
-    std::cout << "root_path: " << config->root_path << std::endl;
-    size_t rootPathIndex = url.find(config->root_path);
+    std::cout << "root_path: " << config->root << std::endl;
+    size_t rootPathIndex = url.find(config->root);
     size_t queryIndex = url.find('?');
     std::string script_name;
     std::string path_info;
 
     if (rootPathIndex != std::string::npos) {
-        size_t rootPathLength = config->root_path.length();
+        size_t rootPathLength = config->root.length();
         script_name = url.substr(0, rootPathIndex + rootPathLength);
         if (queryIndex != std::string::npos) {
             path_info = url.substr(rootPathIndex + rootPathLength, queryIndex - (rootPathIndex + rootPathLength));
