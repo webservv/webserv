@@ -170,10 +170,11 @@ void Router::setParsedURL() {
     }
 }
 
-
 void Router::parseURL(void) {
-    const std::string&  url = getParsedURL();
-    const size_t        pathIndex = url.find('/', 5);
+    const std::string&  url = configURL;
+    std::cout << "url: " << url << std::endl;
+    std::cout << "root_path: " << config->root_path << std::endl;
+    const size_t        pathIndex = url.find('/', configURL.length());
     const size_t        queryIndex = url.find('?');
 
     if (pathIndex != std::string::npos)
@@ -184,6 +185,11 @@ void Router::parseURL(void) {
         CgiVariables["PATH_INFO"] = url.substr(pathIndex, queryIndex - pathIndex);
     if (queryIndex != std::string::npos)
         CgiVariables["QUERY_STRING"] = url.substr(queryIndex + 1, -1);
+
+    std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
+    std::cout << "PATH_INFO: " << CgiVariables["PATH_INFO"] << std::endl;
+    std::cout << "QUERY_STRING: " << CgiVariables["QUERY_STRING"] << std::endl;
+
 }
 
 std::string Router::intToIP(in_addr_t ip) const {
