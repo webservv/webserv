@@ -59,7 +59,6 @@ private:
     void				handleDelete(void);
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
-	const std::string&	getResponseStr(void) const;
     const std::string&  getParsedURL(void) const;
 public:
 	void				    handleRequest(void);
@@ -69,6 +68,7 @@ public:
     bool                    isRequestEnd(void) const;
     void                    parseRequest(void);
     bool                    getHaveResponse(void) const;
+    const std::string&      getRequest(void) const;
     const std::string&      getResponse(void) const;
     void                    addRequest(const std::string& request);
     void                    setResponse(const std::string& src);

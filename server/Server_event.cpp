@@ -82,26 +82,27 @@ void Server::disconnect(const int client_sockfd) {
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
-    int recvByte;
-	char buf[BUFFER_SIZE + 1] = {0, };
+    int     recvByte;
+	char    buf[BUFFER_SIZE + 1] = {0, };
+    Router& router = clientSockets[client_sockfd];
 
-	if (clientSockets[client_sockfd].getHaveResponse())
+	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-	clientSockets[client_sockfd].addRequest(buf);
-	if (clientSockets[client_sockfd].isHeaderEnd()) {
+	router.addRequest(buf);
+	if (router.isHeaderEnd()) {
         try {
-		    clientSockets[client_sockfd].parseRequest();
+		    router.parseRequest();
         } catch (const std::exception& e) {
             int error = getRequestError(client_sockfd);
-            clientSockets[client_sockfd].makeErrorResponse(error);
+            router.makeErrorResponse(error);
             return;
         }
-		if (clientSockets[client_sockfd].isRequestEnd()) {
-			clientSockets[client_sockfd].handleRequest();
-std::cout << std::endl; //for request print
+		if (router.isRequestEnd()) {
+std::cout << router.getRequest() << std::endl;
+			router.handleRequest();
         }
 	}
 }
