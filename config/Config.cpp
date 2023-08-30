@@ -360,8 +360,7 @@ void Config::parseLocation(server& server) {
     if (new_location.url.empty()) {
         throw std::out_of_range("URL pattern for location cannot be empty");
     }
-
-    server.locations.push_back(new_location);
+    server.locations[new_location.url] = new_location;  
 }
 
 void Config::parseErrorPage(server& new_server) {

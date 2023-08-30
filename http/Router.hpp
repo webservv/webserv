@@ -14,7 +14,7 @@
 
 class Server;
 
-typedef std::vector<Config::location>::const_iterator iter;
+typedef std::map<std::string, Config::location>::const_iterator iter;
 
 class Router {
 private:
@@ -41,7 +41,6 @@ private:
     std::string         getExtension(const std::string& url) const;
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
-    bool                resourceExists(const std::string& filePath) const;
     void                readFile(const std::string& filePath, std::string& content) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
@@ -50,6 +49,7 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
+    std::string         findPotentialIndexPath(const std::string& rootPath, const std::vector<std::string>& indexFiles);
 //Router.cpp
 public:
 	Router();

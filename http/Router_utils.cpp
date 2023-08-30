@@ -50,10 +50,6 @@ const std::string& Router::getMIME(const std::string& url) const {
     return findMimeType(extension);
 }
 
-bool Router::resourceExists(const std::string& filePath) const {
-    return !access(filePath.c_str(), F_OK);
-}
-
 void Router::readFile(const std::string& filePath, std::string& content) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
@@ -139,58 +135,101 @@ void Router::validateContentType() {
     }
 }
 
-void Router::setParsedURL() {
-    const std::string& URLFromRequest = request.getURL();
-    std::string bestMatchURL;
-    std::string bestMatchRoot;
+std::string Router::findPotentialIndexPath(const std::string& rootPath, const std::vector<std::string>& indexFiles) {
+  std::string potentialIndexPath = "." + rootPath + "/";
+  for (size_t i = 0; i < indexFiles.size(); ++i) {
+    potentialIndexPath += indexFiles[i];
+    if (access(potentialIndexPath.c_str(), R_OK) == 0) {
+      return potentialIndexPath;
+    }
+  }
+  return "";
+}
 
+void Router::setParsedURL() {
+    const std::string&  URLFromRequest = request.getURL();
+    std::string         bestMatchURL;
+    std::string         bestMatchRoot;
+    Config::location    bestLocation;
+    
     for (iter it = config->locations.begin(); it != config->locations.end(); ++it) {
-        const std::string& url = it->url;
+        const std::string& url = it->first;
         if (URLFromRequest.find(url) == 0) {
             if (url.length() > bestMatchURL.length()) {
                 bestMatchURL = url;
-                bestMatchRoot = it->root;
+                bestMatchRoot = it->first;
+                bestLocation = it->second;
             }
         }
     }
     if (!bestMatchURL.empty()) {
-        configURL = bestMatchRoot + URLFromRequest.substr(bestMatchURL.length());
-    } else {
-        if (URLFromRequest == "/") {
+        // when we find best match -> location block 
+        // if client ask for directory -> index 
+        if (URLFromRequest == bestMatchRoot) {
             for (size_t i = 0; i < config->index.size(); ++i) {
-                std::string potentialIndexPath = config->root_path + config->index[i];
-                if (access(potentialIndexPath.c_str(), R_OK)) {
+                std::string potentialIndexPath = findPotentialIndexPath(bestLocation.root, bestLocation.index);
+                if (!potentialIndexPath.empty()) {
                     configURL = potentialIndexPath;
-                    break;
+                    return;
                 }
             }
         }  else {
-            configURL = config->root_path + URLFromRequest;
+            configURL = bestMatchRoot + URLFromRequest.substr(bestMatchURL.length());
+        }
+    } else {
+        // when we don't find best match -> check server block's root
+        // also when we fail in location block 
+        if (URLFromRequest == "/") {
+            for (size_t i = 0; i < config->index.size(); ++i) {
+                std::string potentialIndexPath = findPotentialIndexPath(config->root_path, config->index);
+                if (!potentialIndexPath.empty()) {
+                    configURL = potentialIndexPath;
+                    return;
+                }
+            }
+        }  else {
+            configURL = config->root_path + URLFromRequest; //404 error
         }
     }
 }
 
-void Router::parseURL(void) {
-    const std::string&  url = configURL;
+void Router::parseURL() {
+    const std::string& url = configURL;
     std::cout << "url: " << url << std::endl;
     std::cout << "root_path: " << config->root_path << std::endl;
-    const size_t        pathIndex = url.find('/', configURL.length());
-    const size_t        queryIndex = url.find('?');
+    size_t rootPathIndex = url.find(config->root_path);
+    size_t queryIndex = url.find('?');
+    std::string script_name;
+    std::string path_info;
 
-    if (pathIndex != std::string::npos)
-        CgiVariables["SCRIPT_NAME"] = url.substr(0, pathIndex);
-    else
-        CgiVariables["SCRIPT_NAME"] = url.substr(0, queryIndex);
-    if (pathIndex != std::string::npos)
-        CgiVariables["PATH_INFO"] = url.substr(pathIndex, queryIndex - pathIndex);
-    if (queryIndex != std::string::npos)
-        CgiVariables["QUERY_STRING"] = url.substr(queryIndex + 1, -1);
+    if (rootPathIndex != std::string::npos) {
+        size_t rootPathLength = config->root_path.length();
+        script_name = url.substr(0, rootPathIndex + rootPathLength);
+        if (queryIndex != std::string::npos) {
+            path_info = url.substr(rootPathIndex + rootPathLength, queryIndex - (rootPathIndex + rootPathLength));
+        } else {
+            path_info = url.substr(rootPathIndex + rootPathLength);
+        }
+    } else {
+        if (queryIndex != std::string::npos) {
+            script_name = url.substr(0, queryIndex);
+        } else {
+            script_name = url;
+        }
+    }
+    std::string query_string;
+    if (queryIndex != std::string::npos) {
+        query_string = url.substr(queryIndex + 1);
+    }
+    CgiVariables["SCRIPT_NAME"] = script_name;
+    CgiVariables["PATH_INFO"] = path_info;
+    CgiVariables["QUERY_STRING"] = query_string;
 
     std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
     std::cout << "PATH_INFO: " << CgiVariables["PATH_INFO"] << std::endl;
     std::cout << "QUERY_STRING: " << CgiVariables["QUERY_STRING"] << std::endl;
-
 }
+
 
 std::string Router::intToIP(in_addr_t ip) const {
 	std::string strIP;

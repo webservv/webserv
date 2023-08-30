@@ -73,7 +73,8 @@ void Router::handleGet() {
 			connectCGI();
 		}
 		else {
-			if (!resourceExists(filePath)) {
+			// if (!resourceExists(filePath)) { -> delete one line function. only used here 
+			if (access(filePath.c_str(), F_OK)) {
 				makeErrorResponse(404);
 				return;
 			}

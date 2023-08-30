@@ -25,7 +25,7 @@ public:
     int                                 return_code;
     };
 struct server{
-	std::vector<Config::location>   locations;
+	std::map<std::string, location> locations;
 	std::map<int, std::string>      errorPages;
     std::vector<std::string>        index;
 	std::string                     server_name;
