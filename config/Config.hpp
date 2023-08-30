@@ -11,7 +11,7 @@
 class Config {
 public:
     struct location {
-    std::map<std::string, std::string>  fastcgi_params;
+    std::map<std::string, std::string>  fastcgi_params; // find cgi route 
     std::vector<std::string>            allowedMethod;
     std::vector<std::string>            try_files;
     std::string                         url;
