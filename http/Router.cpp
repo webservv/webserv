@@ -130,10 +130,6 @@ bool Router::isBodyRequired(void) const {
     }
 }
 
-const std::string& Router::getResponseStr(void) const {
-	return response.getResponseStr();
-}
-
 const std::string& Router::getParsedURL(void) const {
     return parsedURL;
 }
@@ -174,6 +170,10 @@ void Router::parseRequest(void) {
 
 bool Router::getHaveResponse(void) const {
 	return haveResponse;
+}
+
+const std::string& Router::getRequest(void) const {
+	return request.getRequestStr();
 }
 
 const std::string& Router::getResponse(void) const {

@@ -1,5 +1,6 @@
 #include "Router.hpp"
 #include "Server.hpp"
+#include <sys/_types/_size_t.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -119,8 +120,10 @@ void Router::validateHeaderLength() {
 }
 
 void Router::validateContentType() {
-    const std::string& contentType = request.findValue("Content-Type");
-    const std::string& transferEncoding = request.findValue("Transfer-Encoding");
+    const std::string&  transferEncoding = request.findValue("Transfer-Encoding");
+    const std::string&  contentType = request.findValue("Content-Type");
+    const size_t        secondFieldPos = contentType.find(';');
+    const std::string   type = contentType.substr(0, secondFieldPos);
 
     if (!transferEncoding.empty()) {
         if (transferEncoding != "chunked") {
@@ -129,7 +132,7 @@ void Router::validateContentType() {
         }
         return;
     }
-    if (!contentType.empty() && contentType != "application/x-www-form-urlencoded") {
+    if (type != "application/x-www-form-urlencoded" && type != "multipart/form-data") {
         makeErrorResponse(415);
         throw std::runtime_error("Unsupported Media Type");
     }

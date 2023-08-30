@@ -109,7 +109,6 @@ void Response::setResponse(const std::string &src) {
 
 void Response::setMessageToCGI(const std::string &src) {
 	messageToCGI = src;
-std::cout << "messageToCGI: " << messageToCGI << std::endl;
 }
 
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
