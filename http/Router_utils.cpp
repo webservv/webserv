@@ -146,16 +146,14 @@ void Router::validateContentType() {
 }
 
 void Router::setConfigURL() {
-    const std::string&  URLFromRequest = request.getURL();
+    std::string&        URLFromRequest = const_cast<std::string&>(request.getURL());
     std::string         bestMatchURL;
     std::string         bestMatchRoot;
     Config::location    bestLocation;
     
     GetBestMatchURL(config->locations, URLFromRequest, bestMatchURL, bestMatchRoot, bestLocation);
     if (bestMatchURL == "/" && URLFromRequest == "/") {
-        configURL = findPotentialIndexPath(config->root, config->index, "");
-        configRoot = config->root;
-        return;
+        URLFromRequest = "";
     }
     if (bestMatchURL.empty()) {
         configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
