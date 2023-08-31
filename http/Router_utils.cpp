@@ -152,7 +152,7 @@ void Router::validateContentType() {
 void Router::parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, std::string& configURL, std::string& configRoot) {
     URLFromRequest.erase(URLFromRequest.end() - 1);
     
-
+    throw std::runtime_error("for test");
     // directory index를 찾는 로직인데 나중에 테스트 하면서 고쳐야 됩니다. 
     // directory가 들어왔을 때 bestMatchRoot로 돌리는게 맞는가..? 의문
     if (bestMatchRoot.empty()) {
@@ -176,7 +176,17 @@ void Router::setConfigURL() {
         try {
             parseDirectory(URLFromRequest, bestMatchRoot, bestLocation, configURL, configRoot);
         } catch (const std::exception& e) {
-            // auto index를 구현하는 부분 들어올 예정
+            // /happy 
+            // root /document 
+            // -> /document/happy 
+            std::cout << "cath!!" << std::endl;
+            std::string directoryPath;
+            if (bestMatchRoot.empty())
+                directoryPath = config->root + URLFromRequest;
+            else
+                directoryPath = bestMatchRoot + URLFromRequest;
+            configURL = generateDirectoryListing(directoryPath);
+            configRoot = directoryPath;
             // 디렉토리에서 index 접근을 확인하는 과정에서 실패하면 여기로 들어옴
         }
         return ;

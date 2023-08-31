@@ -5,6 +5,7 @@
 #include <ctime>
 #include <sys/stat.h>
 #include <dirent.h>
+#include "Router.hpp"
 
 std::string getFileType(const char* path) {
     struct stat info;
@@ -29,7 +30,7 @@ std::string desiredStr(const int desiredSpaces, const std::string& originStr) {
     return newStr;
 }
 
-std::string generateDirectoryListing(const std::string& directoryPath) {
+std::string Router::generateDirectoryListing(const std::string& directoryPath) {
     std::string html;
 
     html += "<html><head><title>Index of " + directoryPath + "</title></head><body>";
@@ -59,27 +60,16 @@ std::string generateDirectoryListing(const std::string& directoryPath) {
         }
         closedir(dir);
     }
-
     html += "</pre><hr></body></html>";
 
-    return html;
-}
-
-/*
-read this usage!
-int main() {
-    std::string directoryPath = "/Users/yoonsele/project/webserv"; // Replace with your directory path
-    std::string htmlContent = generateDirectoryListing(directoryPath);
-
-    std::ofstream outputFile("directory_listing.html");
+	std::string autoFile = directoryPath + "/" + "autoindex.html";
+    std::ofstream outputFile(autoFile);
     if (outputFile.is_open()) {
-        outputFile << htmlContent;
+        outputFile << html;
         outputFile.close();
         std::cout << "HTML directory listing generated successfully." << std::endl;
     } else {
         std::cerr << "Failed to open output file." << std::endl;
     }
-
-    return 0;
+    return autoFile;
 }
-*/
