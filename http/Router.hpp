@@ -14,6 +14,9 @@
 
 class Server;
 
+typedef std::map<std::string, Config::location>::const_iterator iter;
+static const std::string    CGI_PATH = "./document/cgi";
+
 class Router {
 private:
     static std::map<std::string, std::string>   mimeMap;
@@ -25,10 +28,13 @@ private:
     sockaddr_in                         clientAddr;
     const Config::server*               config;
     std::map<std::string, std::string>  CgiVariables;
-    std::string                         parsedURL;
+    std::string                         configURL;
+    std::string                         configRoot;
 //Router_error.cpp
 private:
-	void    makeErrorPage(void);
+    std::pair<std::string, std::string> \
+                        defaultErrorPage(int statusCode);
+    void                setCustomErrorPage(const std::string& customPath);
 public:
     void    makeErrorResponse(int statusCode);
 //Router_utils.cpp
@@ -42,7 +48,7 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                setParsedURL(void);
+    void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;

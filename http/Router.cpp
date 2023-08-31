@@ -21,7 +21,7 @@ Router::Router():
 	clientAddr(),
 	config(NULL),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -33,7 +33,7 @@ Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config
 	clientAddr(clientAddr),
 	config(config),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -46,7 +46,7 @@ Router::Router(const Router& copy):
 	clientAddr(copy.clientAddr),
 	config(copy.config),
 	CgiVariables(copy.CgiVariables),
-	parsedURL(copy.parsedURL) {
+	configURL(copy.configURL) {
 		initializeMimeMap();
 	}
 
@@ -58,7 +58,7 @@ Router& Router::operator=(const Router& copy) {
 	clientAddr = copy.clientAddr;
 	config = copy.config;
 	CgiVariables = copy.CgiVariables;
-	parsedURL = copy.parsedURL;
+	configURL = copy.configURL;
 	return *this;
 }
 
@@ -70,7 +70,11 @@ void Router::handleGet() {
 	try {
 		if (!scriptName.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
-			connectCGI();
+            try {
+		    	connectCGI();
+            } catch (const std::exception& e) {
+                makeErrorResponse(500);
+            }
 		}
 		else
 			processStaticGet(scriptName);
@@ -94,7 +98,11 @@ void Router::handlePost() {
 
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	connectCGI();
+	try {
+        connectCGI();
+    } catch (const std::exception& e) {
+        makeErrorResponse(500);
+    }
 }
 
 void Router::connectCGI(void) {
@@ -126,13 +134,13 @@ bool Router::isBodyRequired(void) const {
 }
 
 const std::string& Router::getParsedURL(void) const {
-    return parsedURL;
+    return configURL;
 }
 
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
-	setParsedURL();
+	setConfigURL();
 	parseURL();
 	if (method == Request::GET) {
         handleGet();
