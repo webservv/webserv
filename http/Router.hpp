@@ -49,11 +49,12 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, std::string& configURL, std::string& configRoot);
+    void                parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation);
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
+    void            GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
 //Router_static.cpp
 private:
     void    processStaticGet(void);
@@ -74,6 +75,7 @@ private:
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;
+    void                handleMethod(Request::METHOD method);
 public:
 	void				        handleRequest(void);
     const Config::server*       getConfig(void) const;
