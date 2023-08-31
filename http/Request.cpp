@@ -2,22 +2,28 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <algorithm>
 #include <sys/_types/_size_t.h>
 
 Request::Request():
-    requestStr(""),
+    requestStr(),
     requestLines(),
     method(OTHER),
     values(),
+    body(),
     haveHeader(false),
     error(0),
-    bodyPos(0) {}
+    bodyPos(0) {
+        static const size_t BUFFER_SIZE = 10000000;
+        requestStr.reserve(BUFFER_SIZE);
+    }
 
 Request::Request(const Request& copy):
     requestStr(copy.requestStr),
     requestLines(copy.requestLines),
     method(copy.method),
     values(copy.values),
+    body(),
     haveHeader(copy.haveHeader),
     error(copy.error),
     bodyPos(0) {}
@@ -27,6 +33,7 @@ Request& Request::operator=(const Request& copy) {
 	requestLines = copy.requestLines;
 	method = copy.method;
 	values = copy.values;
+    body = copy.body;
     haveHeader = copy.haveHeader;
     error = copy.error;
     haveHeader = copy.bodyPos;
@@ -35,11 +42,25 @@ Request& Request::operator=(const Request& copy) {
 
 Request::~Request() {}
 
+//use until making KMP function
+size_t Request::findHeaderEnd(void) const {
+    size_t  ret = -1;
+
+    for (size_t i = 0; i < requestStr.size() - 3; ++i) {
+        if (requestStr[i] == '\r' && requestStr[i + 1] == '\n'
+        &&  requestStr[i + 2] == '\r' && requestStr[i + 3] == '\n') {
+            ret = i;
+            break;
+        }
+    }
+    return ret;
+}
+
 Request::METHOD Request::getMethod(void) const {
 	return method;
 }
 
-const std::string& Request::getRequestStr(void) const {
+const std::vector<char>& Request::getRequestStr(void) const {
     return requestStr;
 }
 
@@ -51,8 +72,8 @@ const std::string& Request::getURL(void) const {
 	return findValue("url");
 }
 
-const std::string& Request::getBody(void) const {
-	return findValue("body");
+const std::vector<char>& Request::getBody(void) const {
+	return body;
 }
 
 const std::string& Request::getVersion(void) const {
@@ -78,14 +99,14 @@ const std::string& Request::findValue(const std::string& headerName) const {
     return emptyString;
 }
 
-void Request::addRequest(const std::string &request) {
-    this->requestStr += request;
+void Request::addRequest(const std::vector<char>& input) {
+    requestStr.insert(requestStr.end(), input.begin(), input.end());
 }
 
 bool Request::isHeaderEnd(void) {
     if (haveHeader)
         return true;
-    size_t pos = requestStr.find("\r\n\r\n");
+    size_t pos = findHeaderEnd();
     if (pos != std::string::npos) {
         bodyPos = pos + 4;
         return true;
@@ -98,29 +119,24 @@ bool Request::isRequestEnd(void) const {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
 
     if (it != values.end() && it->second == "chunked") {
-        it = values.find("body");
-        if (it != values.end()) {
-            const std::string&  body = it->second;
-            for (size_t i = body.size() - 1; i >= 0; i--) {
-                if (body[i] == '\r' || body[i] == '\n')
-                    continue;
-                else if (body[i] == '0')
-                    return true;
-                else
-                    return false;
-            }
+        for (size_t i = body.size() - 1; i >= 0; i--) {
+            if (body[i] == '\r' || body[i] == '\n')
+                continue;
+            else if (body[i] == '0')
+                return true;
+            else
+                return false;
         }
         return false;
     }
     it = values.find("content-length");
     if (it != values.end()) {
         size_t len = std::atoi(it->second.c_str());
-        it = values.find("body");
-        if (it != values.end() && it->second.size() == len)
+        if (body.size() == len)
             return true;
         else
             return false;
-    }
+    }  
     else
         return true;
 }

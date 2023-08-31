@@ -69,7 +69,7 @@ void Router::readFile(const std::string& filePath, std::string& content) const {
 void Router::makeCgiVariables(void) {
     std::stringstream   ss;
     const std::string&  host = request.findValue("host");
-    const size_t        portIndex = host.find(':');
+    const size_t        portPos = host.find(':');
 
     ss << intToIP(clientAddr.sin_addr.s_addr);
     CgiVariables["AUTH_TYPE"] = request.findValue("AUTH_TYPE");
@@ -83,7 +83,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
     CgiVariables["REQUEST_METHOD"] = request.getStrMethod();
     CgiVariables["SERVER_NAME"] = config->server_name;
-    CgiVariables["SERVER_HOST"] = host.substr(portIndex + 1, -1);
+    CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");

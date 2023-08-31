@@ -172,7 +172,7 @@ bool Router::getHaveResponse(void) const {
 	return haveResponse;
 }
 
-const std::string& Router::getRequest(void) const {
+const std::vector<char>& Router::getRequest(void) const {
 	return request.getRequestStr();
 }
 
@@ -180,8 +180,8 @@ const std::string& Router::getResponse(void) const {
 	return response.getResponseStr();
 }
 
-void Router::addRequest(const std::string &request) {
-	this->request.addRequest(request);
+void Router::addRequest(const std::vector<char>& input) {
+	this->request.addRequest(input);
 }
 
 void Router::setResponse(const std::string &src) {

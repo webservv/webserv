@@ -56,15 +56,22 @@ void Request::parseBody(void) {
     
     if (it != values.end() && it->second == "chunked")
         parseChunkedBody();
-    else
-        values["body"] += requestStr.substr(bodyPos, -1);
-    bodyPos = requestStr.size();
+    else {
+        std::vector<char>::iterator st = requestStr.begin() + bodyPos;
+        if (st < requestStr.end()) {
+            body.insert(body.end(), st, requestStr.end());
+            bodyPos = requestStr.size();
+        }
+    }
 }
 
 void Request::addRequestLines(void) {
-    std::stringstream   parser(requestStr.substr(0, bodyPos));
+    std::stringstream   parser;
     std::string         line;
 
+    for (size_t i = 0; i < bodyPos; ++i) {
+        parser << requestStr[i];
+    }
     while (std::getline(parser, line) && !line.empty()) {
         if (line.back() == '\r')
             line.pop_back();
@@ -73,10 +80,13 @@ void Request::addRequestLines(void) {
 }
 
 void Request::parseChunkedBody(void) {
-    std::stringstream   parser(requestStr.substr(bodyPos, -1));
+    std::stringstream   parser;
     std::string         line;
     size_t              chunkSize;
 
+    for (size_t i = bodyPos; i < requestStr.size(); ++i) {
+        parser << requestStr[i];
+    }
     while (std::getline(parser, line)) {
         line += '\n';
         std::stringstream chunkSizeStream(line);
@@ -121,7 +131,7 @@ void Request::parseKeyValues(void) {
         }
         std::string headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
-        
+
 		values[headerName] = line.substr(index + 2);
 	}
 }
@@ -133,6 +143,12 @@ void Request::parseHeader(void) {
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
+    if (values.find("content-length") != values.end()) {
+        std::stringstream   ss(values["content-length"]);
+        size_t              size;
+        ss >> size;
+        values["body"].reserve(size);
+    }
 }
 
 void Request::parse() {

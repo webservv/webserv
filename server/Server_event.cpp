@@ -12,13 +12,15 @@
 #include <sys/_types/_int16_t.h>
 #include <sys/_types/_intptr_t.h>
 #include <sys/_types/_size_t.h>
+#include <sys/_types/_ssize_t.h>
 #include <sys/_types/_uintptr_t.h>
 #include <sys/event.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
-#define BUFFER_SIZE 1000 // we should put it 100 
+#define BUFFER_SIZE 1000 // we should put it 100
+#define DEBUG_BUFFER_SIZE 1000000
 
 void Server::handleEvent(const struct kevent& cur) {
     if (cur.flags & EV_ERROR) {
@@ -82,16 +84,21 @@ void Server::disconnect(const int client_sockfd) {
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
-    int     recvByte;
-	char    buf[BUFFER_SIZE + 1] = {0, };
+    ssize_t recvByte;
+	char    buf[DEBUG_BUFFER_SIZE + 1] = {0, };
     Router& router = clientSockets[client_sockfd];
 
 	if (router.getHaveResponse())
 		return;
-	recvByte = recv(client_sockfd, buf, BUFFER_SIZE, 0);
+	recvByte = recv(client_sockfd, buf, DEBUG_BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-	router.addRequest(buf);
+	std::vector<char>   input;
+    input.reserve(recvByte);
+    for (ssize_t i = 0; i < recvByte; ++i) {
+        input.push_back(buf[i]);
+    }
+    router.addRequest(input);
 	if (router.isHeaderEnd()) {
         try {
 		    router.parseRequest();
@@ -101,7 +108,11 @@ void Server::receiveBuffer(const int client_sockfd) {
             return;
         }
 		if (router.isRequestEnd()) {
-std::cout << router.getRequest() << std::endl;
+const std::vector<char>& request = router.getRequest();
+for (size_t i = 0; i < request.size(); ++i) {
+std::cout << request[i];
+}
+std::cout << std::endl;
 			router.handleRequest();
         }
 	}

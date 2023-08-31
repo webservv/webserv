@@ -18,7 +18,8 @@
 
 Response::Response():
 	responseStr(""),
-	messageToCGI(""),
+	messageToCGI(),
+	writtenCgiLength(0),
 	writeFD(NULL_FD),
 	readFD(NULL_FD),
 	cgiPid(NULL_PID) {}
@@ -26,6 +27,7 @@ Response::Response():
 Response::Response(const Response& copy):
 	responseStr(copy.responseStr),
 	messageToCGI(copy.messageToCGI),
+	writtenCgiLength(copy.writtenCgiLength),
 	writeFD(copy.writeFD),
 	readFD(copy.readFD),
 	cgiPid(copy.cgiPid) {}
@@ -33,6 +35,7 @@ Response::Response(const Response& copy):
 Response& Response::operator=(const Response& copy) {
 	responseStr = copy.responseStr;
 	messageToCGI = copy.messageToCGI;
+	writtenCgiLength = copy.writtenCgiLength;
 	writeFD = copy.writeFD;
 	readFD = copy.readFD;
 	cgiPid = copy.cgiPid;
@@ -107,7 +110,7 @@ void Response::setResponse(const std::string &src) {
 	responseStr.assign(src);
 }
 
-void Response::setMessageToCGI(const std::string &src) {
+void Response::setMessageToCGI(const std::vector<char> &src) {
 	messageToCGI = src;
 }
 
@@ -146,32 +149,31 @@ void Response::readFromCGI(void) {
 }
 
 void Response::writeToCGI(const intptr_t fdBufferSize) {
-	intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
-	ssize_t		writeLength;
+	const intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
+	const size_t	leftSize = messageToCGI.size() - writtenCgiLength;
+	ssize_t			writeLength;
 
-	if (messageToCGI.size() == 0) {
+	if (leftSize == 0) {
 		close(writeFD);
 		writeFD = NULL_FD;
 		return;
 	}
-	if (static_cast<intptr_t>(messageToCGI.size()) <= bufSize) {
-		writeLength = write(writeFD, messageToCGI.c_str(), messageToCGI.size());
+	if (leftSize <= bufSize) {
+		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, leftSize);
 		if (writeLength < 0)
 			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
-		if (writeLength == static_cast<ssize_t>(messageToCGI.size())) {
-			messageToCGI.clear();
-			close(writeFD);
-			writeFD = NULL_FD;
-		}
-		else
-			messageToCGI = messageToCGI.substr(writeLength, -1);
 	}
 	else {
-		const std::string writeMessage = messageToCGI.substr(0, bufSize);
-		messageToCGI = messageToCGI.substr(bufSize, -1);
-		if (write(writeFD, writeMessage.c_str(), writeMessage.size()) < 0)
-			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
+		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, bufSize);
+		if (writeLength < 0)
+			throw std::runtime_error("writeCGI: " + std::string(strerror(errno))); 
 	}
+	if (writeLength + writtenCgiLength == messageToCGI.size()) {
+			close(writeFD);
+			writeFD = NULL_FD;
+	}
+	else
+		writtenCgiLength += writeLength;
 }
 
 void Response::disconnectCGI(void) {
@@ -183,8 +185,9 @@ void Response::disconnectCGI(void) {
 		close(readFD);
 	if (cgiPid != NULL_PID) {
 		if (waitpid(cgiPid, &stat, 0) < 0)
-			throw std::runtime_error("disconnectCGI: " + std::string(strerror(errno)));
+			throw std::runtime_error("disconnectCGI1: " + std::string(strerror(errno)));
 		if (!WIFEXITED(stat))
-			throw std::logic_error("disconnectCGI: " + std::string(strerror(errno)));
+			throw std::logic_error("disconnectCGI2: " + std::string(strerror(errno)));
+		cgiPid = NULL_PID;
 	}
 }

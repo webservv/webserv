@@ -61,23 +61,23 @@ private:
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;
 public:
-	void				    handleRequest(void);
-    const Config::server*   getConfig(void) const;
-    const sockaddr_in&      getClientAddr(void) const;
-    bool                    isHeaderEnd(void);
-    bool                    isRequestEnd(void) const;
-    void                    parseRequest(void);
-    bool                    getHaveResponse(void) const;
-    const std::string&      getRequest(void) const;
-    const std::string&      getResponse(void) const;
-    void                    addRequest(const std::string& request);
-    void                    setResponse(const std::string& src);
-    void                    readFromCGI(void);
-    void                    writeToCGI(const intptr_t fdBufferSize);
-    void                    disconnectCGI(void);
-    int                     getWriteFD(void) const;
-    int                     getReadFD(void) const;
-    int                     getRequestError(void) const;
+	void				        handleRequest(void);
+    const Config::server*       getConfig(void) const;
+    const sockaddr_in&          getClientAddr(void) const;
+    bool                        isHeaderEnd(void);
+    bool                        isRequestEnd(void) const;
+    void                        parseRequest(void);
+    bool                        getHaveResponse(void) const;
+    const std::vector<char>&    getRequest(void) const;
+    const std::string&          getResponse(void) const;
+    void                        addRequest(const std::vector<char>& input);
+    void                        setResponse(const std::string& src);
+    void                        readFromCGI(void);
+    void                        writeToCGI(const intptr_t fdBufferSize);
+    void                        disconnectCGI(void);
+    int                         getWriteFD(void) const;
+    int                         getReadFD(void) const;
+    int                         getRequestError(void) const;
 };
 
 #endif

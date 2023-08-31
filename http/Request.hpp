@@ -18,10 +18,11 @@ public:
 		OTHER
 	};
 private:
-	std::string							requestStr;
+	std::vector<char>					requestStr;
 	std::queue<std::string>				requestLines;
 	METHOD								method;
 	std::map<std::string, std::string>	values;
+	std::vector<char>					body;
 	bool								haveHeader;
     int									error;
 	size_t								bodyPos;
@@ -44,18 +45,20 @@ public:
 	~Request();
 	Request(const Request& copy);
 	Request&	operator=(const Request& copy);
+private:
+	size_t	findHeaderEnd(void) const;
 public:
-	Request::METHOD		getMethod(void) const;
-	const std::string&	getRequestStr(void) const;
-	const std::string&	getStrMethod(void) const;
-	const std::string&	getURL(void) const;
-	const std::string&	getBody(void) const;
-	const std::string&	getVersion(void) const;
-    int					getError(void) const;
-	const std::string&	findValue(const std::string& headerName) const;
-	void				addRequest(const std::string& request);
-    bool				isHeaderEnd(void);
-	bool				isRequestEnd(void) const;
+	Request::METHOD				getMethod(void) const;
+	const std::vector<char>&	getRequestStr(void) const;
+	const std::string&			getStrMethod(void) const;
+	const std::string&			getURL(void) const;
+	const std::vector<char>&	getBody(void) const;
+	const std::string&			getVersion(void) const;
+    int							getError(void) const;
+	const std::string&			findValue(const std::string& headerName) const;
+	void						addRequest(const std::vector<char>& input);
+    bool						isHeaderEnd(void);
+	bool						isRequestEnd(void) const;
 };
 
 #endif
