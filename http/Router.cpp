@@ -69,7 +69,11 @@ void Router::handleGet() {
 	try {
 		if (filePath.substr(0, CGI_PATH.length()) == CGI_PATH) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
-			connectCGI();
+            try {
+		    	connectCGI();
+            } catch (const std::exception& e) {
+                makeErrorResponse(500);
+            }
 		}
 		else {
 			if (access(filePath.c_str(), F_OK)) {
@@ -93,12 +97,20 @@ void Router::handlePost() {
 	validateHeaderLength();
 	validateContentType();
 	response.makeStatusLine("HTTP/1.1", "201", "OK");
-	connectCGI();
+    try {
+	    connectCGI();
+    } catch (const std::exception& e) {
+        makeErrorResponse(500);
+    }
 }
 
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	connectCGI();
+	try {
+        connectCGI();
+    } catch (const std::exception& e) {
+        makeErrorResponse(500);
+    }
 }
 
 void Router::connectCGI(void) {
