@@ -149,6 +149,22 @@ void Router::validateContentType() {
     }
 }
 
+void Router::parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, std::string& configURL, std::string& configRoot) {
+    URLFromRequest.erase(URLFromRequest.end() - 1);
+    
+
+    // directory index를 찾는 로직인데 나중에 테스트 하면서 고쳐야 됩니다. 
+    // directory가 들어왔을 때 bestMatchRoot로 돌리는게 맞는가..? 의문
+    if (bestMatchRoot.empty()) {
+        configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
+        configRoot = config->root;
+    } else {
+        configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
+        configRoot = bestMatchRoot;
+    }
+}
+
+
 void Router::setConfigURL() {
     std::string&        URLFromRequest = const_cast<std::string&>(request.getURL());
     std::string         bestMatchURL;
@@ -156,18 +172,16 @@ void Router::setConfigURL() {
     Config::location    bestLocation;
     
     GetBestMatchURL(config->locations, URLFromRequest, bestMatchURL, bestMatchRoot, bestLocation);
-    if (bestMatchURL == "/" && URLFromRequest == "/") {
-        URLFromRequest = "";
-        if (bestMatchURL.empty() || bestMatchRoot.empty()) {
-            configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
-            configRoot = config->root;
-        } else {
-            configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
-            configRoot = bestMatchRoot;
+    if (URLFromRequest.back() == '/') {
+        try {
+            parseDirectory(URLFromRequest, bestMatchRoot, bestLocation, configURL, configRoot);
+        } catch (const std::exception& e) {
+            // auto index를 구현하는 부분 들어올 예정
+            // 디렉토리에서 index 접근을 확인하는 과정에서 실패하면 여기로 들어옴
         }
         return ;
     }
-    if (bestMatchURL.empty() || bestMatchRoot.empty()) {
+    if (bestMatchRoot.empty()) {
         configURL = findPath(config->root, URLFromRequest);
         configRoot = config->root;
     } else {
@@ -230,17 +244,17 @@ bool Router::needCookie(void) const {
 }
 
 static std::string findPotentialIndexPath(const std::string& rootPath, \
-    const std::vector<std::string>& indexFiles, const std::string& url) {
-    std::string potentialIndexPath = "." + rootPath + url;
+    const std::vector<std::string>& indexFiles, const std::string& directory) {
+    std::string potentialIndexPath = "." + rootPath + directory;
 
-    potentialIndexPath = "." + rootPath + "/";
+    potentialIndexPath = potentialIndexPath + "/";
     for (size_t i = 0; i < indexFiles.size(); ++i) {
         potentialIndexPath += indexFiles[i];
         if (access(potentialIndexPath.c_str(), R_OK) == 0) {
             return potentialIndexPath;
         }
     }
-    return "." + rootPath + url;
+    return "." + rootPath + directory;
 }
 
 static std::string findPath(const std::string& rootPath, const std::string& url) {
