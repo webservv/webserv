@@ -54,13 +54,13 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void            GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
+    void                GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
 //Router_static.cpp
 private:
     void    processStaticGet(void);
-    void    processStaticPost(void);
-    // void    processStaticPut(void);
-    // void    processStaticDelete(void);
+    void    processStaticPost(void); //WIP
+    void    processStaticPut(void); //WIP
+    void    processStaticDelete(void); //WIP
 //Router.cpp
 public:
 	Router();

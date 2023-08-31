@@ -1,7 +1,9 @@
 #include "Router.hpp"
 #include <fstream>
+#include <ios>
 #include <stdexcept>
 #include <vector>
+#include <cstdio>
 
 void Router::processStaticGet(void) {
 	if (!resourceExists(configURL)) {
@@ -24,7 +26,7 @@ void Router::processStaticPost(void) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
 		response.makeHeader("Content-Length", "0");
 	}
-	os.open(configURL.c_str());
+	os.open(configURL.c_str(), std::ios_base::app);
 	if (os.fail())
 		throw std::runtime_error("processStaticPost: open failure");
 	os.write(body.data(), body.size());
@@ -32,4 +34,34 @@ void Router::processStaticPost(void) {
 		throw std::runtime_error("processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	haveResponse = true;
+}
+
+void Router::processStaticPut(void) {
+	const std::vector<char>&	body = request.getBody();
+	std::ofstream				os;
+
+	if (body.empty()) {
+		response.makeStatusLine("HTTP/1.1", "204", "No Content");
+		response.makeHeader("Content-Length", "0");
+	}
+	os.open(configURL.c_str(), std::ios::out);
+	if (os.fail())
+		throw std::runtime_error("processStaticPost: open failure");
+	os.write(body.data(), body.size());
+	if (os.fail())
+		throw std::runtime_error("processStaticPost: write failure");
+	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	haveResponse = true;
+}
+
+void Router::processStaticDelete(void) {
+	if (!resourceExists(configURL)) {
+		makeErrorResponse(404);
+		return;
+	}
+	if (std::remove(configURL.c_str()) != 0) {
+		makeErrorResponse(500);
+		return;
+	}
+	response.makeStatusLine("HTTP/1.1", "200", "OK");
 }
