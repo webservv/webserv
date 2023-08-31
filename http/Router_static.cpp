@@ -4,20 +4,12 @@
 #include <vector>
 
 void Router::processStaticGet(const std::string& scriptName) {
-	std::string	path;
-
 	if (!resourceExists(scriptName)) {
-		makeErrorPage();
+		makeErrorResponse(404);
 		return;
 	}
-	if (scriptName == "/") {
-		path = "./document/index.html"; //It have to be replaced by the .conf content.
-	}
-	else {
-		path = '.' + scriptName;
-	}
 	std::string content;
-    readFile(path, content);
+    readFile(configURL, content);
     std::string mimeType = getMIME(scriptName);
     response.makeStatusLine("HTTP/1.1", "200", "OK");
     response.makeBody(content, content.size(), mimeType);

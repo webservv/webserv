@@ -247,7 +247,8 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
     const std::vector<std::string>& indexFiles, const std::string& directory) {
     std::string potentialIndexPath = "." + rootPath + directory;
 
-    potentialIndexPath = potentialIndexPath + "/";
+    if (!directory.empty())
+        potentialIndexPath = potentialIndexPath + "/";
     for (size_t i = 0; i < indexFiles.size(); ++i) {
         potentialIndexPath += indexFiles[i];
         if (access(potentialIndexPath.c_str(), R_OK) == 0) {
