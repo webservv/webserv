@@ -3,6 +3,7 @@
 #include "Response.hpp"
 #include "Server.hpp"
 
+#include <exception>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fstream>
@@ -163,7 +164,13 @@ void Router::handleRequest() {
 	
 	setConfigURL();
 	parseURL();
-    handleMethod(method);
+	try {
+    	handleMethod(method);
+	}
+	catch (std::exception& e) {
+		std::cout << e.what() << std::endl;
+		return;
+	}
 	if (method == Request::GET) {
         handleGet();
 	} else if (method == Request::POST) {

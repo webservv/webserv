@@ -142,17 +142,17 @@ void Router::validateContentType() {
     }
 }
 
-void Router::parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation) {
-    URLFromRequest.erase(URLFromRequest.end() - 1);
+void Router::parseDirectory(std::string& UrlFromRequest, const Config::location& bestLocation) {
+    UrlFromRequest.erase(UrlFromRequest.end() - 1);
     
     std::string bestMatchRoot = bestLocation.root;
     // directory index를 찾는 로직인데 나중에 테스트 하면서 고쳐야 됩니다. 
     // directory가 들어왔을 때 bestMatchRoot로 돌리는게 맞는가..? 의문
     if (bestMatchRoot.empty()) {
-        configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
+        configURL = findPotentialIndexPath(config->root, config->index, UrlFromRequest);
         configRoot = config->root;
     } else {
-        configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
+        configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, UrlFromRequest);
         configRoot = bestMatchRoot;
     }
 }
