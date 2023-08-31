@@ -52,53 +52,55 @@ void Request::parseVersion(const std::string& line, const size_t space) {
 }
 
 void Request::parseBody(void) {
-    while (!requestLines.empty()) {
-        values["body"] += requestLines.front();
-        requestLines.pop();
+    std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
+    
+    if (it != values.end() && it->second == "chunked")
+        parseChunkedBody();
+    else {
+        std::vector<char>::iterator st = requestStr.begin() + bodyPos;
+        if (st < requestStr.end()) {
+            body.insert(body.end(), st, requestStr.end());
+            bodyPos = requestStr.size();
+        }
+        it = values.find("content-length");
+        if (it == values.end()) {
+            haveBody = true;
+            return;
+        }
+        size_t len = std::atoi(it->second.c_str());
+        if (body.size() == len)
+            haveBody = true;
     }
 }
 
 void Request::addRequestLines(void) {
-    std::stringstream parser(requestStr);
-    bool isChunked = false;
+    std::stringstream   parser;
+    std::string         line;
 
-    if (values.find("transfer-encoding") != values.end() && values["transfer-encoding"] == "chunked")
-        isChunked = true;
-    readHeadersAndInitialRequestLines(parser);
-    if (isChunked) {
-        handleChunkedTransferEncoding(parser);
-    } else {
-        handleNonChunkedTransferEncoding(parser);
+    for (size_t i = 0; i < bodyPos; ++i) {
+        parser << requestStr[i];
     }
-std::cout << "\n" << requestStr;
-    requestStr.clear();
-}
-
-void Request::readHeadersAndInitialRequestLines(std::stringstream& parser) {
-    std::string line;
     while (std::getline(parser, line) && !line.empty()) {
-        if (line.back() == '\r') line.pop_back();
+        if (line.back() == '\r')
+            line.pop_back();
         requestLines.push(line);
     }
 }
 
-void Request::handleNonChunkedTransferEncoding(std::stringstream& parser) {
-    std::string line;
+void Request::parseChunkedBody(void) {
+    std::stringstream   parser;
+    std::string         line;
+    size_t              chunkSize;
+
+    for (size_t i = bodyPos; i < requestStr.size(); ++i) {
+        parser << requestStr[i];
+    }
     while (std::getline(parser, line)) {
-        if (line.back() == '\r') line.pop_back();
-        requestLines.push(line);
-    }
-}
-
-void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
-    std::string line;
-    while (true) {
-        std::getline(parser, line);
-        if (line.back() == '\r') line.pop_back();
-        size_t chunkSize;
+        line += '\n';
         std::stringstream chunkSizeStream(line);
         chunkSizeStream >> std::hex >> chunkSize;
         if (chunkSizeStream.fail() || chunkSize == 0) {
+            haveBody = !chunkSize;
             break;
         }
         if (chunkSize > MAX_CHUNK_SIZE) {
@@ -108,8 +110,7 @@ void Request::handleChunkedTransferEncoding(std::stringstream& parser) {
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
         std::string chunkData(buffer.begin(), buffer.end());
-        requestLines.push(chunkData);
-        parser.ignore(2); // Ignore the \r\n after the chunk
+        values["body"] += line;
     }
 }
 
@@ -139,7 +140,7 @@ void Request::parseKeyValues(void) {
         }
         std::string headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
-        
+
 		values[headerName] = line.substr(index + 2);
 	}
 }
@@ -147,14 +148,19 @@ void Request::parseKeyValues(void) {
 void Request::parseHeader(void) {
     if (haveHeader)
         return;
-
+    addRequestLines();
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
+    if (values.find("content-length") != values.end()) {
+        std::stringstream   ss(values["content-length"]);
+        size_t              size;
+        ss >> size;
+        values["body"].reserve(size);
+    }
 }
 
 void Request::parse() {
-    addRequestLines();
     parseHeader();
     parseBody();
 }

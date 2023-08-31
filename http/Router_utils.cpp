@@ -1,5 +1,6 @@
 #include "Router.hpp"
 #include "Server.hpp"
+#include <sys/_types/_size_t.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -57,25 +58,22 @@ const std::string& Router::getMIME(const std::string& url) const {
     return findMimeType(extension);
 }
 
-void Router::readFile(const std::string& filePath, std::string& content) const {
+bool Router::resourceExists(const std::string& filePath) const {
+    return !access(filePath.c_str(), F_OK);
+}
+
+void Router::readFile(const std::string& filePath, std::string& outContent) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
         throw std::ios_base::failure("File open error.");
     }
-
-    std::string line;
-    content.clear();
-    while (std::getline(ifs, line)) {
-        content += line;
-        content += "\n";
-    }
-    ifs.close();
+    outContent.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
 void Router::makeCgiVariables(void) {
     std::stringstream   ss;
     const std::string&  host = request.findValue("host");
-    const size_t        portIndex = host.find(':');
+    const size_t        portPos = host.find(':');
 
     ss << intToIP(clientAddr.sin_addr.s_addr);
     CgiVariables["AUTH_TYPE"] = request.findValue("AUTH_TYPE");
@@ -89,7 +87,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
     CgiVariables["REQUEST_METHOD"] = request.getStrMethod();
     CgiVariables["SERVER_NAME"] = config->server_name;
-    CgiVariables["SERVER_HOST"] = host.substr(portIndex + 1, -1);
+    CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
@@ -126,8 +124,10 @@ void Router::validateHeaderLength() {
 }
 
 void Router::validateContentType() {
-    const std::string& contentType = request.findValue("Content-Type");
-    const std::string& transferEncoding = request.findValue("Transfer-Encoding");
+    const std::string&  transferEncoding = request.findValue("Transfer-Encoding");
+    const std::string&  contentType = request.findValue("Content-Type");
+    const size_t        secondFieldPos = contentType.find(';');
+    const std::string   type = contentType.substr(0, secondFieldPos);
 
     if (!transferEncoding.empty()) {
         if (transferEncoding != "chunked") {
@@ -136,7 +136,7 @@ void Router::validateContentType() {
         }
         return;
     }
-    if (!contentType.empty() && contentType != "application/x-www-form-urlencoded") {
+    if (type != "application/x-www-form-urlencoded" && type != "multipart/form-data") {
         makeErrorResponse(415);
         throw std::runtime_error("Unsupported Media Type");
     }
@@ -200,12 +200,6 @@ void Router::parseURL() {
     CgiVariables["SCRIPT_NAME"] = configURL.substr(1, queryIndex - 1);
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
-
-    // std::cout << "configURL: " << configURL << std::endl;
-    // std::cout << "configRoot: " << configRoot << std::endl;
-    // std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
-    // std::cout << "path_info: " << path_info << std::endl;
-    // std::cout << "query_string: " << query_string << std::endl;
 }
 
 
@@ -236,7 +230,8 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
     const std::vector<std::string>& indexFiles, const std::string& directory) {
     std::string potentialIndexPath = "." + rootPath + directory;
 
-    potentialIndexPath = potentialIndexPath + "/";
+    if (!directory.empty())
+        potentialIndexPath = potentialIndexPath + "/";
     for (size_t i = 0; i < indexFiles.size(); ++i) {
         potentialIndexPath += indexFiles[i];
         if (access(potentialIndexPath.c_str(), R_OK) == 0) {

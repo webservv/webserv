@@ -2,14 +2,16 @@
 #define RESPONSE_HPP
 #include <string>
 #include <map>
+#include <vector>
 
 class Response {
 private:
-	std::string	responseStr;
-	std::string	messageToCGI;
-	int			writeFD;
-	int			readFD;
-	pid_t		cgiPid;
+	std::string			responseStr;
+	std::vector<char>	messageToCGI;
+	size_t				writtenCgiLength;
+	int					writeFD;
+	int					readFD;
+	pid_t				cgiPid;
 //Response.cpp
 public:
 	Response();
@@ -27,7 +29,7 @@ public:
 	int					getWriteFD(void) const;
 	int					getReadFD(void) const;
 	void				setResponse(const std::string& src);
-	void				setMessageToCGI(const std::string& src);
+	void				setMessageToCGI(const std::vector<char>& src);
 	void				connectCGI(std::map<std::string, std::string>& envs);
 	void				readFromCGI(void);
 	void				writeToCGI(const intptr_t fdBufferSize);
