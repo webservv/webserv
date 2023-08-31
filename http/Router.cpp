@@ -72,9 +72,8 @@ Router& Router::operator=(const Router& copy) {
 Router::~Router() {}
 
 void Router::handleGet() {
-	const std::string& filePath = "." + CgiVariables["SCRIPT_NAME"];
 	try {
-		if (filePath.substr(0, CGI_PATH.length()) == CGI_PATH) {
+		if (!configURL.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
             try {
 		    	connectCGI();
@@ -82,18 +81,8 @@ void Router::handleGet() {
                 makeErrorResponse(500);
             }
 		}
-		else {
-			if (access(filePath.c_str(), F_OK)) {
-				makeErrorResponse(404);
-				return;
-			}
-			std::string content;
-        	readFile(filePath, content);
-        	std::string mimeType = getMIME(filePath);
-        	response.makeStatusLine("HTTP/1.1", "200", "OK");
-        	response.makeBody(content, content.size(), mimeType);
-			haveResponse = true;
-		}
+		else
+			processStaticGet();
 	} catch (const std::ios_base::failure& e) {
         makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -103,12 +92,12 @@ void Router::handleGet() {
 void Router::handlePost() {
 	validateHeaderLength();
 	validateContentType();
-	response.makeStatusLine("HTTP/1.1", "201", "OK");
-    try {
-	    connectCGI();
-    } catch (const std::exception& e) {
-        makeErrorResponse(500);
-    }
+	if (!configURL.compare(0, 4, "/cgi")) {
+		response.makeStatusLine("HTTP/1.1", "201", "OK");
+		connectCGI();
+	}
+	else
+		processStaticPost();
 }
 
 void Router::handleDelete() {
@@ -146,10 +135,6 @@ bool Router::isBodyRequired(void) const {
         default:
             return false;
     }
-}
-
-const std::string& Router::getResponseStr(void) const {
-	return response.getResponseStr();
 }
 
 const std::string& Router::getParsedURL(void) const {
@@ -196,7 +181,7 @@ const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
 }
 
-bool Router::isHeaderEnd(void) const {
+bool Router::isHeaderEnd(void) {
 	return request.isHeaderEnd();
 }
 
@@ -212,12 +197,16 @@ bool Router::getHaveResponse(void) const {
 	return haveResponse;
 }
 
+const std::vector<char>& Router::getRequest(void) const {
+	return request.getRequestStr();
+}
+
 const std::string& Router::getResponse(void) const {
 	return response.getResponseStr();
 }
 
-void Router::addRequest(const std::string &request) {
-	this->request.addRequest(request);
+void Router::addRequest(const std::vector<char>& input) {
+	this->request.addRequest(input);
 }
 
 void Router::setResponse(const std::string &src) {

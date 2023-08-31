@@ -1,0 +1,213 @@
+Server started on www.helloworld.com:8080, waiting for connections...
+Server started on www.example.com:4242, waiting for connections...
+POST /cgi/post.php HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Content-Length: 338
+sec-ch-ua: "Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"
+sec-ch-ua-platform: "macOS"
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7On9rcCHGqgbhNgX
+Accept: */*
+Origin: http://localhost:8080
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: http://localhost:8080/cgi/index.py
+Accept-Encoding: gzip, deflate, br
+Accept-Language: ko,en-US;q=0.9,en;q=0.8
+Cookie: SessionID=1
+
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="title"
+
+1213
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="content"
+
+123
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="image"
+
+undefined
+------WebKitFormBoundary7On9rcCHGqgbhNgX--
+
+HTTP/1.1 201 OK
+REQUEST_METHOD: POST
+CONTENT_TYPE: multipart/form-data
+No $_FILES\nPOST size: 0
+################################
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="title"
+
+1213
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="content"
+
+123
+------WebKitFormBoundary7On9rcCHGqgbhNgX
+Content-Disposition: form-data; name="image"
+
+undefined
+------WebKitFormBoundary7On9rcCHGqgbhNgX--
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>My Website</title>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Website</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Create a New Post</h2>
+            <form action='/cgi/post.php' method='post'>
+                <label for='title'>Title:</label>
+                <input type='text' id='title' name='title' required><br><br>
+                <label for='content'>Content:</label>
+                <textarea id='content' name='content' rows='4' cols='50' required></textarea><br><br>
+                <input type='submit' value='Submit Post'>
+            </form>
+        </section>
+        <section>
+            <h2>Discussion Topics</h2>
+            <ul>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 My Website. All rights reserved.</p>
+    </footer>
+</body>
+<script>
+function deletePost(post_id) {
+    if (confirm("Delete this post?")) {
+        fetch(`/cgi/delete.pl?post_id=${post_id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                throw new Error('delete method error!');
+            }
+        }).then(html => {
+            const newDoc = document.open("text/html", "replace");
+            newDoc.write(html);
+            newDoc.close();
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    }
+}
+</script>
+</html>
+
+GET /cgi/index.py HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "macOS"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Referer: http://localhost:8080/cgi/index.py
+Accept-Encoding: gzip, deflate, br
+Accept-Language: ko,en-US;q=0.9,en;q=0.8
+Cookie: SessionID=1
+
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>My Website</title>
+</head>
+<body>
+    <header>
+        <h1>Welcome to My Website</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Create a New Post</h2>
+            <form action='/cgi/post.php' method='post' enctype='multipart/form-data' onsubmit='submitPost(event)'>
+                <label for='title'>Title:</label>
+                <input type='text' id='title' name='title' required><br><br>
+                <label for='content'>Content:</label>
+                <textarea id='content' name='content' rows='4' cols='50' required></textarea><br><br>
+                <label for='image'>Image:</label>
+                <input type='file' id='image' name='image' accept='image/*'><br><br>
+                <input type='submit' value='Submit'>
+            </form>
+        </section>
+        <section>
+            <h2>Discussion Topics</h2>
+            <ul>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2023 My Website. All rights reserved.</p>
+    </footer>
+</body>
+<script>
+function submitPost(event) {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append('title', document.getElementById('title').value);
+    formData.append('content', document.getElementById('content').value);
+    formData.append('image', document.getElementById('image').files[0]);
+    fetch('/cgi/post.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            throw new Error('POST request error!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function deletePost(post_id) {
+    if (confirm("Delete this post?")) {
+        fetch(`/cgi/delete.py?post_id=${post_id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                throw new Error('DELETE request error!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+}
+</script>
+</html>
+
