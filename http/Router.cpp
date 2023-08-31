@@ -60,27 +60,18 @@ Router& Router::operator=(const Router& copy) {
 	CgiVariables = copy.CgiVariables;
 	configURL = copy.configURL;
 	return *this;
-    // std::rand() 
-    // int i = 0;
-    // &i % 3 // 보안상의 이유로 3으로 나눈 나머지를 사용한다.
-
-    // placement new -> ub // undefined behavior 컴파일러마다. 
-    // #pregma once
 }
 
 Router::~Router() {}
 
 void Router::handleGet() {
-	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
-
-    std::cout << "filePath: " << filePath << std::endl;
+	const std::string& filePath = "." + CgiVariables["SCRIPT_NAME"];
 	try {
-		if (!filePath.compare(0, 4, "/cgi")) {
+		if (filePath.substr(0, CGI_PATH.length()) == CGI_PATH) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
 			connectCGI();
 		}
 		else {
-			// if (!resourceExists(filePath)) { -> delete one line function. only used here 
 			if (access(filePath.c_str(), F_OK)) {
 				makeErrorResponse(404);
 				return;

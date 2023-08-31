@@ -34,6 +34,9 @@ void Router::initializeMimeMap() {
         mimeMap["png"] = "image/png";
         mimeMap["jpg"] = "image/jpeg";
         mimeMap["ico"] = "image/x-icon";
+        mimeMap["py"] = "text/html";
+        mimeMap["php"] = "text/html";
+        mimeMap["pl"] = "text/html";
     }
 }
 
@@ -172,7 +175,7 @@ void Router::parseURL() {
     size_t queryIndex = url.find('?');
 
     if (rootPathIndex != std::string::npos) {
-        size_t rootPathLength = config->root.length();
+        size_t rootPathLength = configRoot.length();
         size_t beginIndex = rootPathIndex + rootPathLength;
         size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : url.length();
         path_info = url.substr(beginIndex, endIndex - beginIndex);
@@ -182,9 +185,13 @@ void Router::parseURL() {
         query_string = url.substr(queryIndex + 1);
     }
 
-    CgiVariables["SCRIPT_NAME"] = configURL;
+    CgiVariables["SCRIPT_NAME"] = configURL.substr(1);;
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
+
+    std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
+    std::cout << "path_info: " << path_info << std::endl;
+    std::cout << "query_string: " << query_string << std::endl;
 }
 
 
@@ -206,8 +213,7 @@ std::string Router::intToIP(in_addr_t ip) const {
 
 bool Router::needCookie(void) const {
     std::map<std::string, std::string>::const_iterator it = CgiVariables.find("SCRIPT_NAME");
-    
-    if (it->second == "/cgi/index.py") //hard coding until config file.
+    if (it->second.substr(0, CGI_PATH.length()) == CGI_PATH)
         return true;
     return false;
 }

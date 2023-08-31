@@ -66,7 +66,7 @@ re:
 	@make all
 
 debug: fclean
-	make DEBUG=1
+	make DEBUG=1 -j
 
 .PHONY: all clean fclean re debug
 

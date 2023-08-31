@@ -15,6 +15,7 @@
 class Server;
 
 typedef std::map<std::string, Config::location>::const_iterator iter;
+static const std::string    CGI_PATH = "./document/cgi";
 
 class Router {
 private:
