@@ -183,8 +183,8 @@ void Response::disconnectCGI(void) {
 		close(readFD);
 	if (cgiPid != NULL_PID) {
 		if (waitpid(cgiPid, &stat, 0) < 0)
-			throw std::runtime_error("disconnectCGI: " + std::string(strerror(errno)));
+			throw std::runtime_error("disconnectCGI1: " + std::string(strerror(errno)));
 		if (!WIFEXITED(stat))
-			throw std::logic_error("disconnectCGI: " + std::string(strerror(errno)));
+			throw std::logic_error("disconnectCGI2: " + std::string(strerror(errno)));
 	}
 }

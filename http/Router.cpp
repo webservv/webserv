@@ -21,7 +21,7 @@ Router::Router():
 	clientAddr(),
 	config(NULL),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -33,7 +33,7 @@ Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config
 	clientAddr(clientAddr),
 	config(config),
 	CgiVariables(),
-	parsedURL() {
+	configURL(){
 		initializeMimeMap();
 	}
 
@@ -46,7 +46,7 @@ Router::Router(const Router& copy):
 	clientAddr(copy.clientAddr),
 	config(copy.config),
 	CgiVariables(copy.CgiVariables),
-	parsedURL(copy.parsedURL) {
+	configURL(copy.configURL) {
 		initializeMimeMap();
 	}
 
@@ -58,23 +58,26 @@ Router& Router::operator=(const Router& copy) {
 	clientAddr = copy.clientAddr;
 	config = copy.config;
 	CgiVariables = copy.CgiVariables;
-	parsedURL = copy.parsedURL;
+	configURL = copy.configURL;
 	return *this;
 }
 
 Router::~Router() {}
 
 void Router::handleGet() {
-	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
-
+	const std::string& filePath = "." + CgiVariables["SCRIPT_NAME"];
 	try {
-		if (!filePath.compare(0, 4, "/cgi")) {
+		if (filePath.substr(0, CGI_PATH.length()) == CGI_PATH) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
-			connectCGI();
+            try {
+		    	connectCGI();
+            } catch (const std::exception& e) {
+                makeErrorResponse(500);
+            }
 		}
 		else {
-			if (!resourceExists(filePath)) {
-				makeErrorPage();
+			if (access(filePath.c_str(), F_OK)) {
+				makeErrorResponse(404);
 				return;
 			}
 			std::string content;
@@ -94,12 +97,20 @@ void Router::handlePost() {
 	validateHeaderLength();
 	validateContentType();
 	response.makeStatusLine("HTTP/1.1", "201", "OK");
-	connectCGI();
+    try {
+	    connectCGI();
+    } catch (const std::exception& e) {
+        makeErrorResponse(500);
+    }
 }
 
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	connectCGI();
+	try {
+        connectCGI();
+    } catch (const std::exception& e) {
+        makeErrorResponse(500);
+    }
 }
 
 void Router::connectCGI(void) {
@@ -135,13 +146,13 @@ const std::string& Router::getResponseStr(void) const {
 }
 
 const std::string& Router::getParsedURL(void) const {
-    return parsedURL;
+    return configURL;
 }
 
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
-	setParsedURL();
+	setConfigURL();
 	parseURL();
 	if (method == Request::GET) {
         handleGet();

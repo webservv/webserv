@@ -1,18 +1,7 @@
 #include "Router.hpp"
+#include <utility>
 
-static const std::string	g_dir = "./document";
-static const std::string    g_error_dir = g_dir + "/error.html";
-
-void Router::makeErrorPage(void) {
-    makeErrorResponse(404);
-    if (resourceExists(g_error_dir)) {
-        std::string data;
-        readFile(g_error_dir, data);
-        response.makeBody(data, data.length(), getMIME(g_error_dir));
-    }
-}
-
-void Router::makeErrorResponse(int statusCode) {
+std::pair<std::string, std::string> Router::defaultErrorPage(int statusCode) {
     std::string reasonPhrase;
     std::string body;
 
@@ -70,12 +59,37 @@ void Router::makeErrorResponse(int statusCode) {
             body = "The server does not support, or refuses to support, the HTTP protocol version that was used in the request message.";
             break;
         default:
-            statusCode = 500;
             reasonPhrase = "Internal Server Error";
             body = "An unexpected error occurred.";
             break;
     }
 
+    return std::pair<std::string, std::string>(reasonPhrase, body);
+}
+
+void Router::setCustomErrorPage(const std::string& customPath) {
+    std::string body;
+    try {
+        readFile(customPath, body);
+        haveResponse = true;
+    } catch (const std::exception& e) {
+        return ;
+    }
+    response.makeBody(body, body.length(), "text/html");
+}
+
+void Router::makeErrorResponse(int statusCode) {
+    std::map<int, std::string>::const_iterator it = config->errorPages.find(statusCode);
+    if (it != config->errorPages.end()) {
+        std::string customPath = it->second;
+        setCustomErrorPage(customPath);
+        response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), "Custom Error");
+        if (haveResponse) return;
+    }
+
+    std::pair<std::string, std::string> defaultPage = defaultErrorPage(statusCode);
+    std::string& reasonPhrase = defaultPage.first;
+    std::string& body = defaultPage.second;
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
     response.makeBody(body, body.length(), "text/plain");
     haveResponse = true;

@@ -97,7 +97,6 @@ void Server::receiveBuffer(const int client_sockfd) {
         }
 		if (clientSockets[client_sockfd].isRequestEnd()) {
 			clientSockets[client_sockfd].handleRequest();
-std::cout << std::endl; //for request print
         }
 	}
 }
