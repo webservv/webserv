@@ -51,6 +51,8 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
+    void                parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, \
+                        std::string& configURL, std::string& configRoot);
 //Router.cpp
 public:
 	Router();
