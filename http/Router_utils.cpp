@@ -233,10 +233,6 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
     const std::vector<std::string>& indexFiles, const std::string& url) {
     std::string potentialIndexPath = "." + rootPath + url;
 
-    if (access(potentialIndexPath.c_str(), R_OK) == 0) {
-        return potentialIndexPath;
-    }
-
     potentialIndexPath = "." + rootPath + "/";
     for (size_t i = 0; i < indexFiles.size(); ++i) {
         potentialIndexPath += indexFiles[i];
@@ -249,11 +245,7 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
 
 static std::string findPath(const std::string& rootPath, const std::string& url) {
     std::string potentialIndexPath = "." + rootPath + url;
-
-    if (access(potentialIndexPath.c_str(), R_OK) == 0) {
-        return potentialIndexPath;
-    }
-    return ""; // 404 error
+    return potentialIndexPath; // 404 error
 }
 
 static void GetBestMatchURL(
