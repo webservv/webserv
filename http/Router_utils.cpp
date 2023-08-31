@@ -176,9 +176,6 @@ void Router::setConfigURL() {
         try {
             parseDirectory(URLFromRequest, bestMatchRoot, bestLocation, configURL, configRoot);
         } catch (const std::exception& e) {
-            // /happy 
-            // root /document 
-            // -> /document/happy 
             std::cout << "cath!!" << std::endl;
             std::string directoryPath;
             if (bestMatchRoot.empty())
@@ -186,7 +183,7 @@ void Router::setConfigURL() {
             else
                 directoryPath = bestMatchRoot + URLFromRequest;
             configURL = generateDirectoryListing(directoryPath);
-            configRoot = directoryPath;
+            configRoot = configURL;
             // 디렉토리에서 index 접근을 확인하는 과정에서 실패하면 여기로 들어옴
         }
         return ;
