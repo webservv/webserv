@@ -172,7 +172,7 @@ void Router::setConfigURL() {
         configRoot = config->root;
     } else {
         configURL = findPath(bestMatchRoot, URLFromRequest);
-        configRoot = bestMatchRoot;
+        configRoot = bestMatchRoot + bestMatchURL;
     }
 }
 
@@ -194,7 +194,7 @@ void Router::parseURL() {
         query_string = url.substr(queryIndex + 1);
     }
 
-    CgiVariables["SCRIPT_NAME"] = configURL.substr(1);;
+    CgiVariables["SCRIPT_NAME"] = configURL.substr(1, queryIndex - 1);
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
 
@@ -245,7 +245,7 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
 
 static std::string findPath(const std::string& rootPath, const std::string& url) {
     std::string potentialIndexPath = "." + rootPath + url;
-    return potentialIndexPath; // 404 error
+    return potentialIndexPath;
 }
 
 static void GetBestMatchURL(
