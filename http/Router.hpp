@@ -26,10 +26,11 @@ private:
     bool                                haveResponse;
     Server*                             server;
     sockaddr_in                         clientAddr;
-    const Config::server*               config;
+    Config::server*                     config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
     std::string                         configRoot;
+    Config::location*                   location;                   
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
@@ -51,12 +52,13 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void                parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, \
-                        std::string& configURL, std::string& configRoot);
+    void                handleMethod(Request::METHOD method);
+    void                GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
+    void                parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation);
 //Router.cpp
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config);
+    Router(Server* const server, const sockaddr_in& clientAddr, Config::server* config);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();

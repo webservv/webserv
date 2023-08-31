@@ -28,7 +28,7 @@ private:
     std::map<int, Router>                   clientSockets;
     std::map<int, Router*>                  pipes;
     std::map<std::string, std::string>      cookies;
-    std::map<int, const Config::server*>    configs;
+    std::map<int, Config::server*>          configs;
 //Server_event.cpp
 private:
     void	handleEvent(const struct kevent& cur);
@@ -49,7 +49,7 @@ private:
 //Server.cpp
 private: 
 	Server();
-	Server(const Config& config);
+	Server(Config& config);
 	Server(const Server& copy);
 	Server& operator=(const Server& copy);
 public:
@@ -59,7 +59,7 @@ private:
 	in_addr_t   IPToInt(const std::string& ip) const;
     int         getRequestError(const int clientSocketFD) const;
 public:
-	static Server&      getInstance(const Config& config);
+	static Server&      getInstance(Config& config);
 	void                addPipes(const int writeFd, const int readFd, Router* const router);
     void                addCookie(const std::string& key, const std::string& value);
     const std::string&  getCookie(const std::string& key) const;

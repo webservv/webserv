@@ -9,6 +9,13 @@
 #include <iostream>
 #include <sstream>
 
+static const std::string g_methodStr[] = {
+    "GET",
+    "POST",
+    "DELETE",
+    "OTHER"
+};
+
 std::map<std::string, std::string> Router::mimeMap;
 static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
 static int cookieId = 0;
@@ -25,7 +32,7 @@ Router::Router():
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, Config::server* config):
 	request(),
 	response(),
 	haveResponse(false),
@@ -149,11 +156,29 @@ const std::string& Router::getParsedURL(void) const {
     return configURL;
 }
 
+void Router::handleMethod(Request::METHOD method) {
+    
+    std::vector<std::string>& Methods = location->allowedMethod;
+    std::vector<std::string> tmp = location->allowedMethod;
+std::cout << Methods.empty() << std::endl;
+std::cout << Methods.size() << std::endl;
+    if (Methods.empty())
+        return;
+    std::string methodStr = g_methodStr[method];
+    std::vector<std::string>::iterator it = std::find(Methods.begin(), \
+        Methods.end(), methodStr);
+    if (it == Methods.end()) {
+        makeErrorResponse(405);
+        throw std::runtime_error("Method Not Allowed");
+    }
+}
+
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
 	setConfigURL();
 	parseURL();
+    handleMethod(method);
 	if (method == Request::GET) {
         handleGet();
 	} else if (method == Request::POST) {

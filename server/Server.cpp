@@ -35,7 +35,7 @@ Server::Server():
     cookies(),
     configs() {}
 
-Server::Server(const Config& config):
+Server::Server(Config& config):
     kqueueFd(NULL_FD),
     listenSockets(),
     IOchanges(),
@@ -50,9 +50,9 @@ Server::Server(const Config& config):
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
 
-    const std::vector<Config::server>& servers = config.getServers();
-    for (std::vector<Config::server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        const Config::server& new_server = *it;
+    std::vector<Config::server>& servers = config.getServers();
+    for (std::vector<Config::server>::iterator it = servers.begin(); it != servers.end(); ++it) {
+        Config::server& new_server = *it;
         
         int new_socket_fd = createSocket();
         setSocketOptions(new_socket_fd);
@@ -112,7 +112,7 @@ int Server::getRequestError(const int clientSocketFD) const {
     return it->second.getRequestError();
 }
 
-Server& Server::getInstance(const Config& config) {
+Server& Server::getInstance(Config& config) {
 	if (instance == NULL) {
 		instance = new Server(config);
 	}
