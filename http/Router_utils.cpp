@@ -11,13 +11,6 @@
 
 static std::string findPotentialIndexPath(const std::string& rootPath, \
     const std::vector<std::string>& indexFiles, const std::string& url);
-static void GetBestMatchURL(
-    const std::vector<Config::location>& locations,
-    const std::string& URLFromRequest,
-    std::string& bestMatchURL,
-    std::string& bestMatchRoot,
-    Config::location& bestLocation
-);
 static std::string findPath(const std::string& rootPath, const std::string& url);
 
 void Router::initializeMimeMap() {
@@ -149,10 +142,10 @@ void Router::validateContentType() {
     }
 }
 
-void Router::parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, std::string& configURL, std::string& configRoot) {
+void Router::parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation) {
     URLFromRequest.erase(URLFromRequest.end() - 1);
     
-
+    std::string bestMatchRoot = bestLocation.root;
     // directory index를 찾는 로직인데 나중에 테스트 하면서 고쳐야 됩니다. 
     // directory가 들어왔을 때 bestMatchRoot로 돌리는게 맞는가..? 의문
     if (bestMatchRoot.empty()) {
@@ -164,29 +157,25 @@ void Router::parseDirectory(std::string& URLFromRequest, const std::string& best
     }
 }
 
-
 void Router::setConfigURL() {
     std::string&        URLFromRequest = const_cast<std::string&>(request.getURL());
-    std::string         bestMatchURL;
-    std::string         bestMatchRoot;
-    Config::location    bestLocation;
     
-    GetBestMatchURL(config->locations, URLFromRequest, bestMatchURL, bestMatchRoot, bestLocation);
+    GetBestMatchURL(config->locations, URLFromRequest);
     if (URLFromRequest.back() == '/') {
         try {
-            parseDirectory(URLFromRequest, bestMatchRoot, bestLocation, configURL, configRoot);
+            parseDirectory(URLFromRequest, *location);
         } catch (const std::exception& e) {
             // auto index를 구현하는 부분 들어올 예정
             // 디렉토리에서 index 접근을 확인하는 과정에서 실패하면 여기로 들어옴
         }
         return ;
     }
-    if (bestMatchRoot.empty()) {
+    if (location->root.empty()) {
         configURL = findPath(config->root, URLFromRequest);
         configRoot = config->root;
     } else {
-        configURL = findPath(bestMatchRoot, URLFromRequest);
-        configRoot = bestMatchRoot + bestMatchURL;
+        configURL = findPath(location->root, URLFromRequest);
+        configRoot = location->root + location->url;
     }
 }
 
@@ -257,21 +246,19 @@ static std::string findPath(const std::string& rootPath, const std::string& url)
     return potentialIndexPath;
 }
 
-static void GetBestMatchURL(
-    const std::vector<Config::location>& locations,
-    const std::string& URLFromRequest,
-    std::string& bestMatchURL,
-    std::string& bestMatchRoot,
-    Config::location& bestLocation
+void Router::GetBestMatchURL(
+    std::vector<Config::location>& locations,
+    const std::string& URLFromRequest
 ) {
-    for (std::vector<Config::location>::const_iterator it = locations.begin(); 
+    std::string bestMatchURL = "";
+
+    for (std::vector<Config::location>::iterator it = locations.begin(); 
          it != locations.end(); ++it) {
         const std::string& url = it->url;
         if (URLFromRequest.find(url) == 0) {
             if (url.length() > bestMatchURL.length()) {
                 bestMatchURL = url;
-                bestMatchRoot = it->root;
-                bestLocation = *it;
+                location = &(*it);
             }
         }
     }

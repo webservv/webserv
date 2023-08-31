@@ -163,7 +163,7 @@ void Config::parseServer(void) {
     if (!hasListen)
         new_server.listen_port = 8080;
     if (!hasIndex)
-        new_server.index.push_back("index.html");
+        new_server.index.push_back("index.py");
     if (!hasRoot)
         throw std::out_of_range("missing root directory of server");
     if (!hasLocation)
@@ -525,7 +525,7 @@ void Config::tokenization(const std::string& line) {
 	}
 }
 
-const std::vector<Config::server>& Config::getServers() const {
+std::vector<Config::server>& Config::getServers() {
     return servers;
 }
 
