@@ -70,7 +70,7 @@ void Request::addRequestLines(void) {
     } else {
         handleNonChunkedTransferEncoding(parser);
     }
-std::cout << requestStr;
+std::cout << "\n" << requestStr;
     requestStr.clear();
 }
 

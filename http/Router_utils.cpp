@@ -17,6 +17,7 @@ static void GetBestMatchURL(
     std::string& bestMatchRoot,
     Config::location& bestLocation
 );
+static std::string findPath(const std::string& rootPath, const std::string& url);
 
 void Router::initializeMimeMap() {
     if (mimeMap.empty()) {
@@ -157,12 +158,20 @@ void Router::setConfigURL() {
     GetBestMatchURL(config->locations, URLFromRequest, bestMatchURL, bestMatchRoot, bestLocation);
     if (bestMatchURL == "/" && URLFromRequest == "/") {
         URLFromRequest = "";
+        if (bestMatchURL.empty()) {
+            configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
+            configRoot = config->root;
+        } else {
+            configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
+            configRoot = bestMatchRoot;
+        }
+        return ;
     }
     if (bestMatchURL.empty()) {
-        configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
+        configURL = findPath(config->root, URLFromRequest);
         configRoot = config->root;
     } else {
-        configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
+        configURL = findPath(bestMatchRoot, URLFromRequest);
         configRoot = bestMatchRoot;
     }
 }
@@ -189,6 +198,8 @@ void Router::parseURL() {
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
 
+    std::cout << "configURL: " << configURL << std::endl;
+    std::cout << "configRoot: " << configRoot << std::endl;
     std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
     std::cout << "path_info: " << path_info << std::endl;
     std::cout << "query_string: " << query_string << std::endl;
@@ -220,7 +231,13 @@ bool Router::needCookie(void) const {
 
 static std::string findPotentialIndexPath(const std::string& rootPath, \
     const std::vector<std::string>& indexFiles, const std::string& url) {
-    std::string potentialIndexPath = "." + rootPath + "/";
+    std::string potentialIndexPath = "." + rootPath + url;
+
+    if (access(potentialIndexPath.c_str(), R_OK) == 0) {
+        return potentialIndexPath;
+    }
+
+    potentialIndexPath = "." + rootPath + "/";
     for (size_t i = 0; i < indexFiles.size(); ++i) {
         potentialIndexPath += indexFiles[i];
         if (access(potentialIndexPath.c_str(), R_OK) == 0) {
@@ -228,6 +245,15 @@ static std::string findPotentialIndexPath(const std::string& rootPath, \
         }
     }
     return "." + rootPath + url;
+}
+
+static std::string findPath(const std::string& rootPath, const std::string& url) {
+    std::string potentialIndexPath = "." + rootPath + url;
+
+    if (access(potentialIndexPath.c_str(), R_OK) == 0) {
+        return potentialIndexPath;
+    }
+    return ""; // 404 error
 }
 
 static void GetBestMatchURL(
