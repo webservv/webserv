@@ -167,7 +167,7 @@ void Router::setConfigURL() {
         }
         return ;
     }
-    if (bestMatchURL.empty()) {
+    if (bestMatchURL.empty() || bestMatchRoot.empty()) {
         configURL = findPath(config->root, URLFromRequest);
         configRoot = config->root;
     } else {
