@@ -43,7 +43,6 @@ public:
 private:
     void    parseLine(std::fstream& configParser);
 	void    parseHTTP();
-
 	void    parseServer();
     void    parseListen(server& server);
     void    parseServerName(server& server);
@@ -61,7 +60,7 @@ private:
     void    trim(std::string &str) const;
 	void    tokenization(const std::string& line);
 public:
-    const std::vector<server>&  getServers() const;
+    std::vector<Config::server>&        getServers();
     int                         getClientMaxBodySize() const;
 
 };
