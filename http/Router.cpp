@@ -60,6 +60,12 @@ Router& Router::operator=(const Router& copy) {
 	CgiVariables = copy.CgiVariables;
 	configURL = copy.configURL;
 	return *this;
+    // std::rand() 
+    // int i = 0;
+    // &i % 3 // 보안상의 이유로 3으로 나눈 나머지를 사용한다.
+
+    // placement new -> ub // undefined behavior 컴파일러마다. 
+    // #pregma once
 }
 
 Router::~Router() {}
@@ -67,6 +73,7 @@ Router::~Router() {}
 void Router::handleGet() {
 	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
 
+    std::cout << "filePath: " << filePath << std::endl;
 	try {
 		if (!filePath.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
@@ -142,7 +149,7 @@ const std::string& Router::getParsedURL(void) const {
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
-	setParsedURL();
+	setConfigURL();
 	parseURL();
 	if (method == Request::GET) {
         handleGet();

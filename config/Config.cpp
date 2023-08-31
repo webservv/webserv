@@ -385,7 +385,7 @@ void Config::parseLocation(server& server) {
 
     if (new_location.index.empty())
         new_location.index.push_back("index.html");
-    server.locations[new_location.url] = new_location;  
+    server.locations.push_back(new_location);
 }
 
 void Config::parseLimitExcept(location& loc) {

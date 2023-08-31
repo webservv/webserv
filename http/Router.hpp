@@ -28,6 +28,7 @@ private:
     const Config::server*               config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
+    std::string                         configRoot;
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
@@ -45,11 +46,10 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                setParsedURL(void);
+    void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    std::string         findPotentialIndexPath(const std::string& rootPath, const std::vector<std::string>& indexFiles);
 //Router.cpp
 public:
 	Router();

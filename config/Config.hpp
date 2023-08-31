@@ -20,7 +20,7 @@ public:
     int                                 return_code;
     };
 struct server{
-	std::map<std::string, location> locations;
+	std::vector<location>           locations;
 	std::map<int, std::string>      errorPages;
     std::vector<std::string>        index;
 	std::string                     server_name;
