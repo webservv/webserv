@@ -55,8 +55,8 @@ private:
     bool                needCookie(void) const;
 //Router_static.cpp
 private:
-    void    processStaticGet(const std::string& scriptName);
-    void    processStaticPost(const std::string& scriptName);
+    void    processStaticGet(void);
+    void    processStaticPost(void);
     // void    processStaticPut(void);
     // void    processStaticDelete(void);
 //Router.cpp

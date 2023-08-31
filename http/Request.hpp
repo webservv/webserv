@@ -24,6 +24,7 @@ private:
 	std::map<std::string, std::string>	values;
 	std::vector<char>					body;
 	bool								haveHeader;
+	bool								haveBody;
     int									error;
 	size_t								bodyPos;
 //Reqeust_parse.cpp

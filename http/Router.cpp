@@ -65,10 +65,8 @@ Router& Router::operator=(const Router& copy) {
 Router::~Router() {}
 
 void Router::handleGet() {
-	const std::string& scriptName = CgiVariables["SCRIPT_NAME"];
-
 	try {
-		if (!scriptName.compare(0, 4, "/cgi")) {
+		if (!configURL.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
             try {
 		    	connectCGI();
@@ -77,7 +75,7 @@ void Router::handleGet() {
             }
 		}
 		else
-			processStaticGet(scriptName);
+			processStaticGet();
 	} catch (const std::ios_base::failure& e) {
         makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -85,15 +83,14 @@ void Router::handleGet() {
 }
 
 void Router::handlePost() {
-	const std::string& scriptName = CgiVariables["SCRIPT_NAME"];
-
 	validateHeaderLength();
 	validateContentType();
-	response.makeStatusLine("HTTP/1.1", "201", "OK");
-	if (!scriptName.compare(0, 4, "/cgi"))
+	if (!configURL.compare(0, 4, "/cgi")) {
+		response.makeStatusLine("HTTP/1.1", "201", "OK");
 		connectCGI();
+	}
 	else
-		processStaticPost(scriptName);
+		processStaticPost();
 }
 
 void Router::handleDelete() {

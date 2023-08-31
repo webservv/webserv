@@ -12,6 +12,7 @@ Request::Request():
     values(),
     body(),
     haveHeader(false),
+    haveBody(false),
     error(0),
     bodyPos(0) {
         static const size_t BUFFER_SIZE = 10000000;
@@ -25,6 +26,7 @@ Request::Request(const Request& copy):
     values(copy.values),
     body(),
     haveHeader(copy.haveHeader),
+    haveBody(copy.haveBody),
     error(copy.error),
     bodyPos(0) {}
 
@@ -35,6 +37,7 @@ Request& Request::operator=(const Request& copy) {
 	values = copy.values;
     body = copy.body;
     haveHeader = copy.haveHeader;
+    haveBody = copy.haveBody;
     error = copy.error;
     haveHeader = copy.bodyPos;
 	return *this;
@@ -116,27 +119,5 @@ bool Request::isHeaderEnd(void) {
 }
 
 bool Request::isRequestEnd(void) const {
-    std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
-
-    if (it != values.end() && it->second == "chunked") {
-        for (int i = static_cast<int>(body.size() - 1); i >= 0; i--) {
-            if (body[i] == '\r' || body[i] == '\n')
-                continue;
-            else if (body[i] == '0')
-                return true;
-            else
-                return false;
-        }
-        return false;
-    }
-    it = values.find("content-length");
-    if (it != values.end()) {
-        size_t len = std::atoi(it->second.c_str());
-        if (body.size() == len)
-            return true;
-        else
-            return false;
-    }  
-    else
-        return true;
+    return haveHeader && haveBody;
 }

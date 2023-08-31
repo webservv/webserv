@@ -62,6 +62,14 @@ void Request::parseBody(void) {
             body.insert(body.end(), st, requestStr.end());
             bodyPos = requestStr.size();
         }
+        it = values.find("content-length");
+        if (it == values.end()) {
+            haveBody = true;
+            return;
+        }
+        size_t len = std::atoi(it->second.c_str());
+        if (body.size() == len)
+            haveBody = true;
     }
 }
 
@@ -92,6 +100,7 @@ void Request::parseChunkedBody(void) {
         std::stringstream chunkSizeStream(line);
         chunkSizeStream >> std::hex >> chunkSize;
         if (chunkSizeStream.fail() || chunkSize == 0) {
+            haveBody = !chunkSize;
             break;
         }
         if (chunkSize > MAX_CHUNK_SIZE) {

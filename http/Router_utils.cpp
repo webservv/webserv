@@ -211,12 +211,6 @@ void Router::parseURL() {
     CgiVariables["SCRIPT_NAME"] = configURL.substr(1, queryIndex - 1);
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
-
-    std::cout << "configURL: " << configURL << std::endl;
-    std::cout << "configRoot: " << configRoot << std::endl;
-    std::cout << "SCRIPT_NAME: " << CgiVariables["SCRIPT_NAME"] << std::endl;
-    std::cout << "path_info: " << path_info << std::endl;
-    std::cout << "query_string: " << query_string << std::endl;
 }
 
 
