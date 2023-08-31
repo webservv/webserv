@@ -158,7 +158,7 @@ void Router::setConfigURL() {
     GetBestMatchURL(config->locations, URLFromRequest, bestMatchURL, bestMatchRoot, bestLocation);
     if (bestMatchURL == "/" && URLFromRequest == "/") {
         URLFromRequest = "";
-        if (bestMatchURL.empty() || bestMatchRoot.empty()) {
+        if (bestMatchURL.empty()) {
             configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
             configRoot = config->root;
         } else {
