@@ -158,7 +158,7 @@ void Response::writeToCGI(const intptr_t fdBufferSize) {
 		writeFD = NULL_FD;
 		return;
 	}
-	if (leftSize <= bufSize) {
+	if (leftSize <= static_cast<size_t>(bufSize)) {
 		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, leftSize);
 		if (writeLength < 0)
 			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));

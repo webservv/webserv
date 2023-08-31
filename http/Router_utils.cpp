@@ -58,12 +58,12 @@ bool Router::resourceExists(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
-void Router::readFile(const std::string& filePath, std::string& content) const {
+void Router::readFile(const std::string& filePath, std::string& outContent) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
         throw std::ios_base::failure("File open error.");
     }
-    content.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    outContent.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
 
 void Router::makeCgiVariables(void) {

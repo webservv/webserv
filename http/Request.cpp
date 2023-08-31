@@ -119,7 +119,7 @@ bool Request::isRequestEnd(void) const {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
 
     if (it != values.end() && it->second == "chunked") {
-        for (size_t i = body.size() - 1; i >= 0; i--) {
+        for (int i = static_cast<int>(body.size() - 1); i >= 0; i--) {
             if (body[i] == '\r' || body[i] == '\n')
                 continue;
             else if (body[i] == '0')

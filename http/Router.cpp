@@ -65,25 +65,15 @@ Router& Router::operator=(const Router& copy) {
 Router::~Router() {}
 
 void Router::handleGet() {
-	const std::string& filePath = CgiVariables["SCRIPT_NAME"];
+	const std::string& scriptName = CgiVariables["SCRIPT_NAME"];
 
 	try {
-		if (!filePath.compare(0, 4, "/cgi")) {
+		if (!scriptName.compare(0, 4, "/cgi")) {
 			response.makeStatusLine("HTTP/1.1", "200", "OK");
 			connectCGI();
 		}
-		else {
-			if (!resourceExists(filePath)) {
-				makeErrorPage();
-				return;
-			}
-			std::string content;
-        	readFile(filePath, content);
-        	std::string mimeType = getMIME(filePath);
-        	response.makeStatusLine("HTTP/1.1", "200", "OK");
-        	response.makeBody(content, content.size(), mimeType);
-			haveResponse = true;
-		}
+		else
+			processStaticGet(scriptName);
 	} catch (const std::ios_base::failure& e) {
         makeErrorResponse(500);
 		std::cerr << "Error: " << e.what() << std::endl;
@@ -91,10 +81,15 @@ void Router::handleGet() {
 }
 
 void Router::handlePost() {
+	const std::string& scriptName = CgiVariables["SCRIPT_NAME"];
+
 	validateHeaderLength();
 	validateContentType();
 	response.makeStatusLine("HTTP/1.1", "201", "OK");
-	connectCGI();
+	if (!scriptName.compare(0, 4, "/cgi"))
+		connectCGI();
+	else
+		processStaticPost(scriptName);
 }
 
 void Router::handleDelete() {

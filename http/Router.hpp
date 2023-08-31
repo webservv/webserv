@@ -38,7 +38,7 @@ private:
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
     bool                resourceExists(const std::string& filePath) const;
-    void                readFile(const std::string& filePath, std::string& content) const;
+    void                readFile(const std::string& filePath, std::string& outContent) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
@@ -46,6 +46,12 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
+//Router_static.cpp
+private:
+    void    processStaticGet(const std::string& scriptName);
+    void    processStaticPost(const std::string& scriptName);
+    // void    processStaticPut(void);
+    // void    processStaticDelete(void);
 //Router.cpp
 public:
 	Router();

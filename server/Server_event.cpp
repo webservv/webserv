@@ -93,6 +93,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 	recvByte = recv(client_sockfd, buf, DEBUG_BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
+std::cout << buf << std::endl;
 	std::vector<char>   input;
     input.reserve(recvByte);
     for (ssize_t i = 0; i < recvByte; ++i) {
