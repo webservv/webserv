@@ -303,6 +303,15 @@ void Config::parseErrorPage(server& new_server) {
     }
 }
 
+static bool isNumber(const std::string& str) {
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (!std::isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Config::parseClientMaxBodySize() {
     if (tokens.empty()) {
         throw std::out_of_range("Unexpected end of file: Expected a client_max_body_size");
@@ -315,29 +324,34 @@ void Config::parseClientMaxBodySize() {
     }
     valueStr.pop_back();
 
+    char lastChar = valueStr.back();    
     int multiplier = 1;
-    if (valueStr.back() == 'M') {
+    if (lastChar == 'M') {
         multiplier = 1024 * 1024;
         valueStr.pop_back();
-    } else if (valueStr.back() == 'K') {
+    } else if (lastChar == 'K') {
         multiplier = 1024;
         valueStr.pop_back();
-    } else if (valueStr.back() == 'G') {
+    } else if (lastChar == 'G') {
         multiplier = 1024 * 1024 * 1024;
         valueStr.pop_back();
-    } else if (valueStr.back() == 'B') {
+    } else if (lastChar == 'B') {
         valueStr.pop_back();
-    } else {
-        throw std::out_of_range("invalid client_max_body_size, must end with B, K, M or G");
+    } else if (std::isdigit(lastChar) == false) {
+        throw std::out_of_range("invalid client_max_body_size, \
+            must end with 'B', 'K', 'M' or 'G' or be a number");
+    }
+    if (isNumber(valueStr) == false) {
+        throw std::out_of_range("invalid client_max_body_size, must be a number");
     }
 
+    int value = 0;
     std::stringstream ss(valueStr);
-    ss >> clientMaxBodySize;
-    if (ss.fail() || clientMaxBodySize < 0) {
+    ss >> value;
+    if (value < 0) {
         throw std::out_of_range("invalid client_max_body_size, must be non-negative");
     }
-
-    clientMaxBodySize *= multiplier;
+    clientMaxBodySize = value * multiplier;
 }
 
 void Config::parseLocation(server& server) {

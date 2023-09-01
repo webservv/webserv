@@ -41,7 +41,8 @@ Router::Router(Server* const server, const sockaddr_in& clientAddr, Config::serv
 	clientAddr(clientAddr),
 	config(config),
 	CgiVariables(),
-	configURL(){
+	configURL(), 
+	matchLocation(NULL) {
 		initializeMimeMap();
 	}
 
@@ -54,7 +55,8 @@ Router::Router(const Router& copy):
 	clientAddr(copy.clientAddr),
 	config(copy.config),
 	CgiVariables(copy.CgiVariables),
-	configURL(copy.configURL) {
+	configURL(copy.configURL),
+	matchLocation(NULL) {
 		initializeMimeMap();
 	}
 
@@ -67,6 +69,7 @@ Router& Router::operator=(const Router& copy) {
 	config = copy.config;
 	CgiVariables = copy.CgiVariables;
 	configURL = copy.configURL;
+	matchLocation = copy.matchLocation;
 	return *this;
 }
 
@@ -111,6 +114,7 @@ void Router::handleDelete() {
 }
 
 void Router::connectCGI(void) {
+	parseURL();
 	makeCgiVariables();
     if (needCookie()) {
         const std::string& cookie = request.findValue("Cookie");
@@ -143,9 +147,11 @@ const std::string& Router::getParsedURL(void) const {
 }
 
 void Router::handleMethod(Request::METHOD method) {
-    std::vector<std::string>& Methods = location->allowedMethod;
-    std::vector<std::string> tmp = location->allowedMethod;
-
+    
+    std::vector<std::string>& Methods = matchLocation->allowedMethod;
+    std::vector<std::string> tmp = matchLocation->allowedMethod;
+std::cout << Methods.empty() << std::endl;
+std::cout << Methods.size() << std::endl;
     if (Methods.empty())
         return;
     std::string methodStr = g_methodStr[method];
@@ -161,14 +167,7 @@ void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
 	setConfigURL();
-	parseURL();
-	try {
-    	handleMethod(method);
-	}
-	catch (std::exception& e) {
-		std::cout << e.what() << std::endl;
-		return;
-	}
+    handleMethod(method);
 	if (method == Request::GET) {
         handleGet();
 	} else if (method == Request::POST) {
