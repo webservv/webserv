@@ -53,6 +53,7 @@ private:
 private:
     Router::eFileType   getFileType(const char* path) const;
     const std::string   makeSpacedStr(const int desiredSpaces, std::string target) const;
+    
 public:
     std::string generateDirectoryListing(const std::string& directoryPath);               
 //Router_error.cpp

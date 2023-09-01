@@ -137,7 +137,7 @@ void Router::validateContentType() {
 
 void Router::handleDirectory(std::string& replacedURL) {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
-    const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
+    // const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
     
     if (replacedURL.back() != '/')
         replacedURL += "/";
@@ -150,8 +150,8 @@ void Router::handleDirectory(std::string& replacedURL) {
         }
     }
     
-    // for now, we don't check if autoindex is on. have to fix it later 
-    configURL = generateDirectoryListing(directoryPath);
+    // for now, we don't check if autoindex is on. have to fix it later
+    // configURL = generateDirectoryListing(directoryPath);
 }
 
 void Router::replaceURL(std::string& URLFromRequest) const {
@@ -175,6 +175,7 @@ void Router::setConfigURL() {
     replaceURL(URL);
     if (URL.back() == '/' || isDirectory('.' + URL)) {
         handleDirectory(URL);
+        configURL = URL;
     }
     else {
         configURL = URL;

@@ -6,25 +6,14 @@
 #include <cstdio>
 
 void Router::processStaticGet(void) {
-	//until directory bug fixing
-	if (configURL == "./document/YoupiBanane/directory"
-		|| configURL == "./document/YoupiBanane/directory/youpi.bad_extension")
-		configURL = "./document/YoupiBanane/youpi.bad_extension";
-	else if (configURL == "./document/YoupiBanane/directory/youpi.bla")
-		configURL = "./document/YoupiBanane/youpi.bla";
-	else if (configURL == "./document/YoupiBanane/directory/nop"
-	|| configURL == "./document/YoupiBanane/directory/nop/") {
-		configURL = "./document/YoupiBanane/youpi.bad_extension";
-	}
-	else if (configURL == "./document/YoupiBanane/directory/nop/other.pouic")
-		configURL = "./document/YoupiBanane/nop/other.pouic";
-	//end
-	if (!resourceExists(configURL)) {
+	const std::string	filePath = '.' + configURL;
+
+	if (!resourceExists(filePath.c_str())) {
 		makeErrorResponse(404);
 		return;
 	}
 	std::string content;
-    readFile(configURL, content);
+    readFile(filePath, content);
     std::string mimeType = getMIME(configURL);
     response.makeStatusLine("HTTP/1.1", "200", "OK");
     response.makeBody(content, content.size(), mimeType);
