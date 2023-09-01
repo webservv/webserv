@@ -18,6 +18,12 @@ typedef std::map<std::string, Config::location>::const_iterator iter;
 static const std::string    CGI_PATH = "./document/cgi";
 
 class Router {
+public:
+    enum    eFileType {
+        dir,
+        file,
+        other
+    };
 private:
     static std::map<std::string, std::string>   mimeMap;
 private:
@@ -29,7 +35,13 @@ private:
     Config::server*                     config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
-    Config::location*                   matchLocation;                   
+    Config::location*                   matchLocation;
+// Router.autoindex.cpp
+private:
+    Router::eFileType   getFileType(const char* path) const;
+    const std::string   makeSpacedStr(const int desiredSpaces, std::string target) const;
+public:
+    std::string generateDirectoryListing(const std::string& directoryPath);               
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
@@ -49,7 +61,7 @@ private:
     void                validateHeaderLength(void);
     void                validateContentType(void);
     void                handleDirectory(std::string& URLFromRequest);
-    std::string         replaceURL(std::string URLFromRequest);
+    std::string         replaceURL(std::string& URLFromRequest) const;
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
@@ -94,9 +106,6 @@ public:
     int                         getWriteFD(void) const;
     int                         getReadFD(void) const;
     int                         getRequestError(void) const;
-// Router.autoindex.cpp
-public:
-    std::string generateDirectoryListing(const std::string& directoryPath);
 };
 
 #endif

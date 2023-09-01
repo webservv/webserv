@@ -1,5 +1,6 @@
 #include "Router.hpp"
 #include "Server.hpp"
+#include <exception>
 #include <sys/_types/_size_t.h>
 #include <unistd.h>
 #include <fstream>
@@ -144,18 +145,9 @@ void Router::validateContentType() {
 }
 
 void Router::handleDirectory(std::string& replacedURL) {
-
-    std::vector<std::string> indexFiles;
-    std::string directoryPath;
+    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
+    const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
     
-    if (matchLocation) {
-        indexFiles = matchLocation->index;
-        directoryPath = matchLocation->root;
-    }
-    else {
-        indexFiles = config->index;
-        directoryPath = config->root;
-    }
     if (replacedURL.back() != '/')
         replacedURL += "/";
 
@@ -168,10 +160,16 @@ void Router::handleDirectory(std::string& replacedURL) {
     }
     
     // for now, we don't check if autoindex is on. have to fix it later 
-    configURL = generateDirectoryListing(directoryPath);
+    try {
+        configURL = generateDirectoryListing(directoryPath);
+    }
+    catch (std::exception& e) {
+        makeErrorResponse(500);
+        return;
+    }
 }
 
-std::string Router::replaceURL(std::string URLFromRequest) {
+std::string Router::replaceURL(std::string& URLFromRequest) const {
     if (matchLocation) {
         if (matchLocation->url == "/")
             URLFromRequest = "/" + URLFromRequest;

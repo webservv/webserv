@@ -167,6 +167,8 @@ void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
 	setConfigURL();
+	if (haveResponse)
+		return;
     handleMethod(method);
 	if (method == Request::GET) {
         handleGet();
