@@ -173,7 +173,7 @@ void Router::setConfigURL() {
 
     getBestMatchURL(config->locations, URL);
     replaceURL(URL);
-    if (URL.back() == '/' || isDirectory(URL)) {
+    if (URL.back() == '/' || isDirectory('.' + URL)) {
         handleDirectory(URL);
     }
     else {
