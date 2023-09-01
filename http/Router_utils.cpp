@@ -234,14 +234,14 @@ void Router::getBestMatchURL(
     const std::vector<Config::location>& locations,
     const std::string& URLFromRequest
 ) {
-    std::string bestMatchURL = "";
+    size_t  LongestUrlsize = 0;
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
          it != locations.end(); ++it) {
         const std::string& url = it->url;
         if (URLFromRequest.find(url) == 0) {
-            if (url.length() > bestMatchURL.length()) {
-                bestMatchURL = url;
+            if (url.size() > LongestUrlsize) {
+                LongestUrlsize = url.size();
                 matchLocation = &(*it);
             }
         }
