@@ -136,7 +136,9 @@ void Router::validateContentType() {
         }
         return;
     }
-    if (type != "application/x-www-form-urlencoded" && type != "multipart/form-data") {
+    if (type != "application/x-www-form-urlencoded"
+        && type != "multipart/form-data"
+        && type != "text/plain") {
         makeErrorResponse(415);
         throw std::runtime_error("Unsupported Media Type");
     }

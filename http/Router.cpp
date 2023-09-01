@@ -143,11 +143,9 @@ const std::string& Router::getParsedURL(void) const {
 }
 
 void Router::handleMethod(Request::METHOD method) {
-    
     std::vector<std::string>& Methods = location->allowedMethod;
     std::vector<std::string> tmp = location->allowedMethod;
-std::cout << Methods.empty() << std::endl;
-std::cout << Methods.size() << std::endl;
+
     if (Methods.empty())
         return;
     std::string methodStr = g_methodStr[method];
