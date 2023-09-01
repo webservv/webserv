@@ -29,8 +29,7 @@ private:
     Config::server*                     config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
-    std::string                         configRoot;
-    Config::location*                   location;                   
+    Config::location*                   matchLocation;                   
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
@@ -49,12 +48,13 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation);
+    void                handleDirectory(std::string& URLFromRequest);
+    std::string         replaceURL(std::string URLFromRequest);
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void                GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
+    void                getBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
 //Router_static.cpp
 private:
     void    processStaticGet(void);
@@ -94,6 +94,9 @@ public:
     int                         getWriteFD(void) const;
     int                         getReadFD(void) const;
     int                         getRequestError(void) const;
+// Router.autoindex.cpp
+public:
+    std::string generateDirectoryListing(const std::string& directoryPath);
 };
 
 #endif
