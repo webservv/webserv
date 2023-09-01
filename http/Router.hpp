@@ -26,10 +26,11 @@ private:
     bool                                haveResponse;
     Server*                             server;
     sockaddr_in                         clientAddr;
-    const Config::server*               config;
+    Config::server*                     config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
     std::string                         configRoot;
+    Config::location*                   location;                   
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
@@ -43,20 +44,27 @@ private:
     std::string         getExtension(const std::string& url) const;
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
-    void                readFile(const std::string& filePath, std::string& content) const;
+    bool                resourceExists(const std::string& filePath) const;
+    void                readFile(const std::string& filePath, std::string& outContent) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
+    void                parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation);
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void                parseDirectory(std::string& URLFromRequest, const std::string& bestMatchRoot, const Config::location& bestLocation, \
-                        std::string& configURL, std::string& configRoot);
+    void                GetBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
+//Router_static.cpp
+private:
+    void    processStaticGet(void);
+    void    processStaticPost(void); //WIP
+    void    processStaticPut(void); //WIP
+    void    processStaticDelete(void); //WIP
 //Router.cpp
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config);
+    Router(Server* const server, const sockaddr_in& clientAddr, Config::server* config);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -66,27 +74,26 @@ private:
     void				handleDelete(void);
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
-	const std::string&	getResponseStr(void) const;
     const std::string&  getParsedURL(void) const;
+    void                handleMethod(Request::METHOD method);
 public:
-	void				    handleRequest(void);
-    const Config::server*   getConfig(void) const;
-    const sockaddr_in&      getClientAddr(void) const;
-    bool                    isHeaderEnd(void) const;
-    bool                    isRequestEnd(void) const;
-    void                    parseRequest(void);
-    bool                    getHaveResponse(void) const;
-    const std::string&      getResponse(void) const;
-    void                    addRequest(const std::string& request);
-    void                    setResponse(const std::string& src);
-    void                    readFromCGI(void);
-    void                    writeToCGI(const intptr_t fdBufferSize);
-    void                    disconnectCGI(void);
-    int                     getWriteFD(void) const;
-    int                     getReadFD(void) const;
-    int                     getRequestError(void) const;
-// Router_autoindex.cpp
-    std::string generateDirectoryListing(const std::string& directoryPath);
+	void				        handleRequest(void);
+    const Config::server*       getConfig(void) const;
+    const sockaddr_in&          getClientAddr(void) const;
+    bool                        isHeaderEnd(void);
+    bool                        isRequestEnd(void) const;
+    void                        parseRequest(void);
+    bool                        getHaveResponse(void) const;
+    const std::vector<char>&    getRequest(void) const;
+    const std::string&          getResponse(void) const;
+    void                        addRequest(const std::vector<char>& input);
+    void                        setResponse(const std::string& src);
+    void                        readFromCGI(void);
+    void                        writeToCGI(const intptr_t fdBufferSize);
+    void                        disconnectCGI(void);
+    int                         getWriteFD(void) const;
+    int                         getReadFD(void) const;
+    int                         getRequestError(void) const;
 };
 
 #endif
