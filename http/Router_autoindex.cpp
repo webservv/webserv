@@ -35,10 +35,10 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath) {
 
     html += "<html><head><title>Index of " + directoryPath + "</title></head><body>";
     html += "<h1>Index of " + directoryPath + "</h1><hr><pre>";
-
-    DIR* dir = opendir(directoryPath.c_str());
     html += desiredStr(15, "fileName");
     html += desiredStr(10, "fileType") + "fileSize" + "\n";
+
+    DIR* dir = opendir(directoryPath.c_str());
     if (dir) {
         struct dirent* entry;
         while ((entry = readdir(dir)) != NULL) {
