@@ -35,40 +35,37 @@ const std::string Router::makeSpacedStr(const int desiredSpaces, std::string tar
 
 std::string Router::generateDirectoryListing(const std::string& directoryPath) {
     std::string html;
+    struct dirent* entry;
+    DIR* dir = opendir(directoryPath.c_str());
 
+    if (dir == NULL)
+        throw Router::ErrorException(500, "generateDirectoryListing: opendir failure");
     html += "<html><head><title>Index of " + directoryPath + "</title></head><body>";
     html += "<h1>Index of " + directoryPath + "</h1><hr><pre>";
     html += makeSpacedStr(15, "fileName");
     html += makeSpacedStr(10, "fileType") + "fileSize" + "\n";
-
-    DIR* dir = opendir(directoryPath.c_str());
-    if (dir) {
-        struct dirent* entry;
-        while ((entry = readdir(dir)) != NULL) {
-            const std::string fileName = entry->d_name;
-            if (fileName != "." && fileName != "..") {
-                const std::string       filePath = directoryPath + "/" + fileName;
-                const Router::eFileType fileType = getFileType(filePath.c_str());
-                struct stat fileStat;
-
-                if (stat(filePath.c_str(), &fileStat) == 0) {
-                    const std::string fileSize = std::to_string(fileStat.st_size);
-
-                    html += "<a href=\"" + fileName + "\">" + fileName + "</a>";
-                    std::string tab(15 - fileName.length(), ' ');
-                    html += tab + makeSpacedStr(10, std::to_string(fileType));
-                    html += fileSize + "\n";
-                }
-                else
-                    throw Router::ErrorException(500, "generateDirectoryListing: " + std::string(strerror(errno)));
+    while ((entry = readdir(dir)) != NULL) {
+        const std::string fileName = entry->d_name;
+        if (fileName != "." && fileName != "..") {
+            const std::string       filePath = directoryPath + "/" + fileName;
+            const Router::eFileType fileType = getFileType(filePath.c_str());
+            struct stat fileStat;
+            if (stat(filePath.c_str(), &fileStat) == 0) {
+                const std::string fileSize = std::to_string(fileStat.st_size);
+                html += "<a href=\"" + fileName + "\">" + fileName + "</a>";
+                std::string tab(15 - fileName.length(), ' ');
+                html += tab + makeSpacedStr(10, std::to_string(fileType));
+                html += fileSize + "\n";
             }
+            else
+                throw Router::ErrorException(500, "generateDirectoryListing: " + std::string(strerror(errno)));
         }
         closedir(dir);
     }
     html += "</pre><hr></body></html>";
 
-	std::string autoFile = directoryPath + "/" + "autoindex.html";
-    std::ofstream outputFile(autoFile);
+	const std::string autoFile = directoryPath + "/" + "autoindex.html";
+    std::ofstream     outputFile(autoFile);
     if (outputFile.is_open()) {
         outputFile << html;
         outputFile.close();
