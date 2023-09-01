@@ -60,8 +60,8 @@ private:
     void    trim(std::string &str) const;
 	void    tokenization(const std::string& line);
 public:
-    std::vector<Config::server>&        getServers();
-    int                         getClientMaxBodySize() const;
+    const std::vector<Config::server>&  getServers() const;
+    int                                 getClientMaxBodySize() const;
 
 };
 

@@ -25,7 +25,6 @@ private:
 	std::vector<char>					body;
 	bool								haveHeader;
 	bool								haveBody;
-    int									error;
 	size_t								bodyPos;
 //Reqeust_parse.cpp
 private:

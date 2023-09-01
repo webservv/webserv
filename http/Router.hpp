@@ -5,6 +5,7 @@
 #include "Response.hpp"
 #include "Config.hpp"
 
+#include <exception>
 #include <netinet/in.h>
 #include <string>
 #include <map>
@@ -24,6 +25,18 @@ public:
         file,
         other
     };
+public:
+    class ErrorException: public std::exception {
+    private:
+        int         errorCode;
+        std::string message;
+    public:
+        ErrorException(const int errorCode, const std::string& message);
+        virtual ~ErrorException() throw();
+    public:
+        virtual const char* what(void) const throw();
+        int                 getErrorCode(void) const;
+    };
 private:
     static std::map<std::string, std::string>   mimeMap;
 private:
@@ -32,10 +45,10 @@ private:
     bool                                haveResponse;
     Server*                             server;
     sockaddr_in                         clientAddr;
-    Config::server*                     config;
+    const Config::server*               config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
-    Config::location*                   matchLocation;
+    const Config::location*             matchLocation;
 // Router.autoindex.cpp
 private:
     Router::eFileType   getFileType(const char* path) const;
@@ -45,8 +58,9 @@ public:
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
-                        defaultErrorPage(int statusCode);
-    void                setCustomErrorPage(const std::string& customPath);
+            defaultErrorPage(int statusCode);
+    void    setCustomErrorPage(const std::string& customPath);
+    void    makeDefaultErrorResponse(int statusCode);
 public:
     void    makeErrorResponse(int statusCode);
 //Router_utils.cpp
@@ -60,13 +74,15 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                handleDirectory(std::string& URLFromRequest);
-    std::string         replaceURL(std::string& URLFromRequest) const;
+    void                handleDirectory(std::string& UrlFromRequest);
+    void                replaceURL(std::string& UrlFromRequest) const;
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void                getBestMatchURL(std::vector<Config::location>& locations, const std::string& URLFromRequest);
+    void                getBestMatchURL(const std::vector<Config::location>& locations, const std::string& UrlFromRequest);
+    bool                isDirectory(const std::string& path) const;
+    bool                isRegularFile(const std::string& path) const;
 //Router_static.cpp
 private:
     void    processStaticGet(void);
@@ -76,7 +92,7 @@ private:
 //Router.cpp
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr, Config::server* config);
+    Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -105,7 +121,6 @@ public:
     void                        disconnectCGI(void);
     int                         getWriteFD(void) const;
     int                         getReadFD(void) const;
-    int                         getRequestError(void) const;
 };
 
 #endif

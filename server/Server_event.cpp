@@ -101,13 +101,7 @@ std::cout << buf << std::endl;
     }
     router.addRequest(input);
 	if (router.isHeaderEnd()) {
-        try {
-		    router.parseRequest();
-        } catch (const std::exception& e) {
-            int error = getRequestError(client_sockfd);
-            router.makeErrorResponse(error);
-            return;
-        }
+        router.parseRequest();
 		if (router.isRequestEnd()) {
 const std::vector<char>& request = router.getRequest();
 for (size_t i = 0; i < request.size(); ++i) {

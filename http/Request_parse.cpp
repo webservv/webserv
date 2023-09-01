@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <sys/_types/_size_t.h>
 #include <vector>
+#include "Router.hpp"
 
 const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
 static const std::string POST_URL = "/cgi/index.php";
@@ -11,8 +12,7 @@ static const std::string POST_URL = "/cgi/index.php";
 void Request::parseMethod(std::string& line) {
     size_t space = line.find(' ');
     if (space == std::string::npos) {
-        error = 400;
-        throw std::out_of_range("invalid http, request line! Missing or misplaced space");
+        throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
     }
     std::string methodString = line.substr(0, space);
     line = line.substr(space + 1);
@@ -29,16 +29,14 @@ void Request::parseMethod(std::string& line) {
         values["method"] = "DELETE";
     }
     else {
-        error = 405;
-        throw std::out_of_range("invalid http, request line! Unsupported method: " + methodString);
+        throw Router::ErrorException(405, "invalid http, request line! Unsupported method: " + methodString);
     }
 }
 
 void Request::parseURL(const std::string& line) {
     const size_t space = line.find(' ');
     if (space == std::string::npos) {
-        error = 400;
-        throw std::out_of_range("invalid http, request line! Missing or misplaced space");
+        throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
     }
     values["url"] = line.substr(0, space);
 }
@@ -46,8 +44,7 @@ void Request::parseURL(const std::string& line) {
 void Request::parseVersion(const std::string& line, const size_t space) {
     values["version"] = line.substr(space + 1);
     if (values["version"] != "HTTP/1.1") {
-        error = 505;
-        throw std::out_of_range("invalid http, request line! Unsupported version: " + values["version"]);
+        throw Router::ErrorException(505, "invalid http, request line! Unsupported version: " + values["version"]);
     }
 }
 
@@ -104,8 +101,7 @@ void Request::parseChunkedBody(void) {
             break;
         }
         if (chunkSize > MAX_CHUNK_SIZE) {
-            error = 413;
-            throw std::out_of_range("invalid http, chunk size is too big!");
+            throw Router::ErrorException(413, "invalid http, chunk size is too big!");
         }
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
@@ -116,8 +112,7 @@ void Request::parseChunkedBody(void) {
 
 void Request::parseRequestLine() {
     if (requestLines.empty()) {
-        error = 400;
-        throw std::out_of_range("invalid http, empty request line!");
+        throw Router::ErrorException(400, "invalid http, empty request line!");
     }
     std::string line = requestLines.front();
     requestLines.pop();
@@ -135,8 +130,7 @@ void Request::parseKeyValues(void) {
 			break;
 		size_t index = line.find(": ");
 		if (index == std::string::npos || index + 2 >= line.size()) {
-            error = 400;
-			throw std::out_of_range("invalid http, header!");
+			throw Router::ErrorException(400, "invalid http, header!");
         }
         std::string headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);

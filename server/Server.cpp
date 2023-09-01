@@ -33,7 +33,7 @@ Server::Server():
     cookies(),
     configs() {}
 
-Server::Server(Config& config):
+Server::Server(const Config& config):
     kqueueFd(NULL_FD),
     listenSockets(),
     IOchanges(),
@@ -48,9 +48,9 @@ Server::Server(Config& config):
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
 
-    std::vector<Config::server>& servers = config.getServers();
-    for (std::vector<Config::server>::iterator it = servers.begin(); it != servers.end(); ++it) {
-        Config::server& new_server = *it;
+    const std::vector<Config::server>& servers = config.getServers();
+    for (std::vector<Config::server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        const Config::server& new_server = *it;
         
         int new_socket_fd = createSocket();
         setSocketOptions(new_socket_fd);
@@ -105,12 +105,7 @@ in_addr_t Server::IPToInt(const std::string& ip) const {
 	return ret;
 }
 
-int Server::getRequestError(const int clientSocketFD) const {
-    std::map<int, Router>::const_iterator it = clientSockets.find(clientSocketFD);
-    return it->second.getRequestError();
-}
-
-Server& Server::getInstance(Config& config) {
+Server& Server::getInstance(const Config& config) {
 	if (instance == NULL) {
 		instance = new Server(config);
 	}

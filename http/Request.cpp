@@ -13,7 +13,6 @@ Request::Request():
     body(),
     haveHeader(false),
     haveBody(false),
-    error(0),
     bodyPos(0) {
         static const size_t BUFFER_SIZE = 10000000;
         requestStr.reserve(BUFFER_SIZE);
@@ -27,7 +26,6 @@ Request::Request(const Request& copy):
     body(),
     haveHeader(copy.haveHeader),
     haveBody(copy.haveBody),
-    error(copy.error),
     bodyPos(0) {}
 
 Request& Request::operator=(const Request& copy) {
@@ -38,7 +36,6 @@ Request& Request::operator=(const Request& copy) {
     body = copy.body;
     haveHeader = copy.haveHeader;
     haveBody = copy.haveBody;
-    error = copy.error;
     haveHeader = copy.bodyPos;
 	return *this;
 }
@@ -81,10 +78,6 @@ const std::vector<char>& Request::getBody(void) const {
 
 const std::string& Request::getVersion(void) const {
     return findValue("version");
-}
-
-int Request::getError(void) const {
-    return error;
 }
 
 static char tolower_char(unsigned char c) {

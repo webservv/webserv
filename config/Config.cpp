@@ -539,7 +539,7 @@ void Config::tokenization(const std::string& line) {
 	}
 }
 
-std::vector<Config::server>& Config::getServers() {
+const std::vector<Config::server>& Config::getServers() const {
     return servers;
 }
 

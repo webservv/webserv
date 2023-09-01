@@ -2,6 +2,7 @@
 #include "Server.hpp"
 #include <exception>
 #include <sys/_types/_size_t.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
@@ -65,7 +66,7 @@ bool Router::resourceExists(const std::string& filePath) const {
 void Router::readFile(const std::string& filePath, std::string& outContent) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
-        throw std::ios_base::failure("File open error.");
+        throw Router::ErrorException(500, "File open error.");
     }
     outContent.assign((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 }
@@ -102,24 +103,16 @@ void Router::validateHeaderLength() {
     }
     if (contentLengthHeader.empty()) {
         if (isBodyRequired()) {
-            makeErrorResponse(411);
-            throw std::runtime_error("Content-Length header is missing");
+            throw Router::ErrorException(411, "Content-Length header is missing");
         }
         return;
     }
-    try {
-        int contentLength = std::stoi(contentLengthHeader);
-        if (contentLength < 0) {
-            makeErrorResponse(400);
-            throw std::runtime_error("Content-Length is not a valid integer");
-        }
-        else if (contentLength > MAX_POST_SIZE) {
-            makeErrorResponse(413);
-            throw std::runtime_error("Content-Length is too large");
-        }
-    } catch (const std::invalid_argument& e) {
-        makeErrorResponse(400);
-        throw std::runtime_error("Content-Length is not a valid integer");
+    int contentLength = std::stoi(contentLengthHeader);
+    if (contentLength < 0) {
+        throw Router::ErrorException(400, "Content-Length is not a valid integer");
+    }
+    else if (contentLength > MAX_POST_SIZE) {
+        throw Router::ErrorException(413, "Content-Length is too large");
     }
 }
 
@@ -131,16 +124,14 @@ void Router::validateContentType() {
 
     if (!transferEncoding.empty()) {
         if (transferEncoding != "chunked") {
-            makeErrorResponse(501);
-            throw std::runtime_error("Invalid Transfer-Encoding value");
+            throw Router::ErrorException(501, "Invalid Transfer-Encoding value");
         }
         return;
     }
     if (type != "application/x-www-form-urlencoded"
         && type != "multipart/form-data"
         && type != "text/plain") {
-        makeErrorResponse(415);
-        throw std::runtime_error("Unsupported Media Type");
+        throw Router::ErrorException(415, "Unsupported Media Type");
     }
 }
 
@@ -160,18 +151,12 @@ void Router::handleDirectory(std::string& replacedURL) {
     }
     
     // for now, we don't check if autoindex is on. have to fix it later 
-    try {
-        configURL = generateDirectoryListing(directoryPath);
-    }
-    catch (std::exception& e) {
-        makeErrorResponse(500);
-        return;
-    }
+    configURL = generateDirectoryListing(directoryPath);
 }
 
-std::string Router::replaceURL(std::string& URLFromRequest) const {
+void Router::replaceURL(std::string& URLFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/")
+        if (matchLocation->url == "/" && URLFromRequest.front() != '/')
             URLFromRequest = "/" + URLFromRequest;
         if (matchLocation->root.empty())
             URLFromRequest.replace(0, matchLocation->url.length(), config->root);
@@ -181,20 +166,18 @@ std::string Router::replaceURL(std::string& URLFromRequest) const {
     else {
         URLFromRequest = config->root + URLFromRequest;
     }
-    return URLFromRequest;
 }
 
 void Router::setConfigURL() {
-    std::string URLFromRequest = request.getURL();
-    std::string replacedURL;
-    getBestMatchURL(config->locations, URLFromRequest);
-    replacedURL = replaceURL(URLFromRequest);
-    DIR *dir;
-    if (URLFromRequest.back() == '/' || (dir = opendir(replacedURL.c_str())) == NULL) {
-        handleDirectory(replacedURL);
+    std::string URL = request.getURL();
+
+    getBestMatchURL(config->locations, URL);
+    replaceURL(URL);
+    if (URL.back() == '/' || isDirectory(URL)) {
+        handleDirectory(URL);
     }
     else {
-        configURL = replacedURL;
+        configURL = URL;
     }
 }
 
@@ -248,12 +231,12 @@ bool Router::needCookie(void) const {
 }
 
 void Router::getBestMatchURL(
-    std::vector<Config::location>& locations,
+    const std::vector<Config::location>& locations,
     const std::string& URLFromRequest
 ) {
     std::string bestMatchURL = "";
 
-    for (std::vector<Config::location>::iterator it = locations.begin(); 
+    for (std::vector<Config::location>::const_iterator it = locations.begin(); 
          it != locations.end(); ++it) {
         const std::string& url = it->url;
         if (URLFromRequest.find(url) == 0) {
@@ -263,4 +246,28 @@ void Router::getBestMatchURL(
             }
         }
     }
+}
+
+bool Router::isDirectory(const std::string& path) const {
+    struct stat info;
+
+    if (stat(path.c_str(), &info) != 0) {
+        throw Router::ErrorException(500, "isDirectory: " + std::string(strerror(errno)));
+    }
+    if (S_ISDIR(info.st_mode)) {
+        return true;
+    }
+    return false;
+}
+
+bool Router::isRegularFile(const std::string& path) const {
+    struct stat info;
+
+    if (stat(path.c_str(), &info) != 0) {
+        throw Router::ErrorException(500, "isRegularFile: " + std::string(strerror(errno)));
+    }
+    if (S_ISREG(info.st_mode)) {
+        return true;
+    }
+    return false;
 }

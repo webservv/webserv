@@ -41,10 +41,10 @@ void Router::processStaticPost(void) {
 	}
 	os.open(configURL.c_str(), std::ios_base::app);
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: open failure");
+		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: write failure");
+		throw Router::ErrorException(500, "processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	haveResponse = true;
 }
@@ -59,10 +59,10 @@ void Router::processStaticPut(void) {
 	}
 	os.open(configURL.c_str(), std::ios::out);
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: open failure");
+		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: write failure");
+		throw Router::ErrorException(500, "processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	haveResponse = true;
 }

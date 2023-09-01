@@ -13,8 +13,9 @@
 
 Router::eFileType Router::getFileType(const char* path) const {
     struct stat info;
+
     if (stat(path, &info) != 0) {
-        throw std::runtime_error("getFileType: " + std::string(strerror(errno)));
+        throw Router::ErrorException(500, "getFileType: " + std::string(strerror(errno)));
     }
     if (S_ISDIR(info.st_mode)) {
         return dir;
@@ -59,7 +60,7 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath) {
                     html += fileSize + "\n";
                 }
                 else
-                    throw std::runtime_error("generateDirectoryListing: " + std::string(strerror(errno)));
+                    throw Router::ErrorException(500, "generateDirectoryListing: " + std::string(strerror(errno)));
             }
         }
         closedir(dir);
@@ -73,7 +74,7 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath) {
         outputFile.close();
         std::cout << "HTML directory listing generated successfully." << std::endl;
     } else {
-        throw std::runtime_error("generateDirectoryListing: " + std::string(strerror(errno)));
+        throw Router::ErrorException(500, "generateDirectoryListing: " + std::string(strerror(errno)));
     }
     return autoFile;
 }
