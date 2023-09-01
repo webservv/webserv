@@ -94,6 +94,7 @@ public:
     int                         getWriteFD(void) const;
     int                         getReadFD(void) const;
     int                         getRequestError(void) const;
+// Router.autoindex.cpp
 public:
     std::string generateDirectoryListing(const std::string& directoryPath);
 };

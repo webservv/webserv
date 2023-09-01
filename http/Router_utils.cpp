@@ -6,6 +6,9 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <sys/types.h>
+#include <dirent.h>
+#include <libgen.h>
 
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
@@ -142,11 +145,8 @@ void Router::handleDirectory(std::string& replacedURL) {
 
     std::vector<std::string> indexFiles;
     std::string directoryPath;
+    
     if (matchLocation) {
-        if (matchLocation->url != replacedURL) { // error case -> handleGET 
-            configURL = replacedURL;
-            return ;
-        }
         indexFiles = matchLocation->index;
         directoryPath = matchLocation->root;
     }
@@ -165,6 +165,7 @@ void Router::handleDirectory(std::string& replacedURL) {
         }
     }
     
+    // for now, we don't check if autoindex is on. have to fix it later 
     configURL = generateDirectoryListing(directoryPath);
 }
 
@@ -188,7 +189,8 @@ void Router::setConfigURL() {
     std::string replacedURL;
     getBestMatchURL(config->locations, URLFromRequest);
     replacedURL = replaceURL(URLFromRequest);
-    if (URLFromRequest.back() == '/') {
+    DIR *dir;
+    if (URLFromRequest.back() == '/' || (dir = opendir(replacedURL.c_str())) == NULL) {
         handleDirectory(replacedURL);
     }
     else {
