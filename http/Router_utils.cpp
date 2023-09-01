@@ -160,8 +160,8 @@ void Router::parseDirectory(std::string& UrlFromRequest, const Config::location&
 }
 
 void Router::setConfigURL() {
-    std::string&        URLFromRequest = const_cast<std::string&>(request.getURL());
-    
+    std::string URLFromRequest = request.getURL();
+
     GetBestMatchURL(config->locations, URLFromRequest);
     if (URLFromRequest.back() == '/') {
         try {
