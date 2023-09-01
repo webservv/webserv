@@ -9,10 +9,6 @@
 
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
-static std::string findPotentialIndexPath(const std::string& rootPath, \
-    const std::vector<std::string>& indexFiles, const std::string& url);
-static std::string findPath(const std::string& rootPath, const std::string& url);
-
 void Router::initializeMimeMap() {
     if (mimeMap.empty()) {
         mimeMap["html"] = "text/html";
@@ -142,53 +138,69 @@ void Router::validateContentType() {
     }
 }
 
-void Router::parseDirectory(std::string& URLFromRequest, const Config::location& bestLocation) {
-    URLFromRequest.erase(URLFromRequest.end() - 1);
-    
-    std::string bestMatchRoot = bestLocation.root;
-    // directory index를 찾는 로직인데 나중에 테스트 하면서 고쳐야 됩니다. 
-    // directory가 들어왔을 때 bestMatchRoot로 돌리는게 맞는가..? 의문
-    if (bestMatchRoot.empty()) {
-        configURL = findPotentialIndexPath(config->root, config->index, URLFromRequest);
-        configRoot = config->root;
-    } else {
-        configURL = findPotentialIndexPath(bestMatchRoot, bestLocation.index, URLFromRequest);
-        configRoot = bestMatchRoot;
+void Router::handleDirectory(std::string& replacedURL) {
+
+    std::vector<std::string> indexFiles;
+    std::string directoryPath;
+    if (matchLocation) {
+        if (matchLocation->url != replacedURL) { // error case -> handleGET 
+            configURL = replacedURL;
+            return ;
+        }
+        indexFiles = matchLocation->index;
+        directoryPath = matchLocation->root;
     }
+    else {
+        indexFiles = config->index;
+        directoryPath = config->root;
+    }
+    if (replacedURL.back() != '/')
+        replacedURL += "/";
+
+    for (size_t i = 0; i < indexFiles.size(); ++i) {
+        replacedURL += indexFiles[i];
+        if (access(replacedURL.c_str(), R_OK) == 0) {
+            configURL = replacedURL;
+            return ;
+        }
+    }
+    
+    configURL = generateDirectoryListing(directoryPath);
+}
+
+std::string Router::replaceURL(std::string URLFromRequest) {
+    if (matchLocation) {
+        if (matchLocation->url == "/")
+            URLFromRequest = "/" + URLFromRequest;
+        if (matchLocation->root.empty())
+            URLFromRequest.replace(0, matchLocation->url.length(), config->root);
+        else 
+            URLFromRequest.replace(0, matchLocation->url.length(), matchLocation->root);
+    }
+    else {
+        URLFromRequest = config->root + URLFromRequest;
+    }
+    return URLFromRequest;
 }
 
 void Router::setConfigURL() {
-    std::string&        URLFromRequest = const_cast<std::string&>(request.getURL());
-    
-    GetBestMatchURL(config->locations, URLFromRequest);
+    std::string URLFromRequest = request.getURL();
+    std::string replacedURL;
+    getBestMatchURL(config->locations, URLFromRequest);
+    replacedURL = replaceURL(URLFromRequest);
     if (URLFromRequest.back() == '/') {
-        try {
-            parseDirectory(URLFromRequest, *location);
-        } catch (const std::exception& e) {
-            std::cout << "cath!!" << std::endl;
-            std::string directoryPath;
-            if (bestMatchRoot.empty())
-                directoryPath = config->root + URLFromRequest;
-            else
-                directoryPath = bestMatchRoot + URLFromRequest;
-            configURL = generateDirectoryListing(directoryPath);
-            configRoot = configURL;
-            // 디렉토리에서 index 접근을 확인하는 과정에서 실패하면 여기로 들어옴
-        }
-        return ;
+        handleDirectory(replacedURL);
     }
-    if (location->root.empty()) {
-        configURL = findPath(config->root, URLFromRequest);
-        configRoot = config->root;
-    } else {
-        configURL = findPath(location->root, URLFromRequest);
-        configRoot = location->root + location->url;
+    else {
+        configURL = replacedURL;
     }
 }
 
 void Router::parseURL() {
+    // have to change a lot here !!! 
     const std::string& url = configURL;
     std::string path_info, query_string;
+    std::string configRoot = "trash";
 
     size_t rootPathIndex = url.find(configRoot);
     size_t queryIndex = url.find('?');
@@ -233,27 +245,7 @@ bool Router::needCookie(void) const {
     return false;
 }
 
-static std::string findPotentialIndexPath(const std::string& rootPath, \
-    const std::vector<std::string>& indexFiles, const std::string& directory) {
-    std::string potentialIndexPath = "." + rootPath + directory;
-
-    if (!directory.empty())
-        potentialIndexPath = potentialIndexPath + "/";
-    for (size_t i = 0; i < indexFiles.size(); ++i) {
-        potentialIndexPath += indexFiles[i];
-        if (access(potentialIndexPath.c_str(), R_OK) == 0) {
-            return potentialIndexPath;
-        }
-    }
-    return "." + rootPath + directory;
-}
-
-static std::string findPath(const std::string& rootPath, const std::string& url) {
-    std::string potentialIndexPath = "." + rootPath + url;
-    return potentialIndexPath;
-}
-
-void Router::GetBestMatchURL(
+void Router::getBestMatchURL(
     std::vector<Config::location>& locations,
     const std::string& URLFromRequest
 ) {
@@ -265,7 +257,7 @@ void Router::GetBestMatchURL(
         if (URLFromRequest.find(url) == 0) {
             if (url.length() > bestMatchURL.length()) {
                 bestMatchURL = url;
-                location = &(*it);
+                matchLocation = &(*it);
             }
         }
     }
