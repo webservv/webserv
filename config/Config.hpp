@@ -11,21 +11,22 @@
 class Config {
 public:
     struct location {
-    std::vector<std::string>            allowedMethod;
-    std::string                         url;
-    std::string                         root;
-    std::vector<std::string>            index;
-    std::string                         return_url;
-    bool                                autoindex;
-    int                                 return_code;
+    std::vector<std::string>    allowedMethod;
+    std::string                 url;
+    std::string                 root;
+    std::vector<std::string>    index;
+    std::string                 return_url;
+    std::string                 cgiPath;
+    bool                        autoindex;
+    int                         return_code;
     };
 struct server{
-	std::vector<location>           locations;
-	std::map<int, std::string>      errorPages;
-    std::vector<std::string>        index;
-	std::string                     server_name;
-    std::string                     root;
-	int                             listen_port;
+	std::vector<location>       locations;
+	std::map<int, std::string>  errorPages;
+    std::vector<std::string>    index;
+	std::string                 server_name;
+    std::string                 root;
+	int                         listen_port;
     };
 private:
 	std::queue<std::string>		tokens;
@@ -52,11 +53,12 @@ private:
     void    parseClientMaxBodySize();
 
 	void    parseLocation(server& server);
-    void    parseLimitExcept(location& location);
-    void    parseRoot(location& location);
-    void    parseIndex(location& location);
-    void    parseAutoIndex(location& location);
-    void    parseReturn(location& location);
+    void    parseLimitExcept(location& loc);
+    void    parseRoot(location& loc);
+    void    parseIndex(location& loc);
+    void    parseAutoIndex(location& loc);
+    void    parseReturn(location& loc);
+    void    parseCgiPath(location& loc);
     void    trim(std::string &str) const;
 	void    tokenization(const std::string& line);
 public:
