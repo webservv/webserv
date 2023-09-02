@@ -8,7 +8,7 @@
 void Router::processStaticGet(void) {
 	const std::string	filePath = '.' + configURL;
 
-	if (!resourceExists(filePath.c_str())) {
+	if (!isAccessible(filePath.c_str())) {
 		makeErrorResponse(404);
 		return;
 	}
@@ -21,6 +21,7 @@ void Router::processStaticGet(void) {
 }
 
 void Router::processStaticPost(void) {
+	const std::string			filePath = '.' + configURL;
 	const std::vector<char>&	body = request.getBody();
 	std::ofstream				os;
 
@@ -28,7 +29,7 @@ void Router::processStaticPost(void) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
 		response.makeHeader("Content-Length", "0");
 	}
-	os.open(configURL.c_str(), std::ios_base::app);
+	os.open(filePath.c_str(), std::ios_base::app);
 	if (os.fail())
 		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
@@ -39,6 +40,7 @@ void Router::processStaticPost(void) {
 }
 
 void Router::processStaticPut(void) {
+	const std::string			filePath = '.' + configURL;
 	const std::vector<char>&	body = request.getBody();
 	std::ofstream				os;
 
@@ -46,7 +48,7 @@ void Router::processStaticPut(void) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
 		response.makeHeader("Content-Length", "0");
 	}
-	os.open(configURL.c_str(), std::ios::out);
+	os.open(filePath, std::ios::out);
 	if (os.fail())
 		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
@@ -57,13 +59,14 @@ void Router::processStaticPut(void) {
 }
 
 void Router::processStaticDelete(void) {
-	if (!resourceExists(configURL)) {
-		makeErrorResponse(404);
-		return;
+	const std::string	filePath = '.' + configURL;
+
+	if (!isAccessible(configURL)) {
+		throw Router::ErrorException(404, "processStaticDelete: file not found");
 	}
-	if (std::remove(configURL.c_str()) != 0) {
-		makeErrorResponse(500);
-		return;
+	if (std::remove(filePath.c_str()) != 0) {
+		throw Router::ErrorException(500, "processStaticDelete: remove system call error");
 	}
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	haveResponse = true;
 }
