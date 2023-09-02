@@ -6,12 +6,14 @@
 #include <cstdio>
 
 void Router::processStaticGet(void) {
-	if (!resourceExists(configURL)) {
+	const std::string	filePath = '.' + configURL;
+
+	if (!isAccessible(filePath.c_str())) {
 		makeErrorResponse(404);
 		return;
 	}
 	std::string content;
-    readFile(configURL, content);
+    readFile(filePath, content);
     std::string mimeType = getMIME(configURL);
     response.makeStatusLine("HTTP/1.1", "200", "OK");
     response.makeBody(content, content.size(), mimeType);
@@ -19,6 +21,7 @@ void Router::processStaticGet(void) {
 }
 
 void Router::processStaticPost(void) {
+	const std::string			filePath = '.' + configURL;
 	const std::vector<char>&	body = request.getBody();
 	std::ofstream				os;
 
@@ -26,17 +29,18 @@ void Router::processStaticPost(void) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
 		response.makeHeader("Content-Length", "0");
 	}
-	os.open(configURL.c_str(), std::ios_base::app);
+	os.open(filePath.c_str(), std::ios_base::app);
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: open failure");
+		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: write failure");
+		throw Router::ErrorException(500, "processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	haveResponse = true;
 }
 
 void Router::processStaticPut(void) {
+	const std::string			filePath = '.' + configURL;
 	const std::vector<char>&	body = request.getBody();
 	std::ofstream				os;
 
@@ -44,24 +48,25 @@ void Router::processStaticPut(void) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
 		response.makeHeader("Content-Length", "0");
 	}
-	os.open(configURL.c_str(), std::ios::out);
+	os.open(filePath, std::ios::out);
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: open failure");
+		throw Router::ErrorException(500, "processStaticPost: open failure");
 	os.write(body.data(), body.size());
 	if (os.fail())
-		throw std::runtime_error("processStaticPost: write failure");
+		throw Router::ErrorException(500, "processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	haveResponse = true;
 }
 
 void Router::processStaticDelete(void) {
-	if (!resourceExists(configURL)) {
-		makeErrorResponse(404);
-		return;
+	const std::string	filePath = '.' + configURL;
+
+	if (!isAccessible(configURL)) {
+		throw Router::ErrorException(404, "processStaticDelete: file not found");
 	}
-	if (std::remove(configURL.c_str()) != 0) {
-		makeErrorResponse(500);
-		return;
+	if (std::remove(filePath.c_str()) != 0) {
+		throw Router::ErrorException(500, "processStaticDelete: remove system call error");
 	}
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	haveResponse = true;
 }

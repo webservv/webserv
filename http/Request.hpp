@@ -15,6 +15,7 @@ public:
 		GET,
 		POST,
 		DELETE,
+		PUT,
 		OTHER
 	};
 private:
@@ -25,7 +26,6 @@ private:
 	std::vector<char>					body;
 	bool								haveHeader;
 	bool								haveBody;
-    int									error;
 	size_t								bodyPos;
 //Reqeust_parse.cpp
 private:
@@ -48,6 +48,7 @@ public:
 	Request&	operator=(const Request& copy);
 private:
 	size_t	findHeaderEnd(void) const;
+	bool	isChunkEnd(void) const;
 public:
 	Request::METHOD				getMethod(void) const;
 	const std::vector<char>&	getRequestStr(void) const;

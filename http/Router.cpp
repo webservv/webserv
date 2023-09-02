@@ -3,6 +3,7 @@
 #include "Response.hpp"
 #include "Server.hpp"
 
+#include <exception>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fstream>
@@ -20,6 +21,20 @@ std::map<std::string, std::string> Router::mimeMap;
 static const std::string    FAVICON_PATH = "./favicon/favicon.ico";
 static int cookieId = 0;
 
+Router::ErrorException::ErrorException(const int errorCode, const std::string& message)
+	: errorCode(errorCode)
+	, message(message) {}
+
+Router::ErrorException::~ErrorException() throw() {}
+
+const char* Router::ErrorException::what(void) const throw() {
+	return message.c_str();
+}
+
+int Router::ErrorException::getErrorCode(void) const {
+	return errorCode;
+}
+
 Router::Router():
 	request(),
 	response(),
@@ -32,7 +47,7 @@ Router::Router():
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr, Config::server* config):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config):
 	request(),
 	response(),
 	haveResponse(false),
@@ -75,21 +90,12 @@ Router& Router::operator=(const Router& copy) {
 Router::~Router() {}
 
 void Router::handleGet() {
-	try {
-		if (!configURL.compare(0, 4, "/cgi")) {
-			response.makeStatusLine("HTTP/1.1", "200", "OK");
-            try {
-		    	connectCGI();
-            } catch (const std::exception& e) {
-                makeErrorResponse(500);
-            }
-		}
-		else
-			processStaticGet();
-	} catch (const std::ios_base::failure& e) {
-        makeErrorResponse(500);
-		std::cerr << "Error: " << e.what() << std::endl;
+	if (!configURL.compare(0, 4, "/cgi")) {
+		response.makeStatusLine("HTTP/1.1", "200", "OK");
+        connectCGI();
 	}
+	else
+		processStaticGet();
 }
 
 void Router::handlePost() {
@@ -105,11 +111,7 @@ void Router::handlePost() {
 
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
-	try {
-        connectCGI();
-    } catch (const std::exception& e) {
-        makeErrorResponse(500);
-    }
+	connectCGI();
 }
 
 void Router::connectCGI(void) {
@@ -146,33 +148,36 @@ const std::string& Router::getParsedURL(void) const {
 }
 
 void Router::handleMethod(Request::METHOD method) {
-    
-    std::vector<std::string>& Methods = matchLocation->allowedMethod;
-    std::vector<std::string> tmp = matchLocation->allowedMethod;
-std::cout << Methods.empty() << std::endl;
-std::cout << Methods.size() << std::endl;
+    const std::vector<std::string>&	Methods = matchLocation->allowedMethod;
+
     if (Methods.empty())
         return;
     std::string methodStr = g_methodStr[method];
-    std::vector<std::string>::iterator it = std::find(Methods.begin(), \
+    std::vector<std::string>::const_iterator it = std::find(Methods.begin(), \
         Methods.end(), methodStr);
     if (it == Methods.end()) {
-        makeErrorResponse(405);
-        throw std::runtime_error("Method Not Allowed");
+        throw Router::ErrorException(405, "Method Not Allowed");
     }
 }
 
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
-	setConfigURL();
-    handleMethod(method);
-	if (method == Request::GET) {
-        handleGet();
-	} else if (method == Request::POST) {
-		handlePost();
-	} else if (method == Request::DELETE) {
-		handleDelete();
+	try {
+		setConfigURL();
+    	handleMethod(method);
+		if (method == Request::GET) {
+    	    handleGet();
+		} else if (method == Request::POST) {
+			handlePost();
+		} else if (method == Request::DELETE) {
+			handleDelete();
+		} else if (method == Request::PUT)
+			processStaticPut();
+	}
+	catch (Router::ErrorException& e) {
+		std::cout << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
 	}
 }
 
@@ -193,7 +198,13 @@ bool Router::isRequestEnd() const {
 }
 
 void Router::parseRequest(void) {
-    request.parse();
+	try {
+    	request.parse();
+	}
+	catch (Router::ErrorException& e) {
+		std::cerr << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
+	}
 }
 
 bool Router::getHaveResponse(void) const {
@@ -217,15 +228,33 @@ void Router::setResponse(const std::string &src) {
 }
 
 void Router::readFromCGI(void) {
-	response.readFromCGI();
+	try {
+		response.readFromCGI();
+	}
+	catch (Router::ErrorException& e) {
+		std::cerr << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
+	}
 }
 
 void Router::writeToCGI(const intptr_t fdBufferSize) {
-	response.writeToCGI(fdBufferSize);
+	try {
+		response.writeToCGI(fdBufferSize);
+	}
+	catch (Router::ErrorException& e) {
+		std::cerr << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
+	}
 }
 
 void Router::disconnectCGI(void) {
-	response.disconnectCGI();
+	try {
+		response.disconnectCGI();
+	}
+	catch (Router::ErrorException& e) {
+		std::cerr << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
+	}
 	haveResponse = true;
 }
 
@@ -235,8 +264,4 @@ int Router::getWriteFD(void) const {
 
 int Router::getReadFD(void) const {
 	return response.getReadFD();
-}
-
-int Router::getRequestError() const {
-    return request.getError();
 }

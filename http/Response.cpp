@@ -9,6 +9,7 @@
 #include <sys/_types/_ssize_t.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "Router.hpp"
 #define CHILD_PID 0
 #define READ 0
 #define WRITE 1
@@ -48,15 +49,15 @@ void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, 
 	char**	envList = makeEnvList(envs);
 
 	if (dup2(readPipe[WRITE], STDOUT_FILENO) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "processCGI: " + std::string(strerror(errno)));
 	if (dup2(writePipe[READ], STDIN_FILENO) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "processCGI: " + std::string(strerror(errno)));
 	close(readPipe[READ]);
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
 	close(writePipe[WRITE]);
 	if (execve(('.' + envs["SCRIPT_NAME"]).c_str(), NULL, envList) < 0)
-		throw std::runtime_error("processCGI: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "processCGI: " + std::string(strerror(errno)));
 }
 
 char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
@@ -119,12 +120,12 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		writePipe[2];
 
 	if (access(('.' + envs["SCRIPT_NAME"]).c_str(), F_OK))
-		throw std::runtime_error("getFromCGI1: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "getFromCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
-		throw std::runtime_error("getFromCGI2: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "getFromCGI2: " + std::string(strerror(errno)));
 	cgiPid = fork();
 	if (cgiPid < 0)
-		throw std::runtime_error("getFromCGI3: " + std::string(strerror(errno)));
+		throw Router::ErrorException(500, "getFromCGI3: " + std::string(strerror(errno)));
 	else if (cgiPid == CHILD_PID)
 		bootCGI(readPipe, writePipe, envs);
 	close(readPipe[WRITE]);
@@ -140,7 +141,7 @@ void Response::readFromCGI(void) {
 	while (true) {
 		read_size = read(readFD, buf, BUFFER_SIZE);
 		if (read_size < 0)
-			throw std::runtime_error("readCGI: " + std::string(strerror(errno)));
+			throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
 		else if (read_size == 0)
 			break;
 		buf[read_size] = '\0';
@@ -161,12 +162,12 @@ void Response::writeToCGI(const intptr_t fdBufferSize) {
 	if (leftSize <= static_cast<size_t>(bufSize)) {
 		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, leftSize);
 		if (writeLength < 0)
-			throw std::runtime_error("writeCGI: " + std::string(strerror(errno)));
+			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno)));
 	}
 	else {
 		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, bufSize);
 		if (writeLength < 0)
-			throw std::runtime_error("writeCGI: " + std::string(strerror(errno))); 
+			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno))); 
 	}
 	if (writeLength + writtenCgiLength == messageToCGI.size()) {
 			close(writeFD);
@@ -185,9 +186,9 @@ void Response::disconnectCGI(void) {
 		close(readFD);
 	if (cgiPid != NULL_PID) {
 		if (waitpid(cgiPid, &stat, 0) < 0)
-			throw std::runtime_error("disconnectCGI1: " + std::string(strerror(errno)));
+			throw Router::ErrorException(500, "disconnectCGI1: " + std::string(strerror(errno)));
 		if (!WIFEXITED(stat))
-			throw std::logic_error("disconnectCGI2: " + std::string(strerror(errno)));
+			throw Router::ErrorException(500, "disconnectCGI2: " + std::string(strerror(errno)));
 		cgiPid = NULL_PID;
 	}
 }
