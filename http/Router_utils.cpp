@@ -59,7 +59,7 @@ const std::string& Router::getMIME(const std::string& url) const {
     return findMimeType(extension);
 }
 
-bool Router::resourceExists(const std::string& filePath) const {
+bool Router::isAccessible(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
@@ -170,16 +170,22 @@ void Router::replaceURL(std::string& URLFromRequest) const {
 
 void Router::setConfigURL() {
     std::string URL = request.getURL();
+    std::string path;
 
     getBestMatchURL(config->locations, URL);
     replaceURL(URL);
-    if (URL.back() == '/' || isDirectory('.' + URL)) {
+    path = '.' + URL;
+    if (!isAccessible(path))
+        configURL = URL;
+    else if (URL.back() == '/' || isDirectory(path)) {
         handleDirectory(URL);
         configURL = URL;
     }
-    else {
+    else if (isRegularFile(path)){
         configURL = URL;
     }
+    else
+        throw ErrorException(404, "setConfigURL: not a file or directory");
 }
 
 void Router::parseURL() {
