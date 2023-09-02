@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 static const std::string g_methodStr[] = {
     "GET",
@@ -215,15 +216,15 @@ const std::vector<char>& Router::getRequest(void) const {
 	return request.getRequestStr();
 }
 
-const std::string& Router::getResponse(void) const {
-	return response.getResponseStr();
+const std::vector<char>& Router::getResponse(void) const {
+	return response.getResponse();
 }
 
 void Router::addRequest(const std::vector<char>& input) {
 	this->request.addRequest(input);
 }
 
-void Router::setResponse(const std::string &src) {
+void Router::setResponse(const std::vector<char>& src) {
 	response.setResponse(src);
 }
 

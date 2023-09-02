@@ -6,7 +6,7 @@
 
 class Response {
 private:
-	std::string			responseStr;
+	std::vector<char>	response;
 	std::vector<char>	messageToCGI;
 	size_t				writtenCgiLength;
 	int					writeFD;
@@ -21,19 +21,21 @@ public:
 private:
 	void	bootCGI(int readPipe[2], int writePipe[2], std::map<std::string, std::string>& envs) const;
 	char**	makeEnvList(std::map<std::string, std::string>& envs) const;
+	void	addResponse(const std::string& str);
 public:
-	void				makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);
-	void				makeHeader(const std::string& key, const std::string& value);
-	void				makeBody(const std::string& data, const size_t len, const std::string& type);
-	const std::string&	getResponseStr(void) const;
-	int					getWriteFD(void) const;
-	int					getReadFD(void) const;
-	void				setResponse(const std::string& src);
-	void				setMessageToCGI(const std::vector<char>& src);
-	void				connectCGI(std::map<std::string, std::string>& envs);
-	void				readFromCGI(void);
-	void				writeToCGI(const intptr_t fdBufferSize);
-	void				disconnectCGI(void);
+	void						makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);
+	void						makeHeader(const std::string& key, const std::string& value);
+	void						makeBody(const std::vector<char>& data, const size_t len, const std::string& type);
+	const std::vector<char>&	getResponse(void) const;
+	int							getWriteFD(void) const;
+	int							getReadFD(void) const;
+	void						setResponse(const std::vector<char>& src);
+	void						setMessageToCGI(const std::vector<char>& src);
+	void						connectCGI(std::map<std::string, std::string>& envs);
+	void						readFromCGI(void);
+	void						writeToCGI(const intptr_t fdBufferSize);
+	void						disconnectCGI(void);
+	void						endResponse(void);
 };
 
 #endif

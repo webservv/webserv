@@ -71,7 +71,7 @@ private:
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
     bool                isAccessible(const std::string& filePath) const;
-    void                readFile(const std::string& filePath, std::string& outContent) const;
+    void                readFile(const std::string& filePath, std::vector<char>& outContent) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
@@ -114,9 +114,9 @@ public:
     void                        parseRequest(void);
     bool                        getHaveResponse(void) const;
     const std::vector<char>&    getRequest(void) const;
-    const std::string&          getResponse(void) const;
+    const std::vector<char>&    getResponse(void) const;
     void                        addRequest(const std::vector<char>& input);
-    void                        setResponse(const std::string& src);
+    void                        setResponse(const std::vector<char>& src);
     void                        readFromCGI(void);
     void                        writeToCGI(const intptr_t fdBufferSize);
     void                        disconnectCGI(void);

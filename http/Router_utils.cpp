@@ -63,7 +63,7 @@ bool Router::isAccessible(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
-void Router::readFile(const std::string& filePath, std::string& outContent) const {
+void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
         throw Router::ErrorException(500, "File open error.");

@@ -9,6 +9,7 @@
 #include <sys/_types/_ssize_t.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 #include "Router.hpp"
 #define CHILD_PID 0
 #define READ 0
@@ -18,7 +19,7 @@
 #define NULL_PID -1
 
 Response::Response():
-	responseStr(""),
+	response(),
 	messageToCGI(),
 	writtenCgiLength(0),
 	writeFD(NULL_FD),
@@ -26,7 +27,7 @@ Response::Response():
 	cgiPid(NULL_PID) {}
 
 Response::Response(const Response& copy):
-	responseStr(copy.responseStr),
+	response(copy.response),
 	messageToCGI(copy.messageToCGI),
 	writtenCgiLength(copy.writtenCgiLength),
 	writeFD(copy.writeFD),
@@ -34,7 +35,7 @@ Response::Response(const Response& copy):
 	cgiPid(copy.cgiPid) {}
 
 Response& Response::operator=(const Response& copy) {
-	responseStr = copy.responseStr;
+	response = copy.response;
 	messageToCGI = copy.messageToCGI;
 	writtenCgiLength = copy.writtenCgiLength;
 	writeFD = copy.writeFD;
@@ -62,7 +63,7 @@ void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, 
 
 char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 	char**	envList = new char*[envs.size() + 1];
-	int				i = 0;
+	int		i = 0;
 
 	for (std::map<std::string, std::string>::const_iterator it = envs.begin(); it != envs.end(); it++) {
 		std::string	tmp = it->first + "=" + it->second;
@@ -77,26 +78,38 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 	return envList;
 }
 
+void Response::addResponse(const std::string& str) {
+	response.insert(response.end(), str.begin(), str.end());
+}
+
 void Response::makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage) {
-	responseStr += version + " " + statusCode + " " + statusMessage + "\r\n";
+	addResponse(version);
+	addResponse(" ");
+	addResponse(statusCode);
+	addResponse(" ");
+	addResponse(statusMessage);
+	addResponse("\r\n");
 }
 
 void Response::makeHeader(const std::string& key, const std::string& value) {
-	responseStr += key + ": " + value + "\r\n";
+	addResponse(key);
+	addResponse(": ");
+	addResponse(value);
+	addResponse("\r\n");
 }
 
-void Response::makeBody(const std::string& data, const size_t len, const std::string& type) {
+void Response::makeBody(const std::vector<char>& data, const size_t len, const std::string& type) {
 	std::stringstream	ss;
 	
 	ss << len;
-	responseStr += "Content-Length: " + ss.str() + "\r\n";
-	responseStr += "Content-Type: " + type + "\r\n";
-	responseStr += "\r\n";
-	responseStr += data;
+	addResponse("Content-Length: " + ss.str() + "\r\n");
+	addResponse("Content-Type: " + type + "\r\n");
+	addResponse("\r\n");
+	response.insert(response.end(), data.begin(), data.end());
 }
 
-const std::string& Response::getResponseStr(void) const {
-	return responseStr;
+const std::vector<char>& Response::getResponse(void) const {
+	return response;
 }
 
 int Response::getWriteFD(void) const {
@@ -107,8 +120,8 @@ int Response::getReadFD(void) const {
 	return readFD;
 }
 
-void Response::setResponse(const std::string &src) {
-	responseStr.assign(src);
+void Response::setResponse(const std::vector<char> &src) {
+	response = src;
 }
 
 void Response::setMessageToCGI(const std::vector<char> &src) {
@@ -145,7 +158,7 @@ void Response::readFromCGI(void) {
 		else if (read_size == 0)
 			break;
 		buf[read_size] = '\0';
-		responseStr += buf;
+		addResponse(buf);
 	}
 }
 
@@ -191,4 +204,8 @@ void Response::disconnectCGI(void) {
 			throw Router::ErrorException(500, "disconnectCGI2: " + std::string(strerror(errno)));
 		cgiPid = NULL_PID;
 	}
+}
+
+void Response::endResponse(void) {
+	addResponse("\r\n");
 }
