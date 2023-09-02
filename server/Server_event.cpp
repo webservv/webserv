@@ -94,19 +94,10 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
-for (size_t i = 0; i < buf.size(); ++i) {
-std::cout << buf[i];
-}
-std::cout << std::endl;
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
         router.parseRequest();
 		if (router.isRequestEnd()) {
-const std::vector<char>& request = router.getRequest();
-for (size_t i = 0; i < request.size(); ++i) {
-std::cout << request[i];
-}
-std::cout << std::endl;
 			router.handleRequest();
         }
 	}

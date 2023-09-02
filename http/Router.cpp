@@ -103,7 +103,6 @@ void Router::handlePost() {
 	validateHeaderLength();
 	validateContentType();
 	if (!configURL.compare(0, 4, "/cgi")) {
-		response.makeStatusLine("HTTP/1.1", "201", "OK");
 		connectCGI();
 	}
 	else

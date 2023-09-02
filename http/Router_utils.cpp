@@ -1,5 +1,6 @@
 #include "Router.hpp"
 #include "Server.hpp"
+#include <cmath>
 #include <exception>
 #include <sys/_types/_size_t.h>
 #include <sys/stat.h>
@@ -154,17 +155,25 @@ void Router::handleDirectory(std::string& replacedURL) {
     // configURL = generateDirectoryListing(directoryPath);
 }
 
-void Router::replaceURL(std::string& URLFromRequest) const {
+void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/" && URLFromRequest.front() != '/')
-            URLFromRequest = "/" + URLFromRequest;
-        if (matchLocation->root.empty())
-            URLFromRequest.replace(0, matchLocation->url.length(), config->root);
-        else 
-            URLFromRequest.replace(0, matchLocation->url.length(), matchLocation->root);
+        if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
+            UrlFromRequest = "/" + UrlFromRequest;
+        if (matchLocation->url.front() == '.') {
+            if (matchLocation->root.empty())
+                UrlFromRequest.replace(0, UrlFromRequest.rfind('/'), config->root);
+            else 
+                UrlFromRequest.replace(0, UrlFromRequest.rfind('/'), matchLocation->root);
+        }
+        else {
+            if (matchLocation->root.empty())
+                UrlFromRequest.replace(0, matchLocation->url.size(), config->root);
+            else 
+                UrlFromRequest.replace(0, matchLocation->url.size(), matchLocation->root);
+        }
     }
     else {
-        URLFromRequest = config->root + URLFromRequest;
+        UrlFromRequest = config->root + UrlFromRequest;
     }
 }
 
@@ -239,18 +248,29 @@ bool Router::needCookie(void) const {
 
 void Router::getBestMatchURL(
     const std::vector<Config::location>& locations,
-    const std::string& URLFromRequest
+    const std::string& UrlFromRequest
 ) {
     size_t  longestUrlsize = 0;
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
         it != locations.end(); ++it) {
         const std::string& url = it->url;
-        if (URLFromRequest.find(url) == 0) {
+        if (UrlFromRequest.find(url) == 0) {
             if (url.size() > longestUrlsize) {
                 longestUrlsize = url.size();
                 matchLocation = &(*it);
             }
+        }
+    }
+    const size_t        dotPos = UrlFromRequest.rfind('.');
+    if (dotPos == std::string::npos)
+        return;
+    const std::string   extension = UrlFromRequest.substr(dotPos, -1);
+    for (std::vector<Config::location>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
+        const std::string& url = it->url;
+        if (extension == url) {
+            matchLocation = &(*it);
+            return;
         }
     }
 }
