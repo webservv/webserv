@@ -15,6 +15,7 @@ public:
 		GET,
 		POST,
 		DELETE,
+		PUT,
 		OTHER
 	};
 private:
@@ -47,6 +48,7 @@ public:
 	Request&	operator=(const Request& copy);
 private:
 	size_t	findHeaderEnd(void) const;
+	bool	isChunkEnd(void) const;
 public:
 	Request::METHOD				getMethod(void) const;
 	const std::vector<char>&	getRequestStr(void) const;

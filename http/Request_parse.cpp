@@ -18,19 +18,20 @@ void Request::parseMethod(std::string& line) {
     line = line.substr(space + 1);
     if (methodString == "GET") {
         method = GET;
-        values["method"] = "GET";
     }
     else if (methodString == "POST") {
         method = POST;
-        values["method"] = "POST";
     }
     else if (methodString == "DELETE") {
         method = DELETE;
-        values["method"] = "DELETE";
+    }
+    else if (methodString == "PUT") {
+        method = PUT;
     }
     else {
         throw Router::ErrorException(405, "invalid http, request line! Unsupported method: " + methodString);
     }
+    values["method"] = methodString;
 }
 
 void Request::parseURL(const std::string& line) {
@@ -89,12 +90,16 @@ void Request::parseChunkedBody(void) {
     std::string         line;
     size_t              chunkSize;
 
+    if (!isChunkEnd())
+        return;
     for (size_t i = bodyPos; i < requestStr.size(); ++i) {
         parser << requestStr[i];
     }
     while (std::getline(parser, line)) {
-        line += '\n';
         std::stringstream chunkSizeStream(line);
+        
+        if (line == "\r")
+            continue;
         chunkSizeStream >> std::hex >> chunkSize;
         if (chunkSizeStream.fail() || chunkSize == 0) {
             haveBody = !chunkSize;
@@ -105,8 +110,7 @@ void Request::parseChunkedBody(void) {
         }
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
-        std::string chunkData(buffer.begin(), buffer.end());
-        values["body"] += line;
+        body.insert(body.end(), buffer.begin(), buffer.end());        
     }
 }
 

@@ -56,6 +56,20 @@ size_t Request::findHeaderEnd(void) const {
     return ret;
 }
 
+bool Request::isChunkEnd(void) const {
+    size_t  requestSize = requestStr.size();
+
+    if (requestSize < 5)
+        return false;
+    if (requestStr[requestSize - 1] == '\n' &&
+        requestStr[requestSize - 2] == '\r' &&
+        requestStr[requestSize - 3] == '\n' &&
+        requestStr[requestSize - 4] == '\r' &&
+        requestStr[requestSize - 5] == '0')
+        return true;
+    return false;
+}
+
 Request::METHOD Request::getMethod(void) const {
 	return method;
 }
