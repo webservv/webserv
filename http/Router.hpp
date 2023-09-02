@@ -70,7 +70,7 @@ private:
     std::string         getExtension(const std::string& url) const;
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
-    bool                resourceExists(const std::string& filePath) const;
+    bool                isAccessible(const std::string& filePath) const;
     void                readFile(const std::string& filePath, std::string& outContent) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);

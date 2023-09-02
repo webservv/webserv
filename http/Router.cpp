@@ -149,7 +149,6 @@ const std::string& Router::getParsedURL(void) const {
 
 void Router::handleMethod(Request::METHOD method) {
     const std::vector<std::string>&	Methods = matchLocation->allowedMethod;
-    const std::vector<std::string>	tmp = matchLocation->allowedMethod;
 
     if (Methods.empty())
         return;
@@ -173,7 +172,8 @@ void Router::handleRequest() {
 			handlePost();
 		} else if (method == Request::DELETE) {
 			handleDelete();
-		}
+		} else if (method == Request::PUT)
+			processStaticPut();
 	}
 	catch (Router::ErrorException& e) {
 		std::cout << e.what() << std::endl;
