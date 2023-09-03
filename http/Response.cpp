@@ -23,6 +23,7 @@ Response::Response():
 	response(),
 	messageToCGI(),
 	writtenCgiLength(0),
+	sentLenghth(0),
 	writeFD(NULL_FD),
 	readFD(NULL_FD),
 	cgiPid(NULL_PID) {}
@@ -31,6 +32,7 @@ Response::Response(const Response& copy):
 	response(copy.response),
 	messageToCGI(copy.messageToCGI),
 	writtenCgiLength(copy.writtenCgiLength),
+	sentLenghth(copy.writtenCgiLength),
 	writeFD(copy.writeFD),
 	readFD(copy.readFD),
 	cgiPid(copy.cgiPid) {}
@@ -39,6 +41,7 @@ Response& Response::operator=(const Response& copy) {
 	response = copy.response;
 	messageToCGI = copy.messageToCGI;
 	writtenCgiLength = copy.writtenCgiLength;
+	sentLenghth = copy.sentLenghth;
 	writeFD = copy.writeFD;
 	readFD = copy.readFD;
 	cgiPid = copy.cgiPid;
@@ -128,6 +131,14 @@ int Response::getWriteFD(void) const {
 
 int Response::getReadFD(void) const {
 	return readFD;
+}
+
+size_t Response::getSentLength(void) const {
+	return sentLenghth;
+}
+
+void Response::setSentLength(const size_t size) {
+	sentLenghth = size;
 }
 
 void Response::setResponse(const std::vector<char> &src) {
