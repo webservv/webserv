@@ -65,7 +65,7 @@ void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, 
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
 	close(writePipe[WRITE]);
-	if (envs["SCRIPT_NAME"] == "/directory/youpi.bla") { // test only
+	if (envs["SCRIPT_NAME"].rfind(".bla") != std::string::npos) { // test only
 		if (execve("./cgi/cgi_tester", NULL, envList) < 0)
 		throw Router::ErrorException(500, "processCGI: " + std::string(strerror(errno)));
 	}
@@ -153,7 +153,7 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
 
-	if (envs["SCRIPT_NAME"] == "/directory/youpi.bla") { // test only
+	if (envs["SCRIPT_NAME"].rfind(".bla") != std::string::npos) { // test only
 		if (access("./cgi/cgi_tester", F_OK))
 		throw Router::ErrorException(500, "connectCGI0: " + std::string(strerror(errno)));
 	}

@@ -2,6 +2,7 @@
 #include "Server.hpp"
 #include <cmath>
 #include <exception>
+#include <string>
 #include <sys/_types/_size_t.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -255,27 +256,30 @@ void Router::getBestMatchURL(
     const std::vector<Config::location>& locations,
     const std::string& UrlFromRequest
 ) {
-    size_t  longestUrlsize = 0;
+    size_t              longestUrlsize = 0;
+    std::stringstream   ss;
+    const size_t        dotPos = UrlFromRequest.rfind('.');
+    const std::string   extension = dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "";
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
         it != locations.end(); ++it) {
         const std::string& url = it->url;
-        if (UrlFromRequest.find(url) == 0) {
+        if (UrlFromRequest == url) {
+            matchLocation = &(*it);
+            return;
+        }
+        else if (!extension.empty() && extension == url) {
+            const std::vector<std::string>& methodLimit = it->CgiLimit;
+            if (std::find(methodLimit.begin(), methodLimit.end(), request.getStrMethod()) == methodLimit.end())
+                continue;
+            matchLocation = &(*it);
+            return;
+        }
+        else if (UrlFromRequest.find(url) == 0) {
             if (url.size() > longestUrlsize) {
                 longestUrlsize = url.size();
                 matchLocation = &(*it);
             }
-        }
-    }
-    const size_t        dotPos = UrlFromRequest.rfind('.');
-    if (dotPos == std::string::npos)
-        return;
-    const std::string       extension = UrlFromRequest.substr(dotPos, -1);
-    for (std::vector<Config::location>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
-        const std::string& url = it->url;
-        if (extension == url) {
-            matchLocation = &(*it);
-            return;
         }
     }
 }
