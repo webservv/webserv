@@ -7,12 +7,12 @@
 
 void Router::processStaticGet(void) {
 	const std::string	filePath = '.' + configURL;
+	std::vector<char>	content;
 
 	if (!isAccessible(filePath.c_str())) {
 		makeErrorResponse(404);
 		return;
 	}
-	std::string content;
     readFile(filePath, content);
     std::string mimeType = getMIME(configURL);
     response.makeStatusLine("HTTP/1.1", "200", "OK");
@@ -36,6 +36,7 @@ void Router::processStaticPost(void) {
 	if (os.fail())
 		throw Router::ErrorException(500, "processStaticPost: write failure");
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	response.endResponse();
 	haveResponse = true;
 }
 
@@ -54,7 +55,9 @@ void Router::processStaticPut(void) {
 	os.write(body.data(), body.size());
 	if (os.fail())
 		throw Router::ErrorException(500, "processStaticPost: write failure");
+	os.close();
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	response.endResponse();
 	haveResponse = true;
 }
 
@@ -68,5 +71,6 @@ void Router::processStaticDelete(void) {
 		throw Router::ErrorException(500, "processStaticDelete: remove system call error");
 	}
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
+	response.endResponse();
 	haveResponse = true;
 }

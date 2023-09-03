@@ -84,45 +84,39 @@ void Server::disconnect(const int client_sockfd) {
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
-    ssize_t recvByte;
-	char    buf[DEBUG_BUFFER_SIZE + 1] = {0, };
-    Router& router = clientSockets[client_sockfd];
+    ssize_t             recvByte;
+	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
+    Router&             router = clientSockets[client_sockfd];
 
 	if (router.getHaveResponse())
 		return;
-	recvByte = recv(client_sockfd, buf, DEBUG_BUFFER_SIZE, 0);
+	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-std::cout << buf << std::endl;
-	std::vector<char>   input;
-    input.reserve(recvByte);
-    for (ssize_t i = 0; i < recvByte; ++i) {
-        input.push_back(buf[i]);
-    }
-    router.addRequest(input);
+    buf.resize(recvByte);
+    router.addRequest(buf);
 	if (router.isHeaderEnd()) {
         router.parseRequest();
 		if (router.isRequestEnd()) {
-const std::vector<char>& request = router.getRequest();
-for (size_t i = 0; i < request.size(); ++i) {
-std::cout << request[i];
-}
-std::cout << std::endl;
 			router.handleRequest();
         }
 	}
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
-	const std::string& message = clientSockets[client_sockfd].getResponse();
-std::cout << message << std::endl;
-	if (bufSize < static_cast<intptr_t>(message.length())) {
-		if (send(client_sockfd, message.c_str(), bufSize, 0) < 0)
+	const std::vector<char>& message = clientSockets[client_sockfd].getResponse();
+for (size_t i = 0; i < (message.size() < 1000 ? message.size() : 1000); ++i) {
+std::cout << message[i];
+}
+std::cout << std::endl;
+	if (bufSize < static_cast<intptr_t>(message.size())) {
+		if (send(client_sockfd, message.data(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		clientSockets[client_sockfd].setResponse(message.substr(bufSize));
+        const std::vector<char> rest(message.begin() + bufSize, message.end());
+		clientSockets[client_sockfd].setResponse(rest);
 	}
 	else {
-		if (send(client_sockfd, message.c_str(), message.length(), 0) < 0)
+		if (send(client_sockfd, message.data(), message.size(), 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
 		disconnect(client_sockfd);
 		// const sockaddr_in	        tmp = clientSockets[client_sockfd].getClientAddr();

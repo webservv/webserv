@@ -69,10 +69,10 @@ std::pair<std::string, std::string> Router::defaultErrorPage(int statusCode) {
 }
 
 void Router::setCustomErrorPage(const std::string& customPath) {
-    std::string body;
+    std::vector<char> body;
 
     readFile(customPath, body);
-    response.makeBody(body, body.length(), "text/html");
+    response.makeBody(body, body.size(), "text/html");
 }
 
 void Router::makeErrorResponse(int statusCode) {
@@ -98,8 +98,10 @@ void Router::makeDefaultErrorResponse(int statusCode) {
     std::pair<std::string, std::string> defaultPage = defaultErrorPage(statusCode);
     const std::string&                  reasonPhrase = defaultPage.first;
     const std::string&                  body = defaultPage.second;
+    std::vector<char>                   vBody;
 
+    vBody.assign(body.begin(), body.end());
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
-    response.makeBody(body, body.length(), "text/plain");
+    response.makeBody(vBody, body.length(), "text/plain");
     haveResponse = true;
 }

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream>
+#include <stdexcept>
 
 Config::Config()
     : tokens()
@@ -387,6 +388,8 @@ void Config::parseLocation(server& server) {
             parseIndex(new_location);
         } else if (key == "return") {
             parseReturn(new_location);
+        } else if (key == "cgi_path") {
+            parseCgiPath(new_location);
         } else {
             throw std::out_of_range("invalid config - location");
         }
@@ -449,7 +452,6 @@ void Config::parseIndex(location& loc) {
     if (tokens.empty()) {
         throw std::out_of_range("index expects at least one argument");
     }
-
     while (tokens.front().back() != ';') {
         loc.index.push_back(tokens.front());
         tokens.pop();
@@ -489,6 +491,7 @@ void Config::parseReturn(location& loc) {
     if (tokens.size() < 3) {
         throw std::out_of_range("return expects exactly 3 arguments");
     }
+
     std::stringstream ss(tokens.front());
     ss >> loc.return_code;
     if (ss.fail() || loc.return_code < 100 || loc.return_code > 599) {
@@ -506,6 +509,16 @@ void Config::parseReturn(location& loc) {
     if (loc.return_url.empty()) {
         throw std::out_of_range("return URL must not be empty");
     }
+}
+
+void Config::parseCgiPath(location& loc) {
+    if (tokens.empty())
+        throw std::out_of_range("parseCgiPath: no value");
+    loc.cgiPath = tokens.front();
+    tokens.pop();
+    if (loc.cgiPath.back() != ';')
+        throw std::out_of_range("missing ';' after return URL");
+    loc.cgiPath.pop_back();
 }
 
 void Config::trim(std::string &str) const {

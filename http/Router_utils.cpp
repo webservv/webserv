@@ -1,5 +1,6 @@
 #include "Router.hpp"
 #include "Server.hpp"
+#include <cmath>
 #include <exception>
 #include <sys/_types/_size_t.h>
 #include <sys/stat.h>
@@ -63,7 +64,7 @@ bool Router::isAccessible(const std::string& filePath) const {
     return !access(filePath.c_str(), F_OK);
 }
 
-void Router::readFile(const std::string& filePath, std::string& outContent) const {
+void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
     std::ifstream ifs(filePath.c_str());
     if (!ifs.is_open()) {
         throw Router::ErrorException(500, "File open error.");
@@ -154,17 +155,22 @@ void Router::handleDirectory(std::string& replacedURL) {
     // configURL = generateDirectoryListing(directoryPath);
 }
 
-void Router::replaceURL(std::string& URLFromRequest) const {
+void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/" && URLFromRequest.front() != '/')
-            URLFromRequest = "/" + URLFromRequest;
-        if (matchLocation->root.empty())
-            URLFromRequest.replace(0, matchLocation->url.length(), config->root);
-        else 
-            URLFromRequest.replace(0, matchLocation->url.length(), matchLocation->root);
+        if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
+            UrlFromRequest = "/" + UrlFromRequest;
+        if (matchLocation->url.front() == '.') {
+            UrlFromRequest.assign(matchLocation->cgiPath);
+        }
+        else {
+            if (matchLocation->root.empty())
+                UrlFromRequest.replace(0, matchLocation->url.size(), config->root);
+            else 
+                UrlFromRequest.replace(0, matchLocation->url.size(), matchLocation->root);
+        }
     }
     else {
-        URLFromRequest = config->root + URLFromRequest;
+        UrlFromRequest = config->root + UrlFromRequest;
     }
 }
 
@@ -207,10 +213,18 @@ void Router::parseURL() {
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
-
-    CgiVariables["SCRIPT_NAME"] = configURL.substr(1, queryIndex - 1);
-    CgiVariables["PATH_INFO"] = path_info;
-    CgiVariables["QUERY_STRING"] = query_string;
+    if (url == "/cgi/cgi_tester")  {//tester only
+        CgiVariables["PATH_INFO"] = request.getURL();
+        CgiVariables["REQUEST_URI"] = request.getURL();
+        CgiVariables["SCRIPT_NAME"] = request.getURL();
+    }
+    else {
+        CgiVariables["PATH_INFO"] = "/directory/youpi.bla";
+        CgiVariables["REQEUST_URI"] = "/directory/youpi.bla";
+        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
+        CgiVariables["PATH_INFO"] = path_info;
+        CgiVariables["QUERY_STRING"] = query_string;
+    }
 }
 
 
@@ -239,18 +253,30 @@ bool Router::needCookie(void) const {
 
 void Router::getBestMatchURL(
     const std::vector<Config::location>& locations,
-    const std::string& URLFromRequest
+    const std::string& UrlFromRequest
 ) {
-    size_t  LongestUrlsize = 0;
+    size_t  longestUrlsize = 0;
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
-         it != locations.end(); ++it) {
+        it != locations.end(); ++it) {
         const std::string& url = it->url;
-        if (URLFromRequest.find(url) == 0) {
-            if (url.size() > LongestUrlsize) {
-                LongestUrlsize = url.size();
+        if (UrlFromRequest.find(url) == 0) {
+            if (url.size() > longestUrlsize) {
+                longestUrlsize = url.size();
                 matchLocation = &(*it);
             }
+        }
+    }
+    const size_t        dotPos = UrlFromRequest.rfind('.');
+    if (dotPos == std::string::npos)
+        return;
+    const std::string       extension = UrlFromRequest.substr(dotPos, -1);
+    const Request::METHOD   method = request.getMethod();
+    for (std::vector<Config::location>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
+        const std::string& url = it->url;
+        if (extension == url && method == Request::POST) { //method == Request::POST -> temporary
+            matchLocation = &(*it);
+            return;
         }
     }
 }
