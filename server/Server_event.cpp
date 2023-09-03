@@ -105,7 +105,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::vector<char>& message = clientSockets[client_sockfd].getResponse();
-for (size_t i = 0; i < message.size(); ++i) {
+for (size_t i = 0; i < (message.size() < 1000 ? message.size() : 1000); ++i) {
 std::cout << message[i];
 }
 std::cout << std::endl;

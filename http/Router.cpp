@@ -115,6 +115,7 @@ void Router::handleDelete() {
 }
 
 void Router::connectCGI(void) {
+	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	parseURL();
 	makeCgiVariables();
     if (needCookie()) {

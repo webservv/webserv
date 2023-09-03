@@ -160,10 +160,7 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
         if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
-            if (matchLocation->root.empty())
-                UrlFromRequest.replace(0, UrlFromRequest.rfind('/'), config->root);
-            else 
-                UrlFromRequest.replace(0, UrlFromRequest.rfind('/'), matchLocation->root);
+            UrlFromRequest.assign(matchLocation->cgiPath);
         }
         else {
             if (matchLocation->root.empty())
@@ -216,10 +213,18 @@ void Router::parseURL() {
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
-
-    CgiVariables["SCRIPT_NAME"] = configURL.substr(1, queryIndex - 1);
-    CgiVariables["PATH_INFO"] = path_info;
-    CgiVariables["QUERY_STRING"] = query_string;
+    if (url == "/cgi/cgi_tester")  {//tester only
+        CgiVariables["PATH_INFO"] = request.getURL();
+        CgiVariables["REQUEST_URI"] = request.getURL();
+        CgiVariables["SCRIPT_NAME"] = request.getURL();
+    }
+    else {
+        CgiVariables["PATH_INFO"] = "/directory/youpi.bla";
+        CgiVariables["REQEUST_URI"] = "/directory/youpi.bla";
+        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
+        CgiVariables["PATH_INFO"] = path_info;
+        CgiVariables["QUERY_STRING"] = query_string;
+    }
 }
 
 
@@ -265,10 +270,11 @@ void Router::getBestMatchURL(
     const size_t        dotPos = UrlFromRequest.rfind('.');
     if (dotPos == std::string::npos)
         return;
-    const std::string   extension = UrlFromRequest.substr(dotPos, -1);
+    const std::string       extension = UrlFromRequest.substr(dotPos, -1);
+    const Request::METHOD   method = request.getMethod();
     for (std::vector<Config::location>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
         const std::string& url = it->url;
-        if (extension == url) {
+        if (extension == url && method == Request::POST) { //method == Request::POST -> temporary
             matchLocation = &(*it);
             return;
         }
