@@ -16,7 +16,8 @@ public:
     std::string                 root;
     std::vector<std::string>    index;
     std::string                 return_url;
-    std::string                 cgiPath;
+    std::string                 CgiPath;
+    std::vector<std::string>    CgiLimit;
     bool                        autoindex;
     int                         return_code;
     };
@@ -59,6 +60,7 @@ private:
     void    parseAutoIndex(location& loc);
     void    parseReturn(location& loc);
     void    parseCgiPath(location& loc);
+    void    parseCgiLimit(location& loc);
     void    trim(std::string &str) const;
 	void    tokenization(const std::string& line);
 public:

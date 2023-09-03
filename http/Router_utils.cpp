@@ -160,7 +160,7 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
         if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
-            UrlFromRequest.assign(matchLocation->cgiPath);
+            UrlFromRequest.assign(matchLocation->CgiPath);
         }
         else {
             if (matchLocation->root.empty())
@@ -271,10 +271,9 @@ void Router::getBestMatchURL(
     if (dotPos == std::string::npos)
         return;
     const std::string       extension = UrlFromRequest.substr(dotPos, -1);
-    const Request::METHOD   method = request.getMethod();
     for (std::vector<Config::location>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
         const std::string& url = it->url;
-        if (extension == url && method == Request::POST) { //method == Request::POST -> temporary
+        if (extension == url) {
             matchLocation = &(*it);
             return;
         }
