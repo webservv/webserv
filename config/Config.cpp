@@ -357,6 +357,8 @@ void Config::parseClientMaxBodySize() {
 
 void Config::parseLocation(server& server) {
     location new_location;
+    bool hasReturn = false;
+
     if (tokens.empty()) {
         throw std::out_of_range("Unexpected end of file: Expected a location block");
     }
@@ -378,6 +380,9 @@ void Config::parseLocation(server& server) {
         std::string key = tokens.front();
         tokens.pop();
 
+        if (hasReturn) {
+            throw std::out_of_range("return must be the last directive in a location block");
+        }
         if (key == "limit_except") {
             parseLimitExcept(new_location);
         } else if (key == "root") {
@@ -388,11 +393,17 @@ void Config::parseLocation(server& server) {
             parseIndex(new_location);
         } else if (key == "return") {
             parseReturn(new_location);
+            hasReturn = true;
         } else if (key == "cgi_path") {
             parseCgiPath(new_location);
         } else {
             throw std::out_of_range("invalid config - location");
         }
+    }
+
+    if (hasReturn && (new_location.allowedMethod.size() > 0 || new_location.autoindex || !new_location.cgiPath.empty() \
+        || !new_location.index.empty() || !new_location.root.empty())) {
+        throw std::out_of_range("return must be single directive in a location block");
     }
     
     if (tokens.empty() || tokens.front() != "}") {
