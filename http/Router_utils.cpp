@@ -140,36 +140,39 @@ void Router::validateContentType() {
 void Router::handleDirectory(std::string& replacedURL) {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
     const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
-    
+    std::string testURL;
+
     if (replacedURL.back() != '/')
         replacedURL += "/";
 
     for (size_t i = 0; i < indexFiles.size(); ++i) {
-        replacedURL += indexFiles[i];
-        if (access(replacedURL.c_str(), R_OK) == 0) {
-            configURL = replacedURL;
+        testURL = "." + replacedURL + indexFiles[i];
+        if (access(testURL.c_str(), F_OK) == 0) {
+            configURL = replacedURL + indexFiles[i];
             return ;
         }
     }
     
-    if (matchLocation) {
-        if (matchLocation->autoindex)
+    if (matchLocation && matchLocation->autoindex)
         configURL = generateDirectoryListing(directoryPath);
-    }
+    else 
+        configURL = testURL.erase(0, 1);
 }
 
 void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
+        if (matchLocation->url == "/")
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
             UrlFromRequest.assign(matchLocation->CgiPath);
+            // configURL = matchLocation->CgiPath;
         }
         else {
             if (matchLocation->root.empty())
                 UrlFromRequest.replace(0, matchLocation->url.size(), config->root);
             else 
                 UrlFromRequest.replace(0, matchLocation->url.size(), matchLocation->root);
+            // configURL = UrlFromRequest;
         }
     }
     else {
@@ -177,6 +180,22 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
     }
 }
 
+/*
+std::string Router::replaceURL(std::string URLFromRequest) {
+    if (matchLocation) {
+        if (matchLocation->url == "/")
+            URLFromRequest = "/" + URLFromRequest;
+        if (matchLocation->root.empty())
+            URLFromRequest.replace(0, matchLocation->url.length(), config->root);
+        else 
+            URLFromRequest.replace(0, matchLocation->url.length(), matchLocation->root);
+    }
+    else {
+        URLFromRequest = config->root + URLFromRequest;
+    }
+    return URLFromRequest;
+}
+*/
 void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
@@ -188,7 +207,8 @@ void Router::setConfigURL() {
         configURL = URL;
     else if (URL.back() == '/' || isDirectory(path)) {
         handleDirectory(URL);
-        configURL = URL;
+        if (configURL.empty())
+            configURL = URL;
     }
     else if (isRegularFile(path)){
         configURL = URL;
