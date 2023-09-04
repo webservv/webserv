@@ -51,10 +51,10 @@ void Router::processStaticPut(void) {
 	}
 	os.open(filePath, std::ios::out);
 	if (os.fail())
-		throw Router::ErrorException(500, "processStaticPost: open failure");
+		throw Router::ErrorException(500, "processStaticPut: open failure");
 	os.write(body.data(), body.size());
 	if (os.fail())
-		throw Router::ErrorException(500, "processStaticPost: write failure");
+		throw Router::ErrorException(500, "processStaticPut: write failure");
 	os.close();
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	response.endResponse();
