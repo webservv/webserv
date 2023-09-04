@@ -165,14 +165,12 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
             UrlFromRequest.assign(matchLocation->CgiPath);
-            // configURL = matchLocation->CgiPath;
         }
         else {
             if (matchLocation->root.empty())
                 UrlFromRequest.replace(0, matchLocation->url.size(), config->root);
             else 
                 UrlFromRequest.replace(0, matchLocation->url.size(), matchLocation->root);
-            // configURL = UrlFromRequest;
         }
     }
     else {
@@ -180,22 +178,6 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
     }
 }
 
-/*
-std::string Router::replaceURL(std::string URLFromRequest) {
-    if (matchLocation) {
-        if (matchLocation->url == "/")
-            URLFromRequest = "/" + URLFromRequest;
-        if (matchLocation->root.empty())
-            URLFromRequest.replace(0, matchLocation->url.length(), config->root);
-        else 
-            URLFromRequest.replace(0, matchLocation->url.length(), matchLocation->root);
-    }
-    else {
-        URLFromRequest = config->root + URLFromRequest;
-    }
-    return URLFromRequest;
-}
-*/
 void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
