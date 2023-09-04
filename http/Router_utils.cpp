@@ -206,6 +206,11 @@ void Router::parseURL() {
     const std::string& url = request.getURL();
     std::string path_info, query_string;
 
+    if (configURL == "/cgi/cgi_tester")  {//tester only
+        CgiVariables["PATH_INFO"] = request.getURL();
+        CgiVariables["REQUEST_URI"] = request.getURL();
+        CgiVariables["SCRIPT_NAME"] = request.getURL();
+    }
     size_t isCGI = url.find("/cgi/", 0);
     if (isCGI == std::string::npos)
         return;
@@ -220,19 +225,10 @@ void Router::parseURL() {
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
-
-    if (url == "/cgi/cgi_tester")  {//tester only
-        CgiVariables["PATH_INFO"] = request.getURL();
-        CgiVariables["REQUEST_URI"] = request.getURL();
-        CgiVariables["SCRIPT_NAME"] = request.getURL();
-    }
-    else {
-        CgiVariables["PATH_INFO"] = "/directory/youpi.bla";
-        CgiVariables["REQEUST_URI"] = "/directory/youpi.bla";
-        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
-        CgiVariables["PATH_INFO"] = path_info;
-        CgiVariables["QUERY_STRING"] = query_string;
-    }
+    CgiVariables["REQEUST_URI"] = request.getURL();
+    CgiVariables["SCRIPT_NAME"] = url.substr(0, queryIndex - 1);
+    CgiVariables["PATH_INFO"] = path_info;
+    CgiVariables["QUERY_STRING"] = query_string;
 }
 
 std::string Router::intToIP(in_addr_t ip) const {
