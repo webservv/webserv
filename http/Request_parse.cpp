@@ -127,19 +127,26 @@ void Request::parseRequestLine() {
 }
 
 void Request::parseKeyValues(void) {
+    std::string line;
+    std::string headerName;
+    size_t      index;
+
 	while (!requestLines.empty()) {
-		std::string line = requestLines.front();
+		line = requestLines.front();
 		requestLines.pop();
 		if (line.size() == 0)
 			break;
-		size_t index = line.find(": ");
+		index = line.find(": ");
 		if (index == std::string::npos || index + 2 >= line.size()) {
 			throw Router::ErrorException(400, "invalid http, header!");
         }
-        std::string headerName = line.substr(0, index);
+        headerName = line.substr(0, index);
         std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
-
-		values[headerName] = line.substr(index + 2);
+        std::map<std::string, std::string>::iterator    it = values.find(headerName);
+        if (it != values.end())
+            it->second += ", " + line.substr(index + 2);
+        else
+	    	values[headerName] = line.substr(index + 2);
 	}
 }
 
@@ -150,12 +157,6 @@ void Request::parseHeader(void) {
     parseRequestLine();
     parseKeyValues();
     haveHeader = true;
-    if (values.find("content-length") != values.end()) {
-        std::stringstream   ss(values["content-length"]);
-        size_t              size;
-        ss >> size;
-        values["body"].reserve(size);
-    }
 }
 
 void Request::parse() {
