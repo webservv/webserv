@@ -373,7 +373,7 @@ void Config::parseLocation(server& server) {
     if (tokens.empty()) {
         throw std::out_of_range("Unexpected end of file within location block");
     }
-
+    new_location.autoindex = false;
     while (!tokens.empty() && tokens.front() != "}") {
         std::string key = tokens.front();
         tokens.pop();
