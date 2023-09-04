@@ -98,6 +98,12 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (router.isHeaderEnd()) {
         router.parseRequest();
 		if (router.isRequestEnd()) {
+const std::vector<char>&    rq = router.getRequest();
+const size_t                size = rq.size() < 500 ? rq.size() : 500;
+for (size_t i = 0; i < size; ++i) {
+    std::cout << rq[i];
+}
+std::cout << "\n" << std::endl;
 			router.handleRequest();
         }
 	}
@@ -116,8 +122,9 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
         sendLength = send(client_sockfd, message.data() + sentLength, leftLength, 0);
     if (sendLength < 0)
 		throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-    if (sentLength + sendLength == message.size())
+    if (sentLength + sendLength == message.size()) {
         disconnect(client_sockfd);
+    }
     else
         router.setSentLength(sendLength + sentLength);
 }

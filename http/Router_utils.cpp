@@ -1,3 +1,4 @@
+#include "Request.hpp"
 #include "Router.hpp"
 #include "Server.hpp"
 #include <cmath>
@@ -87,6 +88,10 @@ void Router::makeCgiVariables(void) {
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
+    CgiVariables["HTTP_USER_AGENT"] = request.findValue("user-agent");
+    CgiVariables["HTTP_ACCEPT_LANGUAGE"] = request.findValue("accept-encoding");
+    CgiVariables["HTTP_HOST"] = request.findValue("host");
+    CgiVariables["HTTP_X_SECRET_HEADER_FOR_TEST"] = request.findValue("x-secret-header-for-test");
 }
 
 void Router::validateHeaderLength() {
@@ -201,6 +206,12 @@ void Router::parseURL() {
     const std::string& url = request.getURL();
     std::string path_info, query_string;
 
+    if (configURL == "/cgi/cgi_tester")  {//tester only
+        CgiVariables["PATH_INFO"] = request.getURL();
+        CgiVariables["REQUEST_URI"] = request.getURL();
+        CgiVariables["SCRIPT_NAME"] = request.getURL();
+        return;
+    }
     size_t isCGI = url.find("/cgi/", 0);
     if (isCGI == std::string::npos)
         return;
@@ -215,19 +226,10 @@ void Router::parseURL() {
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
-
-    if (url == "/cgi/cgi_tester")  {//tester only
-        CgiVariables["PATH_INFO"] = request.getURL();
-        CgiVariables["REQUEST_URI"] = request.getURL();
-        CgiVariables["SCRIPT_NAME"] = request.getURL();
-    }
-    else {
-        CgiVariables["PATH_INFO"] = "/directory/youpi.bla";
-        CgiVariables["REQEUST_URI"] = "/directory/youpi.bla";
-        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
-        CgiVariables["PATH_INFO"] = path_info;
-        CgiVariables["QUERY_STRING"] = query_string;
-    }
+    CgiVariables["REQEUST_URI"] = request.getURL();
+    CgiVariables["SCRIPT_NAME"] = url.substr(0, queryIndex - 1);
+    CgiVariables["PATH_INFO"] = path_info;
+    CgiVariables["QUERY_STRING"] = query_string;
 }
 
 std::string Router::intToIP(in_addr_t ip) const {

@@ -21,6 +21,7 @@
 
 Response::Response():
 	response(),
+	messageFromCGI(),
 	messageToCGI(),
 	writtenCgiLength(0),
 	sentLenghth(0),
@@ -30,6 +31,7 @@ Response::Response():
 
 Response::Response(const Response& copy):
 	response(copy.response),
+	messageFromCGI(),
 	messageToCGI(copy.messageToCGI),
 	writtenCgiLength(copy.writtenCgiLength),
 	sentLenghth(copy.writtenCgiLength),
@@ -39,6 +41,7 @@ Response::Response(const Response& copy):
 
 Response& Response::operator=(const Response& copy) {
 	response = copy.response;
+	messageFromCGI = copy.messageFromCGI;
 	messageToCGI = copy.messageToCGI;
 	writtenCgiLength = copy.writtenCgiLength;
 	sentLenghth = copy.sentLenghth;
@@ -91,33 +94,88 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 	return envList;
 }
 
-void Response::addResponse(const std::string& str) {
-	response.insert(response.end(), str.begin(), str.end());
+void Response::addResponse(std::vector<char>& src, const std::string& str) {
+	src.insert(src.end(), str.begin(), str.end());
+}
+
+void Response::checkCgiResponse(void) {
+	std::string header;
+	size_t		bodyPos = messageFromCGI.size();
+
+	for (size_t i = 0; i < messageFromCGI.size() - 3; ++i) {
+		if (messageFromCGI[i] == '\r' && messageFromCGI[i + 1] == '\n' && messageFromCGI[i + 2] == '\r' && messageFromCGI[i + 3] == '\n') {
+			bodyPos = i + 4;
+			header.assign(messageFromCGI.begin(), messageFromCGI.begin() + i);
+			if (findIgnoreCase(header, "content-length") != std::string::npos) {
+				return;
+			}
+			break;
+		}
+	}
+std::cout << "bodyPos: " << bodyPos << " MfcSize: " << messageFromCGI.size() << std::endl;
+	if (bodyPos >= messageFromCGI.size())
+		return;
+	addCgiContentLength(messageFromCGI.size() - bodyPos);
+}
+
+void Response::addCgiContentLength(const size_t size) {
+	std::string			contentLength = "Content-Length";
+	std::string			strSize;
+	std::stringstream	ss;
+	std::vector<char>	newResponse;	
+
+	ss << size;
+	ss >> strSize;
+	contentLength += ": " + strSize + "\r\n";
+	newResponse.reserve(contentLength.size() + messageFromCGI.size());
+	newResponse.insert(newResponse.end(), contentLength.begin(), contentLength.end());
+	newResponse.insert(newResponse.end(), messageFromCGI.begin(), messageFromCGI.end());
+	messageFromCGI.swap(newResponse);
+}
+
+size_t Response::findIgnoreCase(const std::string& src, const std::string& find) const {
+	char	srcLower;
+	char	findLower;
+	size_t	matchedSize;
+
+	for (size_t i = 0; i < src.size() - (find.size() - 1); ++i) {
+		matchedSize = 0;
+		for (size_t j = 0; j < find.size(); ++j) {
+			srcLower = (src[i + j] >= 'A' && src[i + j] <= 'Z') ? src[i + j] - 'A' : src[i + j];
+			findLower = (find[j] >= 'A' && find[j] <= 'Z') ? find[j] - 'A' : find[j];
+			if (srcLower == findLower)
+				++matchedSize;
+		}
+		if (matchedSize == find.size()) {
+			return i;
+		}
+	}
+	return std::string::npos;
 }
 
 void Response::makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage) {
-	addResponse(version);
-	addResponse(" ");
-	addResponse(statusCode);
-	addResponse(" ");
-	addResponse(statusMessage);
-	addResponse("\r\n");
+	addResponse(response, version);
+	addResponse(response, " ");
+	addResponse(response, statusCode);
+	addResponse(response, " ");
+	addResponse(response, statusMessage);
+	addResponse(response, "\r\n");
 }
 
 void Response::makeHeader(const std::string& key, const std::string& value) {
-	addResponse(key);
-	addResponse(": ");
-	addResponse(value);
-	addResponse("\r\n");
+	addResponse(response, key);
+	addResponse(response, ": ");
+	addResponse(response, value);
+	addResponse(response, "\r\n");
 }
 
 void Response::makeBody(const std::vector<char>& data, const size_t len, const std::string& type) {
 	std::stringstream	ss;
 	
 	ss << len;
-	addResponse("Content-Length: " + ss.str() + "\r\n");
-	addResponse("Content-Type: " + type + "\r\n");
-	addResponse("\r\n");
+	addResponse(response, "Content-Length: " + ss.str() + "\r\n");
+	addResponse(response, "Content-Type: " + type + "\r\n");
+	addResponse(response, "\r\n");
 	response.insert(response.end(), data.begin(), data.end());
 }
 
@@ -175,20 +233,19 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 void Response::readFromCGI(void) {
 	ssize_t	read_size;
 	char	buf[BUFFER_SIZE + 1];
-// std::cout << "readFromCGI" << std::endl;
+
 	read_size = read(readFD, buf, BUFFER_SIZE);
 	if (read_size < 0)
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
 	buf[read_size] = '\0';
-	addResponse(buf);
+	addResponse(messageFromCGI, buf);
 }
 
 void Response::writeToCGI(const intptr_t fdBufferSize) {
 	const intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
 	const size_t	leftSize = messageToCGI.size() - writtenCgiLength;
 	ssize_t			writeLength;
-// std::cout << "writeToCGI" << std::endl;
-// std::cout << "leftSize: " << leftSize << std::endl;
+
 	if (leftSize == 0) {
 		close(writeFD);
 		writeFD = NULL_FD;
@@ -226,8 +283,15 @@ void Response::disconnectCGI(void) {
 			throw Router::ErrorException(500, "disconnectCGI2: " + std::string(strerror(errno)));
 		cgiPid = NULL_PID;
 	}
+	checkCgiResponse();
+	response.insert(response.end(), messageFromCGI.begin(), messageFromCGI.end());
+const size_t	size = response.size() < 500 ? response.size() : 500;
+for (size_t i = 0; i < size; i++) {
+	std::cout << response[i];
+}
+std::cout << "\n" << std::endl;
 }
 
 void Response::endResponse(void) {
-	addResponse("\r\n");
+	addResponse(response, "\r\n");
 }
