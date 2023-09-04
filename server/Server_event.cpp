@@ -60,6 +60,7 @@ void Server::handleSocketEvent(int socket_fd) {
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
     Router& tmp = *pipes[identifier];
     if (cur.flags & EV_EOF) {
+        tmp.readFromCGI();
         tmp.disconnectCGI();
     } else if (cur.filter == EVFILT_READ) {
         tmp.readFromCGI();
