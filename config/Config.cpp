@@ -382,7 +382,7 @@ void Config::parseLocation(server& server) {
         tokens.pop();
 
         if (hasReturn) {
-            throw std::out_of_range("return must be the last directive in a location block");
+            throw std::out_of_range("return must be single directive in a location block");
         }
         if (key == "limit_except") {
             parseLimitExcept(new_location);
