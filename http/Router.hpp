@@ -67,7 +67,6 @@ public:
 //Router_utils.cpp
 private:
     static void         initializeMimeMap();
-    std::string         getExtension(const std::string& url) const;
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
     void                readFile(const std::string& filePath, std::vector<char>& outContent) const;

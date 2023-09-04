@@ -39,14 +39,6 @@ void Router::initializeMimeMap() {
     }
 }
 
-std::string Router::getExtension(const std::string& url) const {
-    size_t extensionStart = url.find_last_of('.');
-    if (extensionStart == std::string::npos) {
-        return "";
-    }
-    return url.substr(extensionStart + 1);
-}
-
 const std::string& Router::findMimeType(const std::string& extension) const {
     std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
     static const std::string    octet_stream = "application/octet-stream";
@@ -58,8 +50,12 @@ const std::string& Router::findMimeType(const std::string& extension) const {
 }
 
 const std::string& Router::getMIME(const std::string& url) const {
-    const std::string& extension = getExtension(url);
-    return findMimeType(extension);
+
+    size_t extensionStart = url.find_last_of('.');
+    if (extensionStart == std::string::npos) {
+        findMimeType("");
+    }
+    return findMimeType(url.substr(extensionStart + 1));
 }
 
 void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
