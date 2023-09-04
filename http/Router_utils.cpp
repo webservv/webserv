@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <unistd.h>
 
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
@@ -59,10 +60,6 @@ const std::string& Router::findMimeType(const std::string& extension) const {
 const std::string& Router::getMIME(const std::string& url) const {
     const std::string& extension = getExtension(url);
     return findMimeType(extension);
-}
-
-bool Router::isAccessible(const std::string& filePath) const {
-    return !access(filePath.c_str(), F_OK);
 }
 
 void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
@@ -185,7 +182,7 @@ void Router::setConfigURL() {
     getBestMatchURL(config->locations, URL);
     replaceURL(URL);
     path = '.' + URL;
-    if (!isAccessible(path))
+    if (access(path.c_str(), F_OK))
         configURL = URL;
     else if (URL.back() == '/' || isDirectory(path)) {
         handleDirectory(URL);
