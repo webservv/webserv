@@ -115,6 +115,8 @@ public:
     bool                        getHaveResponse(void) const;
     const std::vector<char>&    getRequest(void) const;
     const std::vector<char>&    getResponse(void) const;
+    size_t                      getSentLength(void) const;
+    void                        setSentLength(const size_t size);
     void                        addRequest(const std::vector<char>& input);
     void                        setResponse(const std::vector<char>& src);
     void                        readFromCGI(void);

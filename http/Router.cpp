@@ -220,6 +220,14 @@ const std::vector<char>& Router::getResponse(void) const {
 	return response.getResponse();
 }
 
+size_t Router::getSentLength(void) const {
+	return response.getSentLength();
+}
+
+void Router::setSentLength(const size_t size) {
+	response.setSentLength(size);
+}
+
 void Router::addRequest(const std::vector<char>& input) {
 	this->request.addRequest(input);
 }
