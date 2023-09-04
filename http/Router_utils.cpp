@@ -171,11 +171,16 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
     }
 }
 
+
 void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
 
     getBestMatchURL(config->locations, URL);
+    if (!matchLocation->return_url.empty()) {
+        configURL = matchLocation->return_url;
+        return ;
+    }
     replaceURL(URL);
     path = '.' + URL;
     if (access(path.c_str(), F_OK))
@@ -254,8 +259,8 @@ void Router::getBestMatchURL(
 ) {
     size_t              longestUrlsize = 0;
     std::stringstream   ss;
-    const size_t        dotPos = UrlFromRequest.rfind('.');
-    const std::string   extension = dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "";
+    size_t              dotPos = UrlFromRequest.rfind('.');
+    const std::string   extension = (dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "");
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
         it != locations.end(); ++it) {

@@ -151,8 +151,10 @@ const std::string& Router::getParsedURL(void) const {
 void Router::handleMethod(Request::METHOD method) {
     const std::vector<std::string>&	Methods = matchLocation->allowedMethod;
 
-    if (Methods.empty())
-        return;
+    if (Methods.empty()) {
+        method = Request::OTHER;
+        return ;
+    }
     std::string methodStr = g_methodStr[method];
     std::vector<std::string>::const_iterator it = std::find(Methods.begin(), \
         Methods.end(), methodStr);
@@ -161,11 +163,22 @@ void Router::handleMethod(Request::METHOD method) {
     }
 }
 
+void Router::handleRedirect(const std::string& url) {
+    response.makeStatusLine("HTTP/1.1", "301", "Moved Permanently");
+    response.makeHeader("Location", url);
+    haveResponse = true;
+}
+
+
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
 	try {
 		setConfigURL();
+        if (!matchLocation->return_url.empty()) {
+            handleRedirect(matchLocation->return_url);
+            return ;
+        }
     	handleMethod(method);
 		if (method == Request::GET) {
     	    handleGet();
