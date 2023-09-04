@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <unistd.h>
 
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
@@ -38,14 +39,6 @@ void Router::initializeMimeMap() {
     }
 }
 
-std::string Router::getExtension(const std::string& url) const {
-    size_t extensionStart = url.find_last_of('.');
-    if (extensionStart == std::string::npos) {
-        return "";
-    }
-    return url.substr(extensionStart + 1);
-}
-
 const std::string& Router::findMimeType(const std::string& extension) const {
     std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
     static const std::string    octet_stream = "application/octet-stream";
@@ -57,12 +50,12 @@ const std::string& Router::findMimeType(const std::string& extension) const {
 }
 
 const std::string& Router::getMIME(const std::string& url) const {
-    const std::string& extension = getExtension(url);
-    return findMimeType(extension);
-}
 
-bool Router::isAccessible(const std::string& filePath) const {
-    return !access(filePath.c_str(), F_OK);
+    size_t extensionStart = url.find_last_of('.');
+    if (extensionStart == std::string::npos) {
+        findMimeType("");
+    }
+    return findMimeType(url.substr(extensionStart + 1));
 }
 
 void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
@@ -139,26 +132,29 @@ void Router::validateContentType() {
 
 void Router::handleDirectory(std::string& replacedURL) {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
-    // const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
-    
+    const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
+    std::string testURL;
+
     if (replacedURL.back() != '/')
         replacedURL += "/";
 
     for (size_t i = 0; i < indexFiles.size(); ++i) {
-        replacedURL += indexFiles[i];
-        if (access(replacedURL.c_str(), R_OK) == 0) {
-            configURL = replacedURL;
+        testURL = "." + replacedURL + indexFiles[i];
+        if (access(testURL.c_str(), F_OK) == 0) {
+            configURL = replacedURL + indexFiles[i];
             return ;
         }
     }
     
-    // for now, we don't check if autoindex is on. have to fix it later
-    // configURL = generateDirectoryListing(directoryPath);
+    if (matchLocation && matchLocation->autoindex)
+        configURL = generateDirectoryListing(directoryPath);
+    else 
+        configURL = testURL.erase(0, 1);
 }
 
 void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
+        if (matchLocation->url == "/")
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
             UrlFromRequest.assign(matchLocation->CgiPath);
@@ -182,11 +178,12 @@ void Router::setConfigURL() {
     getBestMatchURL(config->locations, URL);
     replaceURL(URL);
     path = '.' + URL;
-    if (!isAccessible(path))
+    if (access(path.c_str(), F_OK))
         configURL = URL;
     else if (URL.back() == '/' || isDirectory(path)) {
         handleDirectory(URL);
-        configURL = URL;
+        if (configURL.empty())
+            configURL = URL;
     }
     else if (isRegularFile(path)){
         configURL = URL;
