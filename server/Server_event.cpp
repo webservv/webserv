@@ -104,26 +104,22 @@ void Server::receiveBuffer(const int client_sockfd) {
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
-	const std::vector<char>& message = clientSockets[client_sockfd].getResponse();
-for (size_t i = 0; i < (message.size() < 1000 ? message.size() : 1000); ++i) {
-// std::cout << message[i];
-}
-// std::cout << std::endl;
-	if (bufSize < static_cast<intptr_t>(message.size())) {
-		if (send(client_sockfd, message.data(), bufSize, 0) < 0)
-			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-        const std::vector<char> rest(message.begin() + bufSize, message.end());
-		clientSockets[client_sockfd].setResponse(rest);
-	}
-	else {
-		if (send(client_sockfd, message.data(), message.size(), 0) < 0)
-			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
-		disconnect(client_sockfd);
-		// const sockaddr_in	        tmp = clientSockets[client_sockfd].getClientAddr();
-        // const Config::server*       config = clientSockets[client_sockfd].getConfig();
-		// clientSockets.erase(client_sockfd);
-		// clientSockets.insert(std::make_pair(client_sockfd, Router(this, tmp, config)));
-	}
+    Router&                     router = clientSockets[client_sockfd];
+	const std::vector<char>&    message = router.getResponse();
+    const size_t                sentLength = router.getSentLength();
+    const size_t                leftLength = message.size() - sentLength;
+    size_t                      sendLength;
+
+	if (bufSize < static_cast<intptr_t>(leftLength))
+        sendLength = send(client_sockfd, message.data() + sentLength, bufSize, 0);
+	else
+        sendLength = send(client_sockfd, message.data() + sentLength, leftLength, 0);
+    if (sendLength < 0)
+		throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+    if (sentLength + sendLength == message.size())
+        disconnect(client_sockfd);
+    else
+        router.setSentLength(sendLength + sentLength);
 }
 
 void Server::waitEvents() {
@@ -133,7 +129,6 @@ void Server::waitEvents() {
     if (events < 0) {
         throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
     }
-
     for (int i = 0; i < events; ++i) {
         handleEvent(IOevents[i]);
     }

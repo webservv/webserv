@@ -14,7 +14,7 @@ Request::Request():
     haveHeader(false),
     haveBody(false),
     bodyPos(0) {
-        static const size_t BUFFER_SIZE = 10000000;
+        static const size_t BUFFER_SIZE = 20000000;
         requestStr.reserve(BUFFER_SIZE);
     }
 

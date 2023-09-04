@@ -23,6 +23,7 @@ Response::Response():
 	response(),
 	messageToCGI(),
 	writtenCgiLength(0),
+	sentLenghth(0),
 	writeFD(NULL_FD),
 	readFD(NULL_FD),
 	cgiPid(NULL_PID) {}
@@ -31,6 +32,7 @@ Response::Response(const Response& copy):
 	response(copy.response),
 	messageToCGI(copy.messageToCGI),
 	writtenCgiLength(copy.writtenCgiLength),
+	sentLenghth(copy.writtenCgiLength),
 	writeFD(copy.writeFD),
 	readFD(copy.readFD),
 	cgiPid(copy.cgiPid) {}
@@ -39,6 +41,7 @@ Response& Response::operator=(const Response& copy) {
 	response = copy.response;
 	messageToCGI = copy.messageToCGI;
 	writtenCgiLength = copy.writtenCgiLength;
+	sentLenghth = copy.sentLenghth;
 	writeFD = copy.writeFD;
 	readFD = copy.readFD;
 	cgiPid = copy.cgiPid;
@@ -62,7 +65,7 @@ void Response::bootCGI(int readPipe[2], int writePipe[2] ,std::map<std::string, 
 	close(readPipe[WRITE]);
 	close(writePipe[READ]);
 	close(writePipe[WRITE]);
-	if (envs["SCRIPT_NAME"] == "/directory/youpi.bla") { // test only
+	if (envs["SCRIPT_NAME"].rfind(".bla") != std::string::npos) { // test only
 		if (execve("./cgi/cgi_tester", NULL, envList) < 0)
 		throw Router::ErrorException(500, "processCGI: " + std::string(strerror(errno)));
 	}
@@ -130,6 +133,14 @@ int Response::getReadFD(void) const {
 	return readFD;
 }
 
+size_t Response::getSentLength(void) const {
+	return sentLenghth;
+}
+
+void Response::setSentLength(const size_t size) {
+	sentLenghth = size;
+}
+
 void Response::setResponse(const std::vector<char> &src) {
 	response = src;
 }
@@ -142,7 +153,7 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
 
-	if (envs["SCRIPT_NAME"] == "/directory/youpi.bla") { // test only
+	if (envs["SCRIPT_NAME"].rfind(".bla") != std::string::npos) { // test only
 		if (access("./cgi/cgi_tester", F_OK))
 		throw Router::ErrorException(500, "connectCGI0: " + std::string(strerror(errno)));
 	}

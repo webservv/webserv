@@ -397,6 +397,8 @@ void Config::parseLocation(server& server) {
             hasReturn = true;
         } else if (key == "cgi_path") {
             parseCgiPath(new_location);
+        } else if (key == "cgi_limit") {
+            parseCgiLimit(new_location);
         } else {
             throw std::out_of_range("invalid config - location");
         }
@@ -526,11 +528,26 @@ void Config::parseReturn(location& loc) {
 void Config::parseCgiPath(location& loc) {
     if (tokens.empty())
         throw std::out_of_range("parseCgiPath: no value");
-    loc.cgiPath = tokens.front();
+    loc.CgiPath = tokens.front();
     tokens.pop();
-    if (loc.cgiPath.back() != ';')
+    if (loc.CgiPath.back() != ';')
         throw std::out_of_range("missing ';' after return URL");
-    loc.cgiPath.pop_back();
+    loc.CgiPath.pop_back();
+}
+
+void Config::parseCgiLimit(location& loc) {
+    if (tokens.empty())
+        throw std::out_of_range("parseCgiPath: no value");
+    while (tokens.front().back() != ';') {
+        loc.CgiLimit.push_back(tokens.front());
+        tokens.pop();
+        if (tokens.empty()) {
+            throw std::out_of_range("missing ';' after last index");
+        }
+    }
+    loc.CgiLimit.push_back(tokens.front());
+    tokens.pop();
+    loc.CgiLimit.back().pop_back();
 }
 
 void Config::trim(std::string &str) const {

@@ -9,6 +9,7 @@ private:
 	std::vector<char>	response;
 	std::vector<char>	messageToCGI;
 	size_t				writtenCgiLength;
+	size_t				sentLenghth;
 	int					writeFD;
 	int					readFD;
 	pid_t				cgiPid;
@@ -29,6 +30,8 @@ public:
 	const std::vector<char>&	getResponse(void) const;
 	int							getWriteFD(void) const;
 	int							getReadFD(void) const;
+	size_t						getSentLength(void) const;
+	void						setSentLength(const size_t size);
 	void						setResponse(const std::vector<char>& src);
 	void						setMessageToCGI(const std::vector<char>& src);
 	void						connectCGI(std::map<std::string, std::string>& envs);
