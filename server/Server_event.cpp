@@ -106,9 +106,9 @@ void Server::receiveBuffer(const int client_sockfd) {
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 	const std::vector<char>& message = clientSockets[client_sockfd].getResponse();
 for (size_t i = 0; i < (message.size() < 1000 ? message.size() : 1000); ++i) {
-std::cout << message[i];
+// std::cout << message[i];
 }
-std::cout << std::endl;
+// std::cout << std::endl;
 	if (bufSize < static_cast<intptr_t>(message.size())) {
 		if (send(client_sockfd, message.data(), bufSize, 0) < 0)
 			throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
