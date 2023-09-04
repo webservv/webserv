@@ -193,24 +193,24 @@ void Router::setConfigURL() {
 }
 
 void Router::parseURL() {
-    // have to change a lot here !!! 
-    const std::string& url = configURL;
+    const std::string& url = request.getURL();
     std::string path_info, query_string;
-    std::string configRoot = "trash";
 
-    size_t rootPathIndex = url.find(configRoot);
+    size_t isCGI = url.find("/cgi/", 0);
+    if (isCGI == std::string::npos)
+        return;
+    size_t pathIndex = url.find('/', 5);
     size_t queryIndex = url.find('?');
 
-    if (rootPathIndex != std::string::npos) {
-        size_t rootPathLength = configRoot.length();
-        size_t beginIndex = rootPathIndex + rootPathLength;
+    if (pathIndex != std::string::npos) {
+        size_t beginIndex = pathIndex;
         size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : url.length();
         path_info = url.substr(beginIndex, endIndex - beginIndex);
     }
-
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
+
     if (url == "/cgi/cgi_tester")  {//tester only
         CgiVariables["PATH_INFO"] = request.getURL();
         CgiVariables["REQUEST_URI"] = request.getURL();
@@ -224,7 +224,6 @@ void Router::parseURL() {
         CgiVariables["QUERY_STRING"] = query_string;
     }
 }
-
 
 std::string Router::intToIP(in_addr_t ip) const {
 	std::string strIP;
