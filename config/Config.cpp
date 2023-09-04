@@ -404,7 +404,7 @@ void Config::parseLocation(server& server) {
         }
     }
 
-    if (hasReturn && (new_location.allowedMethod.size() > 0 || new_location.autoindex || !new_location.cgiPath.empty() \
+    if (hasReturn && (new_location.allowedMethod.size() > 0 || new_location.autoindex || !new_location.CgiPath.empty() \
         || !new_location.index.empty() || !new_location.root.empty())) {
         throw std::out_of_range("return must be single directive in a location block");
     }

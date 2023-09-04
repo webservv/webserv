@@ -106,6 +106,7 @@ private:
     const std::string&  getParsedURL(void) const;
     void                handleMethod(Request::METHOD method);
 public:
+    void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);
     const Config::server*       getConfig(void) const;
     const sockaddr_in&          getClientAddr(void) const;
