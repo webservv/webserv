@@ -210,6 +210,7 @@ void Router::parseURL() {
         CgiVariables["PATH_INFO"] = request.getURL();
         CgiVariables["REQUEST_URI"] = request.getURL();
         CgiVariables["SCRIPT_NAME"] = request.getURL();
+        return;
     }
     size_t isCGI = url.find("/cgi/", 0);
     if (isCGI == std::string::npos)
