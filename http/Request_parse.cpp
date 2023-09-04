@@ -29,6 +29,7 @@ void Request::parseMethod(std::string& line) {
         method = PUT;
     }
     else {
+        method = OTHER;
         throw Router::ErrorException(405, "invalid http, request line! Unsupported method: " + methodString);
     }
     values["method"] = methodString;

@@ -67,10 +67,8 @@ public:
 //Router_utils.cpp
 private:
     static void         initializeMimeMap();
-    std::string         getExtension(const std::string& url) const;
     const std::string&  findMimeType(const std::string& extension) const;
 	const std::string&  getMIME(const std::string& url) const;
-    bool                isAccessible(const std::string& filePath) const;
     void                readFile(const std::string& filePath, std::vector<char>& outContent) const;
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
@@ -106,6 +104,7 @@ private:
     const std::string&  getParsedURL(void) const;
     void                handleMethod(Request::METHOD method);
 public:
+    void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);
     const Config::server*       getConfig(void) const;
     const sockaddr_in&          getClientAddr(void) const;

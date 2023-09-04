@@ -4,12 +4,13 @@
 #include <stdexcept>
 #include <vector>
 #include <cstdio>
+#include <unistd.h>
 
 void Router::processStaticGet(void) {
 	const std::string	filePath = '.' + configURL;
 	std::vector<char>	content;
 
-	if (!isAccessible(filePath.c_str())) {
+	if (access(filePath.c_str(), F_OK)) {
 		makeErrorResponse(404);
 		return;
 	}
@@ -64,7 +65,7 @@ void Router::processStaticPut(void) {
 void Router::processStaticDelete(void) {
 	const std::string	filePath = '.' + configURL;
 
-	if (!isAccessible(configURL)) {
+	if (access(configURL.c_str(), F_OK)) {
 		throw Router::ErrorException(404, "processStaticDelete: file not found");
 	}
 	if (std::remove(filePath.c_str()) != 0) {

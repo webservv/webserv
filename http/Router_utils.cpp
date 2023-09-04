@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <unistd.h>
 
 #define MAX_POST_SIZE 500 * 1024 * 1024
 
@@ -39,14 +40,6 @@ void Router::initializeMimeMap() {
     }
 }
 
-std::string Router::getExtension(const std::string& url) const {
-    size_t extensionStart = url.find_last_of('.');
-    if (extensionStart == std::string::npos) {
-        return "";
-    }
-    return url.substr(extensionStart + 1);
-}
-
 const std::string& Router::findMimeType(const std::string& extension) const {
     std::map<std::string, std::string>::const_iterator it = mimeMap.find(extension);
     static const std::string    octet_stream = "application/octet-stream";
@@ -58,12 +51,12 @@ const std::string& Router::findMimeType(const std::string& extension) const {
 }
 
 const std::string& Router::getMIME(const std::string& url) const {
-    const std::string& extension = getExtension(url);
-    return findMimeType(extension);
-}
 
-bool Router::isAccessible(const std::string& filePath) const {
-    return !access(filePath.c_str(), F_OK);
+    size_t extensionStart = url.find_last_of('.');
+    if (extensionStart == std::string::npos) {
+        findMimeType("");
+    }
+    return findMimeType(url.substr(extensionStart + 1));
 }
 
 void Router::readFile(const std::string& filePath, std::vector<char>& outContent) const {
@@ -144,26 +137,29 @@ void Router::validateContentType() {
 
 void Router::handleDirectory(std::string& replacedURL) {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
-    // const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
-    
+    const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
+    std::string testURL;
+
     if (replacedURL.back() != '/')
         replacedURL += "/";
 
     for (size_t i = 0; i < indexFiles.size(); ++i) {
-        replacedURL += indexFiles[i];
-        if (access(replacedURL.c_str(), R_OK) == 0) {
-            configURL = replacedURL;
+        testURL = "." + replacedURL + indexFiles[i];
+        if (access(testURL.c_str(), F_OK) == 0) {
+            configURL = replacedURL + indexFiles[i];
             return ;
         }
     }
     
-    // for now, we don't check if autoindex is on. have to fix it later
-    // configURL = generateDirectoryListing(directoryPath);
+    if (matchLocation && matchLocation->autoindex)
+        configURL = generateDirectoryListing(directoryPath);
+    else 
+        configURL = testURL.erase(0, 1);
 }
 
 void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/" && UrlFromRequest.front() != '/')
+        if (matchLocation->url == "/")
             UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->url.front() == '.') {
             UrlFromRequest.assign(matchLocation->CgiPath);
@@ -180,18 +176,24 @@ void Router::replaceURL(std::string& UrlFromRequest) const {
     }
 }
 
+
 void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
 
     getBestMatchURL(config->locations, URL);
+    if (!matchLocation->return_url.empty()) {
+        configURL = matchLocation->return_url;
+        return ;
+    }
     replaceURL(URL);
     path = '.' + URL;
-    if (!isAccessible(path))
+    if (access(path.c_str(), F_OK))
         configURL = URL;
     else if (URL.back() == '/' || isDirectory(path)) {
         handleDirectory(URL);
-        configURL = URL;
+        if (configURL.empty())
+            configURL = URL;
     }
     else if (isRegularFile(path)){
         configURL = URL;
@@ -201,24 +203,24 @@ void Router::setConfigURL() {
 }
 
 void Router::parseURL() {
-    // have to change a lot here !!! 
-    const std::string& url = configURL;
+    const std::string& url = request.getURL();
     std::string path_info, query_string;
-    std::string configRoot = "trash";
 
-    size_t rootPathIndex = url.find(configRoot);
+    size_t isCGI = url.find("/cgi/", 0);
+    if (isCGI == std::string::npos)
+        return;
+    size_t pathIndex = url.find('/', 5);
     size_t queryIndex = url.find('?');
 
-    if (rootPathIndex != std::string::npos) {
-        size_t rootPathLength = configRoot.length();
-        size_t beginIndex = rootPathIndex + rootPathLength;
+    if (pathIndex != std::string::npos) {
+        size_t beginIndex = pathIndex;
         size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : url.length();
         path_info = url.substr(beginIndex, endIndex - beginIndex);
     }
-
     if (queryIndex != std::string::npos) {
         query_string = url.substr(queryIndex + 1);
     }
+
     if (url == "/cgi/cgi_tester")  {//tester only
         CgiVariables["PATH_INFO"] = request.getURL();
         CgiVariables["REQUEST_URI"] = request.getURL();
@@ -232,7 +234,6 @@ void Router::parseURL() {
         CgiVariables["QUERY_STRING"] = query_string;
     }
 }
-
 
 std::string Router::intToIP(in_addr_t ip) const {
 	std::string strIP;
@@ -263,8 +264,8 @@ void Router::getBestMatchURL(
 ) {
     size_t              longestUrlsize = 0;
     std::stringstream   ss;
-    const size_t        dotPos = UrlFromRequest.rfind('.');
-    const std::string   extension = dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "";
+    size_t              dotPos = UrlFromRequest.rfind('.');
+    const std::string   extension = (dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "");
 
     for (std::vector<Config::location>::const_iterator it = locations.begin(); 
         it != locations.end(); ++it) {
