@@ -80,6 +80,12 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 }
 
 void Server::disconnect(const int client_sockfd) {
+const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
+const size_t                size = (response.size() < 500) ? response.size() : 500;
+for (size_t i = 0; i < size; ++i) {
+    std::cout << response[i];
+}
+std::cout << std::endl;
 	close(client_sockfd);
 	clientSockets.erase(client_sockfd);
 }
