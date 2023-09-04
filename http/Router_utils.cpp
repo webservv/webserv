@@ -1,3 +1,4 @@
+#include "Request.hpp"
 #include "Router.hpp"
 #include "Server.hpp"
 #include <cmath>
@@ -94,6 +95,10 @@ void Router::makeCgiVariables(void) {
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
+    CgiVariables["HTTP_USER_AGENT"] = request.findValue("user-agent");
+    CgiVariables["HTTP_ACCEPT_LANGUAGE"] = request.findValue("accept-encoding");
+    CgiVariables["HTTP_HOST"] = request.findValue("host");
+    CgiVariables["HTTP_X_SECRET_HEADER_FOR_TEST"] = request.findValue("x-secret-header-for-test");
 }
 
 void Router::validateHeaderLength() {
