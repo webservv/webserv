@@ -83,7 +83,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
     CgiVariables["REQUEST_METHOD"] = request.getStrMethod();
-    CgiVariables["SERVER_NAME"] = config->server_name;
+    CgiVariables["SERVER_NAME"] = config->getServerName();
     CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
@@ -136,8 +136,8 @@ void Router::validateContentType() {
 }
 
 void Router::handleDirectory(std::string& replacedURL) {
-    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->index : config->index;
-    const std::string& directoryPath = matchLocation ? matchLocation->root : config->root;
+    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
+    const std::string& directoryPath = matchLocation ? matchLocation->getRoot() : config->getRoot();
     std::string testURL;
 
     if (replacedURL.back() != '/')
@@ -151,7 +151,7 @@ void Router::handleDirectory(std::string& replacedURL) {
         }
     }
     
-    if (matchLocation && matchLocation->autoindex)
+    if (matchLocation && matchLocation->getAutoIndex())
         configURL = generateDirectoryListing(directoryPath);
     else 
         configURL = testURL.erase(0, 1);
@@ -159,20 +159,20 @@ void Router::handleDirectory(std::string& replacedURL) {
 
 void Router::replaceURL(std::string& UrlFromRequest) const {
     if (matchLocation) {
-        if (matchLocation->url == "/")
+        if (matchLocation->getURL() == "/")
             UrlFromRequest = "/" + UrlFromRequest;
-        if (matchLocation->url.front() == '.') {
-            UrlFromRequest.assign(matchLocation->CgiPath);
+        if (matchLocation->getURL().front() == '.') {
+            UrlFromRequest.assign(matchLocation->getCgiPath());
         }
         else {
-            if (matchLocation->root.empty())
-                UrlFromRequest.replace(0, matchLocation->url.size(), config->root);
+            if (matchLocation->getRoot().empty())
+                UrlFromRequest.replace(0, matchLocation->getURL().size(), config->getRoot());
             else 
-                UrlFromRequest.replace(0, matchLocation->url.size(), matchLocation->root);
+                UrlFromRequest.replace(0, matchLocation->getURL().size(), matchLocation->getRoot());
         }
     }
     else {
-        UrlFromRequest = config->root + UrlFromRequest;
+        UrlFromRequest = config->getRoot() + UrlFromRequest;
     }
 }
 
@@ -181,9 +181,9 @@ void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
 
-    getBestMatchURL(config->locations, URL);
-    if (!matchLocation->return_url.empty()) {
-        configURL = matchLocation->return_url;
+    getBestMatchURL(config->getLocations(), URL);
+    if (!matchLocation->getReturnURL().empty()) {
+        configURL = matchLocation->getReturnURL();
         return ;
     }
     replaceURL(URL);
@@ -256,7 +256,7 @@ bool Router::needCookie(void) const {
 }
 
 void Router::getBestMatchURL(
-    const std::vector<Config::location>& locations,
+    const std::vector<LocationConfig>& locations,
     const std::string& UrlFromRequest
 ) {
     size_t              longestUrlsize = 0;
@@ -264,15 +264,15 @@ void Router::getBestMatchURL(
     size_t              dotPos = UrlFromRequest.rfind('.');
     const std::string   extension = (dotPos != std::string::npos ? UrlFromRequest.substr(dotPos, -1) : "");
 
-    for (std::vector<Config::location>::const_iterator it = locations.begin(); 
+    for (std::vector<LocationConfig>::const_iterator it = locations.begin(); 
         it != locations.end(); ++it) {
-        const std::string& url = it->url;
+        const std::string& url = it->getURL();
         if (UrlFromRequest == url) {
             matchLocation = &(*it);
             return;
         }
         else if (!extension.empty() && extension == url) {
-            const std::vector<std::string>& methodLimit = it->CgiLimit;
+            const std::vector<std::string>& methodLimit = it->getCgiLimit();
             if (std::find(methodLimit.begin(), methodLimit.end(), request.getStrMethod()) == methodLimit.end())
                 continue;
             matchLocation = &(*it);

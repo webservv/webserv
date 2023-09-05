@@ -42,9 +42,9 @@ void Server::setSocketOptions(int socket_fd) const {
 }
 
 
-void Server::bindSocket(const Config::server& server, int socket_fd) const {
+void Server::bindSocket(const ServerConfig& server, int socket_fd) const {
     sockaddr_in server_addr;
-    const int port = server.listen_port;
+    const int port = server.getListenPort();
     const std::string& host = default_host;
 
     std::memset(&server_addr, 0, sizeof(server_addr));

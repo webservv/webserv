@@ -9,8 +9,8 @@
 LocationConfig::LocationConfig()
 	: URL()
 	, root()
-	, limitExcept()
 	, index()
+	, limitExcept()
 	, returnCode()
 	, returnURL()
 	, CgiPath()
@@ -21,7 +21,7 @@ LocationConfig::LocationConfig()
 LocationConfig::LocationConfig(const ServerConfig& server)
 	: URL()
 	, root(server.getRoot())
-	, index(server.getIndexes())
+	, index(server.getIndex())
 	, limitExcept()
 	, returnCode(server.getReturnCode())
 	, returnURL(server.getReturnURL())
@@ -29,6 +29,18 @@ LocationConfig::LocationConfig(const ServerConfig& server)
 	, CgiLimit()
 	, autoIndex(false)
 	, clientMaxBodySize(server.getClientMaxBodySize()) {}
+
+LocationConfig::LocationConfig(const LocationConfig& src)
+	: URL(src.URL)
+	, root(src.root)
+	, index(src.index)
+	, limitExcept(src.limitExcept)
+	, returnCode(src.returnCode)
+	, returnURL(src.returnURL)
+	, CgiPath(src.CgiPath)
+	, CgiLimit(src.CgiLimit)
+	, autoIndex(src.autoIndex)
+	, clientMaxBodySize(src.clientMaxBodySize) {}
 
 LocationConfig::~LocationConfig() {}
 
