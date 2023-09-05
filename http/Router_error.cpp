@@ -101,7 +101,10 @@ void Router::makeDefaultErrorResponse(int statusCode) {
     std::vector<char>                   vBody;
 
     vBody.assign(body.begin(), body.end());
-    response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
+    if (!response.getResponse().empty()) {
+        response.clearResponse();
+        response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
+    }
     response.makeBody(vBody, body.length(), "text/plain");
     haveResponse = true;
 }
