@@ -28,7 +28,7 @@ private:
     std::map<int, Router>                   clientSockets;
     std::map<int, Router*>                  pipes;
     std::map<std::string, std::string>      cookies;
-    std::map<int, const Config::server*>    configs;
+    std::map<int, const ServerConfig*>      configs;
 //Server_event.cpp
 private:
     void	handleEvent(const struct kevent& cur);
@@ -44,7 +44,7 @@ public:
 private:
 	int 	createSocket();
 	void	setSocketOptions(int socket_fd) const;
-	void	bindSocket(const Config::server& server, int socket_fd) const;
+	void	bindSocket(const ServerConfig& server, int socket_fd) const;
 	void	listenSocket(int socket_fd) const;
 //Server.cpp
 private: 

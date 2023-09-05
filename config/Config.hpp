@@ -8,31 +8,13 @@
 #include <algorithm>
 #include <map>
 
+#include "LocationConfig.hpp"
+#include "ServerConfig.hpp"
+
 class Config {
-public:
-    struct location {
-    std::vector<std::string>    allowedMethod;
-    std::string                 url;
-    std::string                 root;
-    std::vector<std::string>    index;
-    std::string                 return_url;
-    std::string                 CgiPath;
-    std::vector<std::string>    CgiLimit;
-    bool                        autoindex;
-    int                         return_code;
-    };
-struct server{
-	std::vector<location>       locations;
-	std::map<int, std::string>  errorPages;
-    std::vector<std::string>    index;
-	std::string                 server_name;
-    std::string                 root;
-	int                         listen_port;
-    };
 private:
 	std::queue<std::string>		tokens;
-	std::vector<Config::server> servers;
-    int                         clientMaxBodySize;
+	std::vector<ServerConfig>   servers;
     bool                        hasHTTP;
 //Config.cpp
 private:
@@ -46,25 +28,10 @@ private:
     void    parseLine(std::fstream& configParser);
 	void    parseHTTP();
 	void    parseServer();
-    void    parseListen(server& server);
-    void    parseServerName(server& server);
-    void    parseRoot(server& server);
-    void    parseIndex(server& server);
-	void    parseErrorPage(server& server);
-    void    parseClientMaxBodySize();
-
-	void    parseLocation(server& server);
-    void    parseLimitExcept(location& loc);
-    void    parseRoot(location& loc);
-    void    parseIndex(location& loc);
-    void    parseAutoIndex(location& loc);
-    void    parseReturn(location& loc);
-    void    parseCgiPath(location& loc);
-    void    parseCgiLimit(location& loc);
     void    trim(std::string &str) const;
 	void    tokenization(const std::string& line);
 public:
-    const std::vector<Config::server>&  getServers() const;
+    const std::vector<ServerConfig>&    getServers() const;
     int                                 getClientMaxBodySize() const;
 
 };
