@@ -13,10 +13,9 @@
 #include <unistd.h>
 #include <vector>
 
-class Server;
-
-typedef std::map<std::string, Config::location>::const_iterator iter;
 static const std::string    CGI_PATH = "./document/cgi";
+
+class Server;
 
 class Router {
 public:
@@ -45,10 +44,10 @@ private:
     bool                                haveResponse;
     Server*                             server;
     sockaddr_in                         clientAddr;
-    const Config::server*               config;
+    const ServerConfig*                 config;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
-    const Config::location*             matchLocation;
+    const LocationConfig*               matchLocation;
 // Router.autoindex.cpp
 private:
     Router::eFileType   getFileType(const char* path) const;
@@ -79,9 +78,10 @@ private:
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
     bool                needCookie(void) const;
-    void                getBestMatchURL(const std::vector<Config::location>& locations, const std::string& UrlFromRequest);
+    void                getBestMatchURL(const std::vector<LocationConfig>& locations, const std::string& UrlFromRequest);
     bool                isDirectory(const std::string& path) const;
     bool                isRegularFile(const std::string& path) const;
+    bool                isInvalidBodySize(void) const;
 //Router_static.cpp
 private:
     void    processStaticGet(void);
@@ -91,7 +91,7 @@ private:
 //Router.cpp
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config);
+    Router(Server* const server, const sockaddr_in& clientAddr, const ServerConfig* config);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -99,6 +99,7 @@ private:
 	void				handleGet(void);
     void				handlePost(void);
     void				handleDelete(void);
+    void                handlePut(void);
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;
@@ -106,7 +107,7 @@ private:
 public:
     void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);
-    const Config::server*       getConfig(void) const;
+    const ServerConfig*         getConfig(void) const;
     const sockaddr_in&          getClientAddr(void) const;
     bool                        isHeaderEnd(void);
     bool                        isRequestEnd(void) const;

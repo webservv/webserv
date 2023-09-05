@@ -80,12 +80,14 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 }
 
 void Server::disconnect(const int client_sockfd) {
-const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
-const size_t                size = (response.size() < 500) ? response.size() : 500;
-for (size_t i = 0; i < size; ++i) {
-    std::cout << response[i];
-}
-std::cout << std::endl;
+// const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
+// const size_t                size = (response.size() < 500) ? response.size() : 500;
+// for (size_t i = 0; i < size; ++i) {
+//     std::cout << response[i];
+// }
+// std::cout << std::endl;
+static size_t   num = 0;
+std::cout << "Send OK: " << ++num << std::endl;
 	close(client_sockfd);
 	clientSockets.erase(client_sockfd);
 }
@@ -105,12 +107,12 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (router.isHeaderEnd()) {
         router.parseRequest();
 		if (router.isRequestEnd()) {
-const std::vector<char>&    rq = router.getRequest();
-const size_t                size = rq.size() < 500 ? rq.size() : 500;
-for (size_t i = 0; i < size; ++i) {
-    std::cout << rq[i];
-}
-std::cout << "\n" << std::endl;
+// const std::vector<char>&    rq = router.getRequest();
+// const size_t                size = rq.size() < 500 ? rq.size() : 500;
+// for (size_t i = 0; i < size; ++i) {
+//     std::cout << rq[i];
+// }
+// std::cout << "\n" << std::endl;
 			router.handleRequest();
         }
 	}

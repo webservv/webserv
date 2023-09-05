@@ -48,7 +48,7 @@ Router::Router():
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr, const Config::server* config):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, const ServerConfig* config):
 	request(),
 	response(),
 	haveResponse(false),
@@ -100,6 +100,8 @@ void Router::handleGet() {
 }
 
 void Router::handlePost() {
+	if (isInvalidBodySize())
+		throw Router::ErrorException(413, "handlePost: body size is too large");
 	validateHeaderLength();
 	validateContentType();
 	if (!configURL.compare(0, 4, "/cgi")) {
@@ -112,6 +114,12 @@ void Router::handlePost() {
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	connectCGI();
+}
+
+void Router::handlePut(void) {
+	if (isInvalidBodySize())
+		throw Router::ErrorException(413, "handlePost: body size is too large");
+	processStaticPut();
 }
 
 void Router::connectCGI(void) {
@@ -149,7 +157,7 @@ const std::string& Router::getParsedURL(void) const {
 }
 
 void Router::handleMethod(Request::METHOD method) {
-    const std::vector<std::string>&	Methods = matchLocation->allowedMethod;
+    const std::vector<std::string>&	Methods = matchLocation->getLimitExcept();
 
     if (Methods.empty()) {
         method = Request::OTHER;
@@ -175,8 +183,8 @@ void Router::handleRequest() {
 	
 	try {
 		setConfigURL();
-        if (!matchLocation->return_url.empty()) {
-            handleRedirect(matchLocation->return_url);
+        if (!matchLocation->getReturnURL().empty()) {
+            handleRedirect(matchLocation->getReturnURL());
             return ;
         }
     	handleMethod(method);
@@ -187,7 +195,7 @@ void Router::handleRequest() {
 		} else if (method == Request::DELETE) {
 			handleDelete();
 		} else if (method == Request::PUT)
-			processStaticPut();
+			handlePut();
 	}
 	catch (Router::ErrorException& e) {
 		std::cout << e.what() << std::endl;
@@ -195,7 +203,7 @@ void Router::handleRequest() {
 	}
 }
 
-const Config::server* Router::getConfig(void) const {
+const ServerConfig* Router::getConfig(void) const {
 	return config;
 }
 

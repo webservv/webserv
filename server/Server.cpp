@@ -18,8 +18,8 @@
 #include <cstdio>
 #include <utility>
 #define NULL_FD -1
-#define BUFFER_SIZE 100
-#define EVENTS_SIZE 100
+#define BUFFER_SIZE 10000000
+#define EVENTS_SIZE 10000
 
 Server* Server::instance = NULL;
 
@@ -48,18 +48,18 @@ Server::Server(const Config& config):
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
 
-    const std::vector<Config::server>& servers = config.getServers();
-    for (std::vector<Config::server>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        const Config::server& new_server = *it;
-        
+    const std::vector<ServerConfig>& servers = config.getServers();
+    for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        const ServerConfig& new_server = *it;
+
         int new_socket_fd = createSocket();
         setSocketOptions(new_socket_fd);
         bindSocket(new_server, new_socket_fd);
         listenSocket(new_socket_fd);
         listenSockets[new_socket_fd] = new_socket_fd;
         configs[new_socket_fd] = &new_server;
-        std::cout << "Server started on " << new_server.server_name << ":"
-                  << new_server.listen_port << ", waiting for connections..." << std::endl;
+        std::cout << "Server started on " << new_server.getServerName() << ":"
+                  << new_server.getListenPort() << ", waiting for connections..." << std::endl;
     }
 }
 
