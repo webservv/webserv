@@ -6,7 +6,6 @@
 #include <vector>
 #include "Router.hpp"
 
-const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
 static const std::string POST_URL = "/cgi/index.php";
 
 void Request::parseMethod(std::string& line) {
@@ -69,7 +68,6 @@ void Request::parseBody(void) {
         size_t len = std::atoi(it->second.c_str());
         if (body.size() == len){
             haveBody = true;
-            bodySize = len;
         }
     }
 }
@@ -107,9 +105,6 @@ void Request::parseChunkedBody(void) {
         if (chunkSizeStream.fail() || chunkSize == 0) {
             haveBody = !chunkSize;
             break;
-        }
-        if (chunkSize > MAX_CHUNK_SIZE) {
-            throw Router::ErrorException(413, "invalid http, chunk size is too big!");
         }
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);

@@ -27,7 +27,6 @@ private:
 	bool								haveHeader;
 	bool								haveBody;
 	size_t								bodyPos;
-    size_t                              bodySize;
 //Reqeust_parse.cpp
 private:
     void	parseMethod(std::string& line);

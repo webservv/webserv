@@ -13,8 +13,7 @@ Request::Request():
     body(),
     haveHeader(false),
     haveBody(false),
-    bodyPos(0),
-    bodySize(0) {
+    bodyPos(0) {
         static const size_t BUFFER_SIZE = 20000000;
         requestStr.reserve(BUFFER_SIZE);
     }
@@ -27,8 +26,7 @@ Request::Request(const Request& copy):
     body(),
     haveHeader(copy.haveHeader),
     haveBody(copy.haveBody),
-    bodyPos(0),
-    bodySize(0) {}
+    bodyPos(0) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -39,7 +37,6 @@ Request& Request::operator=(const Request& copy) {
     haveHeader = copy.haveHeader;
     haveBody = copy.haveBody;
     haveHeader = copy.bodyPos;
-    bodySize = copy.bodySize;
 	return *this;
 }
 
@@ -133,5 +130,5 @@ bool Request::isRequestEnd(void) const {
 }
 
 size_t Request::getBodySize(void) const {
-    return bodySize;
+    return body.size();
 }
