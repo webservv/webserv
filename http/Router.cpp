@@ -197,7 +197,6 @@ void Router::handleRequest() {
 			processStaticPut();
 	}
 	catch (Router::ErrorException& e) {
-        std::cout << "in handleRequest" << std::endl;
 		std::cout << e.what() << std::endl;
 		makeErrorResponse(e.getErrorCode());
 	}
