@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include <mutex>
 #include <queue>
 #include <sstream>
 #include <stdexcept>
@@ -7,18 +8,18 @@ ServerConfig::ServerConfig()
 	: serverName()
 	, listenPort()
 	, root("index.html")
+	, locations()
 	, errorPages()
 	, index()
-	, clientMaxBodySize(-1)
+	, clientMaxBodySize()
 	, returnCode()
-	, returnURL() {
-		index.push_back("index.html");
-	}
+	, returnURL() {}
 
 ServerConfig::ServerConfig(const ServerConfig& src)
 	: serverName(src.serverName)
 	, listenPort(src.listenPort)
 	, root(src.root)
+	, locations(src.locations)
 	, errorPages(src.errorPages)
 	, index(src.index)
 	, clientMaxBodySize(src.clientMaxBodySize)
@@ -31,6 +32,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig &src) {
 	serverName = src.serverName;
 	listenPort = src.listenPort;
 	root = src.root;
+	locations = src.locations;
 	errorPages = src.errorPages;
 	index = src.index;
 	clientMaxBodySize = src.clientMaxBodySize;
@@ -183,6 +185,7 @@ void ServerConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 	std::string			value;
 	char				unit;
 	size_t				multiplier;
+	size_t				lastDigit;
 
 	if (tokens.empty())
         throw std::out_of_range("ParseClientMaxBodySize: Unexpected end of file: Expected a client_max_body_size");
@@ -198,8 +201,10 @@ void ServerConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 		multiplier = 1024 * 1024;
 	else if (unit == 'K')
 		multiplier = 1024;
-	else if (unit == 'B' || std::isdigit(unit))
+	else if (unit == 'B' || std::isdigit(unit)) {
 		multiplier = 1;
+		lastDigit = unit - '0';
+	}
 	else
 		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, \
             must end with 'B', 'K', 'M' or 'G' or be a number");
@@ -208,6 +213,8 @@ void ServerConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, must be a number");
 	ss << value;
 	ss >> clientMaxBodySize;
+	if (lastDigit)
+		clientMaxBodySize = clientMaxBodySize * 10 + lastDigit;
 	clientMaxBodySize *= multiplier;
 }
 
@@ -245,4 +252,8 @@ int ServerConfig::getReturnCode(void) const {
 
 const std::string& ServerConfig::getReturnURL(void) const {
 	return returnURL;
+}
+
+void ServerConfig::addIndex(const std::string &src) {
+	index.push_back(src);
 }

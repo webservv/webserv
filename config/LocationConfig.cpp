@@ -16,7 +16,7 @@ LocationConfig::LocationConfig()
 	, CgiPath()
 	, CgiLimit()
 	, autoIndex(false)
-	, clientMaxBodySize(-1) {}
+	, clientMaxBodySize() {}
 
 LocationConfig::LocationConfig(const ServerConfig& server)
 	: URL()
@@ -111,6 +111,7 @@ void LocationConfig::parseIndex(std::queue<std::string> &tokens) {
 	if (tokens.empty()) {
         throw std::out_of_range("parseIndex: index expects at least one argument");
     }
+	index.clear();
 	while (tokens.front().back() != ';') {
         index.push_back(tokens.front());
         tokens.pop();
@@ -143,13 +144,10 @@ void LocationConfig::parseLimitExcept(std::queue<std::string> &tokens) {
 	limitExcept.push_back(tokens.front());
 	tokens.pop();
 	limitExcept.back().pop_back();
-	if (limitExcept.back() != "GET" &&
-		limitExcept.back() != "POST" &&
-		limitExcept.back() != "DELETE" &&
-		limitExcept.back() != "PUT") {
+	if (!isValidMethod(limitExcept.back())) {
         throw std::out_of_range("parseLimitExcept: Invalid method: " + limitExcept.back());
     }
-	if (std::find(limitExcept.begin(), limitExcept.end(), limitExcept.back()) != limitExcept.end()) {
+	if (std::find(limitExcept.begin(), limitExcept.end(), limitExcept.back()) != limitExcept.end() - 1) {
         throw std::out_of_range("parseLimitExcept: Duplicate method found: " + limitExcept.back());
     }
 }
@@ -223,6 +221,7 @@ void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 	std::string			value;
 	char				unit;
 	size_t				multiplier;
+	size_t				lastDigit = 0;
 
 	if (tokens.empty())
         throw std::out_of_range("ParseClientMaxBodySize: Unexpected end of file: Expected a client_max_body_size");
@@ -238,8 +237,10 @@ void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 		multiplier = 1024 * 1024;
 	else if (unit == 'K')
 		multiplier = 1024;
-	else if (unit == 'B' || std::isdigit(unit))
+	else if (unit == 'B' || std::isdigit(unit)) {
 		multiplier = 1;
+		lastDigit = unit - '0';
+	}
 	else
 		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, \
             must end with 'B', 'K', 'M' or 'G' or be a number");
@@ -248,6 +249,8 @@ void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, must be a number");
 	ss << value;
 	ss >> clientMaxBodySize;
+	if (lastDigit)
+		clientMaxBodySize = clientMaxBodySize * 10 + lastDigit;
 	clientMaxBodySize *= multiplier;
 }
 

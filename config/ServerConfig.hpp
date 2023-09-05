@@ -43,6 +43,8 @@ public:
 	size_t								getClientMaxBodySize(void) const;
 	int									getReturnCode(void) const;
 	const std::string&					getReturnURL(void) const;
+public:
+	void	addIndex(const std::string& src);
 };
 
 #endif

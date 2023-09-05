@@ -154,6 +154,8 @@ void Config::parseServer(void) {
             throw std::out_of_range("missing '}' in server block");
         }
     }
+    if (newServer.getIndex().empty())
+        newServer.addIndex("index.html");
     if (newServer.getListenPort() == 0)
         throw std::out_of_range("parseServer: missing listen port");
     if (newServer.getRoot().empty())
