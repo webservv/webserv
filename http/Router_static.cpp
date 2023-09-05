@@ -28,7 +28,9 @@ void Router::processStaticPost(void) {
 
 	if (body.empty()) {
 		response.makeStatusLine("HTTP/1.1", "204", "No Content");
-		response.makeHeader("Content-Length", "0");
+		response.endResponse();
+		haveResponse = true;
+		return;
 	}
 	os.open(filePath.c_str(), std::ios_base::app);
 	if (os.fail())

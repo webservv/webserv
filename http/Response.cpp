@@ -112,7 +112,6 @@ void Response::checkCgiResponse(void) {
 			break;
 		}
 	}
-std::cout << "bodyPos: " << bodyPos << " MfcSize: " << messageFromCGI.size() << std::endl;
 	if (bodyPos >= messageFromCGI.size())
 		return;
 	addCgiContentLength(messageFromCGI.size() - bodyPos);
@@ -238,7 +237,8 @@ void Response::readFromCGI(void) {
 	if (read_size < 0)
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
 	buf[read_size] = '\0';
-	addResponse(messageFromCGI, buf);
+	addResponse(response, buf);
+	// addResponse(messageFromCGI, buf);
 }
 
 void Response::writeToCGI(const intptr_t fdBufferSize) {
@@ -283,13 +283,13 @@ void Response::disconnectCGI(void) {
 			throw Router::ErrorException(500, "disconnectCGI2: " + std::string(strerror(errno)));
 		cgiPid = NULL_PID;
 	}
-	checkCgiResponse();
-	response.insert(response.end(), messageFromCGI.begin(), messageFromCGI.end());
-const size_t	size = response.size() < 500 ? response.size() : 500;
-for (size_t i = 0; i < size; i++) {
-	std::cout << response[i];
-}
-std::cout << "\n" << std::endl;
+	// checkCgiResponse();
+	// response.insert(response.end(), messageFromCGI.begin(), messageFromCGI.end());
+// const size_t	size = response.size() < 500 ? response.size() : 500;
+// for (size_t i = 0; i < size; i++) {
+// 	std::cout << response[i];
+// }
+// std::cout << "\n" << std::endl;
 }
 
 void Response::endResponse(void) {
