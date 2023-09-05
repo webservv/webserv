@@ -11,7 +11,9 @@ ServerConfig::ServerConfig()
 	, index()
 	, clientMaxBodySize(-1)
 	, returnCode()
-	, returnURL() {}
+	, returnURL() {
+		index.push_back("index.html");
+	}
 
 ServerConfig::ServerConfig(const ServerConfig& src)
 	: serverName(src.serverName)
