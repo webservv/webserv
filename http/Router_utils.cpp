@@ -310,3 +310,14 @@ bool Router::isRegularFile(const std::string& path) const {
     }
     return false;
 }
+
+bool Router::isInvalidBodySize(void) const {
+    size_t  bodySize = request.getBody().size();
+    size_t  clientMaxBodySize = matchLocation->getClientMaxBodySize();
+
+    if (clientMaxBodySize == 0)
+        return false;
+    if (bodySize > clientMaxBodySize)
+        return true;
+    return false;
+}

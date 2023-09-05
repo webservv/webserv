@@ -18,8 +18,8 @@
 #include <cstdio>
 #include <utility>
 #define NULL_FD -1
-#define BUFFER_SIZE 100
-#define EVENTS_SIZE 100
+#define BUFFER_SIZE 10000000
+#define EVENTS_SIZE 10000
 
 Server* Server::instance = NULL;
 
