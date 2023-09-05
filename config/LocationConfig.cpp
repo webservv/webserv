@@ -1,7 +1,10 @@
 #include "LocationConfig.hpp"
 #include "ServerConfig.hpp"
+#include <cctype>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 LocationConfig::LocationConfig()
 	: URL()
@@ -12,7 +15,7 @@ LocationConfig::LocationConfig()
 	, returnURL()
 	, CgiPath()
 	, CgiLimit()
-	, autoindex(false)
+	, autoIndex(false)
 	, clientMaxBodySize(-1) {}
 
 LocationConfig::LocationConfig(const ServerConfig& server)
@@ -24,7 +27,7 @@ LocationConfig::LocationConfig(const ServerConfig& server)
 	, returnURL(server.getReturnURL())
 	, CgiPath()
 	, CgiLimit()
-	, autoindex(false)
+	, autoIndex(false)
 	, clientMaxBodySize(server.getClientMaxBodySize()) {}
 
 LocationConfig::~LocationConfig() {}
@@ -38,7 +41,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig &src) {
 	returnURL = src.returnURL;
 	CgiPath = src.CgiPath;
 	CgiLimit = src.CgiLimit;
-	autoindex = src.autoindex;
+	autoIndex = src.autoIndex;
 	clientMaxBodySize = src.clientMaxBodySize;
 	return *this;
 }
@@ -50,6 +53,15 @@ bool LocationConfig::isValidMethod(const std::string& method) const {
 		method != "PUT")
 		return false;
 	return true;
+}
+
+bool LocationConfig::isNumber(const std::string& str) const {
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (!std::isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void LocationConfig::parseURL(std::queue<std::string> &tokens) {
@@ -142,7 +154,7 @@ void LocationConfig::parseAutoIndex(std::queue<std::string> &tokens) {
 	if (value != "on" && value != "off") {
         throw std::out_of_range("parseAutoIndex: invalid value for autoindex, expected 'on' or 'off'");
     }
-	autoindex = (value == "on");
+	autoIndex = (value == "on");
 }
 
 void LocationConfig::parseReturn(std::queue<std::string> &tokens) {
@@ -192,4 +204,77 @@ void LocationConfig::parseCgiLimit(std::queue<std::string> &tokens) {
 	CgiLimit.push_back(tokens.front());
     tokens.pop();
     CgiLimit.back().pop_back();
+}
+
+void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
+	std::stringstream	ss;
+	std::string			value;
+	char				unit;
+	size_t				multiplier;
+
+	if (tokens.empty())
+        throw std::out_of_range("ParseClientMaxBodySize: Unexpected end of file: Expected a client_max_body_size");
+	value = tokens.front();
+	tokens.pop();
+	if (value.back() != ';')
+		throw std::out_of_range("parseClientMaxBodySize: missing ';' after client_max_body_size");
+	value.pop_back();
+	unit = value.back();
+	if (unit == 'G')
+		multiplier = 1024 * 1024 * 1024;
+	else if (unit == 'M')
+		multiplier = 1024 * 1024;
+	else if (unit == 'K')
+		multiplier = 1024;
+	else if (unit == 'B' || std::isdigit(unit))
+		multiplier = 1;
+	else
+		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, \
+            must end with 'B', 'K', 'M' or 'G' or be a number");
+	value.pop_back();
+	if (!isNumber(value))
+		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, must be a number");
+	ss << value;
+	ss >> clientMaxBodySize;
+	clientMaxBodySize *= multiplier;
+}
+
+const std::string& LocationConfig::getURL(void) const {
+	return URL;
+}
+
+const std::string& LocationConfig::getRoot(void) const {
+	return root;
+}
+
+const std::vector<std::string>& LocationConfig::getIndex(void) const {
+	return index;
+}
+
+const std::vector<std::string>& LocationConfig::getLimitExcept(void) const {
+	return limitExcept;
+}
+
+int LocationConfig::getReturnCode(void) const {
+	return returnCode;
+}
+
+const std::string& LocationConfig::getReturnURL(void) const {
+	return returnURL;
+}
+
+const std::string& LocationConfig::getCgiPath(void) const {
+	return CgiPath;
+}
+
+const std::vector<std::string>& LocationConfig::getCgiLimit(void) const {
+	return CgiLimit;
+}
+
+bool LocationConfig::getAutoIndex(void) const {
+	return autoIndex;
+}
+
+size_t LocationConfig::getClientMaxBodySize(void) const {
+	return clientMaxBodySize;
 }
