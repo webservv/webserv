@@ -67,8 +67,10 @@ void Request::parseBody(void) {
             return;
         }
         size_t len = std::atoi(it->second.c_str());
-        if (body.size() == len)
+        if (body.size() == len){
             haveBody = true;
+            bodySize = len;
+        }
     }
 }
 

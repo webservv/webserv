@@ -20,6 +20,7 @@ public:
     std::vector<std::string>    CgiLimit;
     bool                        autoindex;
     int                         return_code;
+    size_t                      clientMaxBodySize;
     };
 struct server{
 	std::vector<location>       locations;
@@ -32,7 +33,7 @@ struct server{
 private:
 	std::queue<std::string>		tokens;
 	std::vector<Config::server> servers;
-    int                         clientMaxBodySize;
+    size_t                      clientMaxBodySize;
     bool                        hasHTTP;
 //Config.cpp
 private:

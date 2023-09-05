@@ -169,16 +169,23 @@ void Router::handleRedirect(const std::string& url) {
     haveResponse = true;
 }
 
+void Router::handleClientMaxBodySize(void) {
+    if (request.getBodySize() > matchLocation->clientMaxBodySize) {
+        throw Router::ErrorException(413, "Request Entity Too Large");
+    }
+}
 
 void Router::handleRequest() {
     Request::METHOD method = request.getMethod();
 	
+    getBestMatchURL(config->locations, request.getURL());
+    if (!matchLocation->return_url.empty()) {
+        handleRedirect(matchLocation->return_url);
+        return ;
+    }
 	try {
+        handleClientMaxBodySize();
 		setConfigURL();
-        if (!matchLocation->return_url.empty()) {
-            handleRedirect(matchLocation->return_url);
-            return ;
-        }
     	handleMethod(method);
 		if (method == Request::GET) {
     	    handleGet();
@@ -190,6 +197,7 @@ void Router::handleRequest() {
 			processStaticPut();
 	}
 	catch (Router::ErrorException& e) {
+        std::cout << "in handleRequest" << std::endl;
 		std::cout << e.what() << std::endl;
 		makeErrorResponse(e.getErrorCode());
 	}

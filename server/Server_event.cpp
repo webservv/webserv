@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
-#define BUFFER_SIZE 1000 // we should put it 100
 #define DEBUG_BUFFER_SIZE 1000000
 
 void Server::handleEvent(const struct kevent& cur) {

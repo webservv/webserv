@@ -104,6 +104,7 @@ private:
     const std::string&  getParsedURL(void) const;
     void                handleMethod(Request::METHOD method);
 public:
+    void                        handleClientMaxBodySize(void);
     void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);
     const Config::server*       getConfig(void) const;

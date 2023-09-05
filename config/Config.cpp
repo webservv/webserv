@@ -357,6 +357,7 @@ void Config::parseClientMaxBodySize() {
 
 void Config::parseLocation(server& server) {
     location new_location;
+    new_location.clientMaxBodySize = clientMaxBodySize;
     new_location.autoindex = false;
     bool hasReturn = false;
 

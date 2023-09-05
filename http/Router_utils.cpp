@@ -181,11 +181,6 @@ void Router::setConfigURL() {
     std::string URL = request.getURL();
     std::string path;
 
-    getBestMatchURL(config->locations, URL);
-    if (!matchLocation->return_url.empty()) {
-        configURL = matchLocation->return_url;
-        return ;
-    }
     replaceURL(URL);
     path = '.' + URL;
     if (access(path.c_str(), F_OK))

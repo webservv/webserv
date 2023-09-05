@@ -27,6 +27,7 @@ private:
 	bool								haveHeader;
 	bool								haveBody;
 	size_t								bodyPos;
+    size_t                              bodySize;
 //Reqeust_parse.cpp
 private:
     void	parseMethod(std::string& line);
@@ -55,6 +56,7 @@ public:
 	const std::string&			getStrMethod(void) const;
 	const std::string&			getURL(void) const;
 	const std::vector<char>&	getBody(void) const;
+    size_t                      getBodySize(void) const;
 	const std::string&			getVersion(void) const;
     int							getError(void) const;
 	const std::string&			findValue(const std::string& headerName) const;
