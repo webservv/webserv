@@ -76,9 +76,9 @@ void Router::setCustomErrorPage(const std::string& customPath) {
 }
 
 void Router::makeErrorResponse(int statusCode) {
-    std::map<int, std::string>::const_iterator  it = config->errorPages.find(statusCode);
+    std::map<int, std::string>::const_iterator  it = config->getErrorPages().find(statusCode);
 
-    if (it == config->errorPages.end()) {
+    if (it == config->getErrorPages().end()) {
         makeDefaultErrorResponse(statusCode);
         return;
     }
@@ -101,6 +101,9 @@ void Router::makeDefaultErrorResponse(int statusCode) {
     std::vector<char>                   vBody;
 
     vBody.assign(body.begin(), body.end());
+    if (!response.getResponse().empty()) {
+        response.clearResponse();
+    }
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
     response.makeBody(vBody, body.length(), "text/plain");
     haveResponse = true;
