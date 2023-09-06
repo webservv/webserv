@@ -2,15 +2,11 @@
 #define SERVER_HPP
 
 #include <iostream>
-#include <sys/_types/_intptr_t.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <poll.h>
 #include <fcntl.h>
 #include <sys/event.h>
-#include <istream>
 #include <vector>
 #include <map>
 #include "Router.hpp"

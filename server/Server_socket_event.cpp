@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "Router.hpp"
 
 static bool isFcntlSetNonBlockSuccessful(int sockfd);
 static int GetSocketFlags(int sockfd);

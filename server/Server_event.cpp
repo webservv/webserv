@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "Router.hpp"
 
 void Server::handleEvent(const struct kevent& cur) {
     if (cur.flags & EV_ERROR) {

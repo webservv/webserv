@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "Router.hpp"
 
 static void bufferToRouter(Router& router, std::vector<char>& buf);
 static bool isEOFEvent(const struct kevent& cur);
