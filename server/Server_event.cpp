@@ -48,29 +48,28 @@ std::cout << std::endl;
 	clientSockets.erase(client_sockfd);
 }
 
-void timeStamp(int i) {
-    std::cout << "\n" << std::endl;
-    std::time_t currentTime = std::time(nullptr);
-    std::string timestamp = std::ctime(&currentTime);
-    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+static void timeStamp(int i) {
+    std::time_t Time = std::time(NULL);
+    std::string timeStr = std::ctime(&Time);
+    std::cout << "Time" << i << " : " << timeStr << std::endl;
 }
 
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
 	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
-timeStamp(1);
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
+std::cout << "recvByte: " << recvByte << std::endl;
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
-timeStamp(2);
+timeStamp(0);
         router.parseRequest();
-timeStamp(3);
+timeStamp(1);
 		if (router.isRequestEnd()) {
 const std::vector<char>&    rq = router.getRequest();
 const size_t                size = rq.size() < 500 ? rq.size() : 500;

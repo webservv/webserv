@@ -1,4 +1,6 @@
 #include "Request.hpp"
+#include <cctype>
+#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -6,7 +8,6 @@
 #include <vector>
 #include "Router.hpp"
 
-const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
 static const std::string POST_URL = "/cgi/index.php";
 
 void Request::parseMethod(std::string& line) {
@@ -50,11 +51,19 @@ void Request::parseVersion(const std::string& line, const size_t space) {
     }
 }
 
+// static void timeStamp(int i) {
+//     std::time_t Time = std::time(NULL);
+//     std::string timeStr = std::ctime(&Time);
+//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+// }
+
 void Request::parseBody(void) {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
-    
-    if (it != values.end() && it->second == "chunked")
-        parseChunkedBody();
+// timeStamp(1);
+    if (it != values.end() && it->second == "chunked") {
+        while (bodyPos != requestStr.size())
+            parseChunkedBody();
+        }
     else {
         std::vector<char>::iterator st = requestStr.begin() + bodyPos;
         if (st < requestStr.end()) {
@@ -70,6 +79,7 @@ void Request::parseBody(void) {
         if (body.size() == len)
             haveBody = true;
     }
+// timeStamp(2);
 }
 
 void Request::addRequestLines(void) {
@@ -86,42 +96,76 @@ void Request::addRequestLines(void) {
     }
 }
 
-void timeStamp2(int i) {
-    std::cout << "\n" << std::endl;
-    std::time_t currentTime = std::time(nullptr);
-    std::string timestamp = std::ctime(&currentTime);
-    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+size_t Request::hexToDecimal(char digit) const {
+    if (digit >= '0' && digit <= '9')
+        return digit - '0';
+    if (digit >= 'a' && digit <= 'f')
+        return 10 + (digit - 'a');
+    if (digit >= 'A' && digit <= 'F')
+        return 10 + (digit - 'A');
+    return -1;
 }
 
-void Request::parseChunkedBody(void) {
-    std::stringstream   parser;
-    std::string         line;
-    size_t              chunkSize;
-timeStamp2(10);
-    if (!isChunkEnd())
-        return;
+void Request::skipCRLF(void) {
+    if (requestStr.size() - bodyPos >= 2) {
+        if (requestStr[bodyPos] == '\r' && requestStr[bodyPos + 1] == '\n')
+            bodyPos += 2;
+    }
+}
 
-    for (size_t i = bodyPos; i < requestStr.size(); ++i) {
-        parser << requestStr[i];
-    }
-    while (std::getline(parser, line)) {
-        std::stringstream chunkSizeStream(line);
-        
-        if (line == "\r")
-            continue;
-        chunkSizeStream >> std::hex >> chunkSize;
-        if (chunkSizeStream.fail() || chunkSize == 0) {
-            haveBody = !chunkSize;
-            break;
+bool Request::parseChunkSize(void) {
+    size_t  hexDigit;
+
+    for (; bodyPos < requestStr.size() - 1; ++bodyPos) {
+        if ((requestStr[bodyPos] == '\r' && requestStr[bodyPos + 1] == '\n')) {
+            bodyPos += 2;
+            chunkStart = bodyPos;
+            return true;
         }
-        if (chunkSize > MAX_CHUNK_SIZE) {
-            throw Router::ErrorException(413, "invalid http, chunk size is too big!");
-        }
-        std::vector<char> buffer(chunkSize);
-        parser.read(buffer.data(), chunkSize);
-        body.insert(body.end(), buffer.begin(), buffer.end());
+        hexDigit = hexToDecimal(requestStr[bodyPos]);
+        if (hexDigit == static_cast<size_t>(-1))
+            throw Router::ErrorException(400, "parseChunkSize: invalid chunk size");
+        chunkSize =  chunkSize * 16 + hexDigit;
     }
-timeStamp2(11);
+    return false;
+}
+
+// static void timeStamp(int i) {
+//     std::time_t Time = std::time(NULL);
+//     std::string timeStr = std::ctime(&Time);
+//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+// }
+
+void Request::parseChunkedBody(void) {
+    size_t                              copySize;
+    size_t                              bodySize;
+    std::vector<char>::const_iterator   start;
+    std::vector<char>::const_iterator   end;
+
+    if (chunkSize == 0) {
+        if (!parseChunkSize())
+            return;
+    }
+    if (chunkSize == 0) {
+        skipCRLF();
+        haveBody = true;
+        return;
+    }
+    bodySize = requestStr.size() - chunkStart;
+    if (bodySize < chunkSize) {
+        copySize = bodySize;
+        bodyPos = requestStr.size();
+        chunkSize -= bodySize;
+    }
+    else {
+        copySize = chunkSize;
+        bodyPos += chunkSize;
+        chunkSize = 0;
+    }
+    start = requestStr.begin() + chunkStart;
+    end = start + copySize;
+    body.insert(body.end(), start, end);
+    skipCRLF();
 }
 
 void Request::parseRequestLine() {

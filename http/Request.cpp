@@ -5,28 +5,33 @@
 #include <algorithm>
 #include <sys/_types/_size_t.h>
 
-Request::Request():
-    requestStr(),
-    requestLines(),
-    method(OTHER),
-    values(),
-    body(),
-    haveHeader(false),
-    haveBody(false),
-    bodyPos(0) {
+Request::Request()
+    : requestStr()
+    , requestLines()
+    , method(OTHER)
+    , values()
+    , body()
+    , bodyPos(0)
+    , chunkSize(0)
+    , chunkStart()
+    , haveHeader(false)
+    , haveBody(false) {
         static const size_t BUFFER_SIZE = 20000000;
         requestStr.reserve(BUFFER_SIZE);
+        body.reserve(BUFFER_SIZE);
     }
 
-Request::Request(const Request& copy):
-    requestStr(copy.requestStr),
-    requestLines(copy.requestLines),
-    method(copy.method),
-    values(copy.values),
-    body(),
-    haveHeader(copy.haveHeader),
-    haveBody(copy.haveBody),
-    bodyPos(0) {}
+Request::Request(const Request& copy)
+    : requestStr(copy.requestStr)
+    , requestLines(copy.requestLines)
+    , method(copy.method)
+    , values(copy.values)
+    , body(copy.body)
+    , bodyPos(copy.bodyPos)
+    , chunkSize(copy.chunkSize)
+    , chunkStart(copy.chunkStart)
+    , haveHeader(copy.haveHeader)
+    , haveBody(copy.haveBody) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -34,6 +39,9 @@ Request& Request::operator=(const Request& copy) {
 	method = copy.method;
 	values = copy.values;
     body = copy.body;
+    bodyPos = copy.bodyPos;
+    chunkSize = copy.chunkSize;
+    chunkStart = copy.chunkStart;
     haveHeader = copy.haveHeader;
     haveBody = copy.haveBody;
     haveHeader = copy.bodyPos;
@@ -54,20 +62,6 @@ size_t Request::findHeaderEnd(void) const {
         }
     }
     return ret;
-}
-
-bool Request::isChunkEnd(void) const {
-    size_t  requestSize = requestStr.size();
-
-    if (requestSize < 5)
-        return false;
-    if (requestStr[requestSize - 1] == '\n' &&
-        requestStr[requestSize - 2] == '\r' &&
-        requestStr[requestSize - 3] == '\n' &&
-        requestStr[requestSize - 4] == '\r' &&
-        requestStr[requestSize - 5] == '0')
-        return true;
-    return false;
 }
 
 Request::METHOD Request::getMethod(void) const {
