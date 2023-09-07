@@ -107,9 +107,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
-timeStamp(1);
     router.addRequest(buf);
-timeStamp(2);
 	if (router.isHeaderEnd()) {
         router.parseRequest();
 		if (router.isRequestEnd()) {
