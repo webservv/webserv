@@ -33,7 +33,7 @@ private:
 private:
     void	parseMethod(std::string& line);
     void	parseURL(const std::string& line);
-    void	parseVersion(const std::string& line);
+    void	parseVersion(const std::string& line, const size_t space);
 	void	parseBody(void);
     void	addRequestLines(void);
 	void	skipCRLF(void);

@@ -11,7 +11,7 @@
 static const std::string POST_URL = "/cgi/index.php";
 
 void Request::parseMethod(std::string& line) {
-    const size_t space = line.find(' ');
+    size_t space = line.find(' ');
     if (space == std::string::npos) {
         throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
     }
@@ -44,8 +44,7 @@ void Request::parseURL(const std::string& line) {
     values["url"] = line.substr(0, space);
 }
 
-void Request::parseVersion(const std::string& line) {
-    const size_t space = line.find(' ');
+void Request::parseVersion(const std::string& line, const size_t space) {
     values["version"] = line.substr(space + 1);
     if (values["version"] != "HTTP/1.1") {
         throw Router::ErrorException(505, "invalid http, request line! Unsupported version: " + values["version"]);
@@ -176,8 +175,9 @@ void Request::parseRequestLine() {
     std::string line = requestLines.front();
     requestLines.pop();
     parseMethod(line);
+    size_t space = line.find(' ');
     parseURL(line);
-    parseVersion(line);
+    parseVersion(line, space);
 }
 
 void Request::parseKeyValues(void) {
