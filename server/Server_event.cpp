@@ -53,7 +53,6 @@ void Server::handleSocketEvent(int socket_fd) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
     addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
     clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
 }
 
@@ -92,11 +91,11 @@ std::cout << "Send OK: " << ++num << std::endl;
 	clientSockets.erase(client_sockfd);
 }
 
-static void timeStamp(int i) {
-    std::time_t Time = std::time(NULL);
-    std::string timeStr = std::ctime(&Time);
-    std::cout << "Time" << i << " : " << timeStr << std::endl;
-}
+// static void timeStamp(int i) {
+//     std::time_t Time = std::time(NULL);
+//     std::string timeStr = std::ctime(&Time);
+//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+// }
 
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
@@ -111,9 +110,9 @@ std::cout << "recvByte: " << recvByte << std::endl;
     buf.resize(recvByte);
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
-timeStamp(0);
+// timeStamp(0);
         router.parseRequest();
-timeStamp(1);
+// timeStamp(1);
 		if (router.isRequestEnd()) {
 // const std::vector<char>&    rq = router.getRequest();
 // const size_t                size = rq.size() < 500 ? rq.size() : 500;
@@ -124,6 +123,10 @@ timeStamp(1);
 			router.handleRequest();
         }
 	}
+    if (router.getHaveResponse()) {
+        addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    }
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
@@ -149,7 +152,7 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 void Server::waitEvents() {
     const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
     IOchanges.clear();
-
+std::cout << "events: " << events << std::endl;
     if (events < 0) {
         throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
     }
