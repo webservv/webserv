@@ -90,11 +90,18 @@ std::cout << std::endl;
 	clientSockets.erase(client_sockfd);
 }
 
+void timeStamp(int i) {
+    std::cout << "\n" << std::endl;
+    std::time_t currentTime = std::time(nullptr);
+    std::string timestamp = std::ctime(&currentTime);
+    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+}
+
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
 	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
-
+timeStamp(1);
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
@@ -103,14 +110,16 @@ void Server::receiveBuffer(const int client_sockfd) {
     buf.resize(recvByte);
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
+timeStamp(2);
         router.parseRequest();
+timeStamp(3);
 		if (router.isRequestEnd()) {
 const std::vector<char>&    rq = router.getRequest();
 const size_t                size = rq.size() < 500 ? rq.size() : 500;
 for (size_t i = 0; i < size; ++i) {
     std::cout << rq[i];
 }
-std::cout << "\n" << std::endl;
+timeStamp(4);
 			router.handleRequest();
         }
 	}

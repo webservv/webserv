@@ -87,13 +87,21 @@ void Request::addRequestLines(void) {
     }
 }
 
+void timeStamp2(int i) {
+    std::cout << "\n" << std::endl;
+    std::time_t currentTime = std::time(nullptr);
+    std::string timestamp = std::ctime(&currentTime);
+    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+}
+
 void Request::parseChunkedBody(void) {
     std::stringstream   parser;
     std::string         line;
     size_t              chunkSize;
-
+timeStamp2(10);
     if (!isChunkEnd())
         return;
+
     for (size_t i = bodyPos; i < requestStr.size(); ++i) {
         parser << requestStr[i];
     }
@@ -112,8 +120,9 @@ void Request::parseChunkedBody(void) {
         }
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
-        body.insert(body.end(), buffer.begin(), buffer.end());        
+        body.insert(body.end(), buffer.begin(), buffer.end());
     }
+timeStamp2(11);
 }
 
 void Request::parseRequestLine() {
