@@ -100,6 +100,8 @@ void Router::handleGet() {
 }
 
 void Router::handlePost() {
+	if (isInvalidBodySize())
+		throw Router::ErrorException(413, "handlePost: body size is too large");
 	validateHeaderLength();
 	validateContentType();
 	if (!configURL.compare(0, 4, "/cgi")) {
@@ -112,6 +114,12 @@ void Router::handlePost() {
 void Router::handleDelete() {
 	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	connectCGI();
+}
+
+void Router::handlePut(void) {
+	if (isInvalidBodySize())
+		throw Router::ErrorException(413, "handlePost: body size is too large");
+	processStaticPut();
 }
 
 void Router::connectCGI(void) {
@@ -187,7 +195,7 @@ void Router::handleRequest() {
 		} else if (method == Request::DELETE) {
 			handleDelete();
 		} else if (method == Request::PUT)
-			processStaticPut();
+			handlePut();
 	}
 	catch (Router::ErrorException& e) {
 		std::cout << e.what() << std::endl;
