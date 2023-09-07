@@ -19,6 +19,8 @@
 #define NULL_FD -1
 #define NULL_PID -1
 
+static const size_t	BUFS = 120000000;
+
 Response::Response():
 	response(),
 	messageFromCGI(),
@@ -27,7 +29,11 @@ Response::Response():
 	sentLenghth(0),
 	writeFD(NULL_FD),
 	readFD(NULL_FD),
-	cgiPid(NULL_PID) {}
+	cgiPid(NULL_PID) {
+		response.reserve(BUFS);
+		messageFromCGI.reserve(BUFS);
+		messageToCGI.reserve(BUFS);
+	}
 
 Response::Response(const Response& copy):
 	response(copy.response),
@@ -37,7 +43,11 @@ Response::Response(const Response& copy):
 	sentLenghth(copy.writtenCgiLength),
 	writeFD(copy.writeFD),
 	readFD(copy.readFD),
-	cgiPid(copy.cgiPid) {}
+	cgiPid(copy.cgiPid) {
+		response.reserve(BUFS);
+		messageFromCGI.reserve(BUFS);
+		messageToCGI.reserve(BUFS);
+	}
 
 Response& Response::operator=(const Response& copy) {
 	response = copy.response;
@@ -116,7 +126,7 @@ void Response::checkCgiResponse(void) {
 		return;
 	addCgiContentLength(messageFromCGI.size() - bodyPos);
 }
-
+//WIP
 void Response::addCgiContentLength(const size_t size) {
 	std::string			contentLength = "Content-Length";
 	std::string			strSize;

@@ -81,7 +81,7 @@ void Request::parseBody(void) {
     }
 // timeStamp(2);
 }
-
+//WIP
 void Request::addRequestLines(void) {
     std::stringstream   parser;
     std::string         line;

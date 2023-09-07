@@ -53,7 +53,6 @@ void Server::handleSocketEvent(int socket_fd) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
     addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
     clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
 }
 
@@ -105,25 +104,22 @@ void Server::receiveBuffer(const int client_sockfd) {
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
-std::cout << "recvByte: " << recvByte << std::endl;
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
-    router.addRequest(buf);
-	if (router.isHeaderEnd()) {
-timeStamp(0);
-        router.parseRequest();
 timeStamp(1);
+    router.addRequest(buf);
+timeStamp(2);
+	if (router.isHeaderEnd()) {
+        router.parseRequest();
 		if (router.isRequestEnd()) {
-// const std::vector<char>&    rq = router.getRequest();
-// const size_t                size = rq.size() < 500 ? rq.size() : 500;
-// for (size_t i = 0; i < size; ++i) {
-//     std::cout << rq[i];
-// }
-// std::cout << "\n" << std::endl;
 			router.handleRequest();
         }
 	}
+    if (router.isRequestEnd() || router.getHaveResponse()) {
+        addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+        addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+    }
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
