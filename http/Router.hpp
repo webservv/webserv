@@ -13,10 +13,9 @@
 #include <unistd.h>
 #include <vector>
 
-class Server;
-
-typedef std::map<std::string, LocationConfig>::const_iterator iter;
 static const std::string    CGI_PATH = "./document/cgi";
+
+class Server;
 
 class Router {
 public:
@@ -74,7 +73,7 @@ private:
     void                validateHeaderLength(void);
     void                validateContentType(void);
     void                handleDirectory(std::string& UrlFromRequest);
-    void                replaceURL(std::string& UrlFromRequest) const;
+    void                replaceURL(const std::string& UrlFromRequest);
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;
@@ -82,6 +81,7 @@ private:
     void                getBestMatchURL(const std::vector<LocationConfig>& locations, const std::string& UrlFromRequest);
     bool                isDirectory(const std::string& path) const;
     bool                isRegularFile(const std::string& path) const;
+    bool                isInvalidBodySize(void) const;
 //Router_static.cpp
 private:
     void    processStaticGet(void);
@@ -99,6 +99,7 @@ private:
 	void				handleGet(void);
     void				handlePost(void);
     void				handleDelete(void);
+    void                handlePut(void);
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;

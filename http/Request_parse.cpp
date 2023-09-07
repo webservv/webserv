@@ -7,10 +7,10 @@
 #include "Router.hpp"
 
 const size_t MAX_CHUNK_SIZE = 1024 * 1024; // 1 MB
-// static const std::string POST_URL = "/cgi/index.php";
+static const std::string POST_URL = "/cgi/index.php";
 
 void Request::parseMethod(std::string& line) {
-    const size_t space = line.find(' ');
+    size_t space = line.find(' ');
     if (space == std::string::npos) {
         throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
     }
@@ -43,8 +43,7 @@ void Request::parseURL(const std::string& line) {
     values["url"] = line.substr(0, space);
 }
 
-void Request::parseVersion(const std::string& line) {
-    const size_t space = line.find(' ');
+void Request::parseVersion(const std::string& line, const size_t space) {
     values["version"] = line.substr(space + 1);
     if (values["version"] != "HTTP/1.1") {
         throw Router::ErrorException(505, "invalid http, request line! Unsupported version: " + values["version"]);
@@ -87,13 +86,21 @@ void Request::addRequestLines(void) {
     }
 }
 
+void timeStamp2(int i) {
+    std::cout << "\n" << std::endl;
+    std::time_t currentTime = std::time(nullptr);
+    std::string timestamp = std::ctime(&currentTime);
+    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+}
+
 void Request::parseChunkedBody(void) {
     std::stringstream   parser;
     std::string         line;
     size_t              chunkSize;
-
+timeStamp2(10);
     if (!isChunkEnd())
         return;
+
     for (size_t i = bodyPos; i < requestStr.size(); ++i) {
         parser << requestStr[i];
     }
@@ -112,8 +119,9 @@ void Request::parseChunkedBody(void) {
         }
         std::vector<char> buffer(chunkSize);
         parser.read(buffer.data(), chunkSize);
-        body.insert(body.end(), buffer.begin(), buffer.end());        
+        body.insert(body.end(), buffer.begin(), buffer.end());
     }
+timeStamp2(11);
 }
 
 void Request::parseRequestLine() {
@@ -123,8 +131,9 @@ void Request::parseRequestLine() {
     std::string line = requestLines.front();
     requestLines.pop();
     parseMethod(line);
+    size_t space = line.find(' ');
     parseURL(line);
-    parseVersion(line);
+    parseVersion(line, space);
 }
 
 void Request::parseKeyValues(void) {

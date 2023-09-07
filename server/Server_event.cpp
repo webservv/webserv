@@ -1,33 +1,11 @@
 #include "Server.hpp"
-#include "Request.hpp"
-#include "Router.hpp"
-#include <arpa/inet.h>
-#include <cstring>
-#include <fstream>
-#include <netinet/in.h>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <sys/_types/_in_addr_t.h>
-#include <sys/_types/_int16_t.h>
-#include <sys/_types/_intptr_t.h>
-#include <sys/_types/_size_t.h>
-#include <sys/_types/_ssize_t.h>
-#include <sys/_types/_uintptr_t.h>
-#include <sys/event.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
-#include <cstdio>
-#include <utility>
-#define BUFFER_SIZE 1000 // we should put it 100
-#define DEBUG_BUFFER_SIZE 1000000
 
 void Server::handleEvent(const struct kevent& cur) {
     if (cur.flags & EV_ERROR) {
         throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
     }
 
-    int identifier = static_cast<int>(cur.ident);
+    const int identifier = static_cast<int>(cur.ident);
     if (listenSockets.find(identifier) != listenSockets.end()) {
         handleSocketEvent(identifier);
     } else if (clientSockets.find(identifier) != clientSockets.end()) {
@@ -35,26 +13,6 @@ void Server::handleEvent(const struct kevent& cur) {
     } else if (pipes.find(identifier) != pipes.end()) {
         handlePipeEvent(identifier, cur);
     }
-}
-
-void Server::handleSocketEvent(int socket_fd) {
-    sockaddr_in         client_addr;
-    socklen_t           client_len = sizeof(client_addr);
-    static const size_t MAX_CLIENT_NUM = 3;
-
-    if (clientSockets.size() > MAX_CLIENT_NUM)
-        return;
-    const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
-    if (client_sockfd < 0) {
-        throw std::runtime_error("ERROR on accept");
-    }
-
-    if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
-        throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
-    }
-    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
 }
 
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
@@ -90,11 +48,18 @@ std::cout << std::endl;
 	clientSockets.erase(client_sockfd);
 }
 
+void timeStamp(int i) {
+    std::cout << "\n" << std::endl;
+    std::time_t currentTime = std::time(nullptr);
+    std::string timestamp = std::ctime(&currentTime);
+    std::cout << "현재 시간" << i << ": " << timestamp << std::endl;
+}
+
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
 	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
-
+timeStamp(1);
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
@@ -103,14 +68,16 @@ void Server::receiveBuffer(const int client_sockfd) {
     buf.resize(recvByte);
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
+timeStamp(2);
         router.parseRequest();
+timeStamp(3);
 		if (router.isRequestEnd()) {
 const std::vector<char>&    rq = router.getRequest();
 const size_t                size = rq.size() < 500 ? rq.size() : 500;
 for (size_t i = 0; i < size; ++i) {
     std::cout << rq[i];
 }
-std::cout << "\n" << std::endl;
+timeStamp(4);
 			router.handleRequest();
         }
 	}

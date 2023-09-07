@@ -221,7 +221,7 @@ void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 	std::string			value;
 	char				unit;
 	size_t				multiplier;
-	size_t				lastDigit = 0;
+	int					lastDigit = -1;
 
 	if (tokens.empty())
         throw std::out_of_range("ParseClientMaxBodySize: Unexpected end of file: Expected a client_max_body_size");
@@ -249,7 +249,7 @@ void LocationConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
 		throw std::out_of_range("parseClientMaxBodySize: invalid client_max_body_size, must be a number");
 	ss << value;
 	ss >> clientMaxBodySize;
-	if (lastDigit)
+	if (lastDigit != -1)
 		clientMaxBodySize = clientMaxBodySize * 10 + lastDigit;
 	clientMaxBodySize *= multiplier;
 }
