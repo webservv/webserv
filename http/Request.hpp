@@ -60,7 +60,7 @@ public:
 	const std::string&			getURL(void) const;
 	const std::vector<char>&	getBody(void) const;
 	const std::string&			getVersion(void) const;
-    int							getError(void) const;
+	char*						getRequestBuffer(void);
 	const std::string&			findValue(const std::string& headerName) const;
 	void						addRequest(const std::vector<char>& input);
     bool						isHeaderEnd(void);
