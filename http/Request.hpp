@@ -24,9 +24,11 @@ private:
 	METHOD								method;
 	std::map<std::string, std::string>	values;
 	std::vector<char>					body;
+	size_t								bodyPos;
+	size_t								chunkSize;
+	size_t								chunkStart;
 	bool								haveHeader;
 	bool								haveBody;
-	size_t								bodyPos;
 //Reqeust_parse.cpp
 private:
     void	parseMethod(std::string& line);
@@ -34,6 +36,8 @@ private:
     void	parseVersion(const std::string& line, const size_t space);
 	void	parseBody(void);
     void	addRequestLines(void);
+	size_t	hexToDecimal(char digit) const;
+	bool	parseChunkSize(void);
     void	parseChunkedBody(void);
 	void	parseRequestLine(void);
 	void	parseKeyValues(void);

@@ -5,28 +5,32 @@
 #include <algorithm>
 #include <sys/_types/_size_t.h>
 
-Request::Request():
-    requestStr(),
-    requestLines(),
-    method(OTHER),
-    values(),
-    body(),
-    haveHeader(false),
-    haveBody(false),
-    bodyPos(0) {
+Request::Request()
+    : requestStr()
+    , requestLines()
+    , method(OTHER)
+    , values()
+    , body()
+    , bodyPos(0)
+    , chunkSize(-1)
+    , chunkStart()
+    , haveHeader(false)
+    , haveBody(false) {
         static const size_t BUFFER_SIZE = 20000000;
         requestStr.reserve(BUFFER_SIZE);
     }
 
-Request::Request(const Request& copy):
-    requestStr(copy.requestStr),
-    requestLines(copy.requestLines),
-    method(copy.method),
-    values(copy.values),
-    body(),
-    haveHeader(copy.haveHeader),
-    haveBody(copy.haveBody),
-    bodyPos(0) {}
+Request::Request(const Request& copy)
+    : requestStr(copy.requestStr)
+    , requestLines(copy.requestLines)
+    , method(copy.method)
+    , values(copy.values)
+    , body(copy.body)
+    , bodyPos(copy.bodyPos)
+    , chunkSize(copy.chunkSize)
+    , chunkStart(copy.chunkStart)
+    , haveHeader(copy.haveHeader)
+    , haveBody(copy.haveBody) {}
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
@@ -34,6 +38,9 @@ Request& Request::operator=(const Request& copy) {
 	method = copy.method;
 	values = copy.values;
     body = copy.body;
+    bodyPos = copy.bodyPos;
+    chunkSize = copy.chunkSize;
+    chunkStart = copy.chunkStart;
     haveHeader = copy.haveHeader;
     haveBody = copy.haveBody;
     haveHeader = copy.bodyPos;

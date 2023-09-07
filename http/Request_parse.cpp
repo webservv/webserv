@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include <cctype>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -86,33 +87,62 @@ void Request::addRequestLines(void) {
     }
 }
 
+size_t Request::hexToDecimal(char digit) const {
+    if (digit >= '0' && digit <= '9')
+        return digit - '0';
+    if (digit >= 'a' && digit <= 'f')
+        return 10 + (digit - 'a');
+    if (digit >= 'A' && digit <= 'F')
+        return 10 + (digit - 'A');
+    return -1;
+}
+
+bool Request::parseChunkSize(void) {
+    size_t  hexDigit;
+
+    for (; bodyPos < requestStr.size() - 1; ++bodyPos) {
+        if (requestStr[bodyPos] == '\r' && requestStr[bodyPos + 1] == '\n') {
+            ++bodyPos;
+            return true;
+        }
+        hexDigit = hexToDecimal(requestStr[bodyPos]);
+        if (hexDigit == -1)
+            throw Router::ErrorException(400, "parseChunkSize: invalid chunk size");
+        chunkSize += hexDigit;
+    }
+    return false;
+}
+
 void Request::parseChunkedBody(void) {
-    std::stringstream   parser;
-    std::string         line;
-    size_t              chunkSize;
+    size_t                              copySize;
+    size_t                              bodySize;
+    std::vector<char>::const_iterator   start;
+    std::vector<char>::const_iterator   end;
 
     if (!isChunkEnd())
         return;
-    for (size_t i = bodyPos; i < requestStr.size(); ++i) {
-        parser << requestStr[i];
+    if (chunkSize == -1) {
+        if (parseChunkSize())
+            return;
     }
-    while (std::getline(parser, line)) {
-        std::stringstream chunkSizeStream(line);
-        
-        if (line == "\r")
-            continue;
-        chunkSizeStream >> std::hex >> chunkSize;
-        if (chunkSizeStream.fail() || chunkSize == 0) {
-            haveBody = !chunkSize;
-            break;
-        }
-        if (chunkSize > MAX_CHUNK_SIZE) {
-            throw Router::ErrorException(413, "invalid http, chunk size is too big!");
-        }
-        std::vector<char> buffer(chunkSize);
-        parser.read(buffer.data(), chunkSize);
-        body.insert(body.end(), buffer.begin(), buffer.end());        
+    if (chunkSize == 0) {
+        haveBody = true;
+        return;
     }
+    bodySize = requestStr.size() - chunkStart;
+    if (bodySize < chunkSize) {
+        copySize = bodySize;
+        bodyPos = requestStr.size();
+        chunkSize -= bodySize;
+    }
+    else {
+        copySize = chunkSize;
+        bodyPos += chunkSize;
+        chunkSize = -1;
+    }
+    start = requestStr.begin() + chunkStart;
+    end = start + copySize;
+    body.insert(body.end(), start, end);
 }
 
 void Request::parseRequestLine() {
