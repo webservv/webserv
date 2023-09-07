@@ -21,6 +21,7 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
     }
 }
 
+
 void Server::receiveBuffer(const int client_sockfd) {
     const int           buffer_size = 1000000;
     ssize_t             recvByte;
@@ -35,6 +36,16 @@ void Server::receiveBuffer(const int client_sockfd) {
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
     bufferToRouter(router, buf);
+    if (router.getHaveResponse()) {
+        AddIOReadDelete(client_sockfd);
+        AddIOWriteChange(client_sockfd);
+    }
+}
+
+void Server::AddIOReadDelete(uintptr_t ident) {
+    struct kevent newEvents;
+    EV_SET(&newEvents, ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+    IOchanges.push_back(newEvents);
 }
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
@@ -55,11 +66,23 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 }
 
 void Server::disconnect(const int client_sockfd) {
+// const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
+// const size_t                size = (response.size() < 500) ? response.size() : 500;
+// for (size_t i = 0; i < size; ++i) {
+//     std::cout << response[i];
+// }
+// std::cout << std::endl;
 static size_t   num = 0;
 std::cout << "Send OK: " << ++num << std::endl;
 	close(client_sockfd);
 	clientSockets.erase(client_sockfd);
 }
+
+// static void timeStamp(int i) {
+//     std::time_t Time = std::time(NULL);
+//     std::string timeStr = std::ctime(&Time);
+//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+// }
 
 void Server::AddIOReadChange(uintptr_t ident) {
     struct kevent newEvents;

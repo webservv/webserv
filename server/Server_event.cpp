@@ -26,3 +26,15 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
         tmp.writeToCGI(cur.data);
     }
 }
+
+void Server::waitEvents() {
+    const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
+    IOchanges.clear();
+std::cout << "events: " << events << std::endl;
+    if (events < 0) {
+        throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
+    }
+    for (int i = 0; i < events; ++i) {
+        handleEvent(IOevents[i]);
+    }
+}
