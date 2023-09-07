@@ -36,6 +36,7 @@ private:
     void	parseVersion(const std::string& line, const size_t space);
 	void	parseBody(void);
     void	addRequestLines(void);
+	void	skipCRLF(void);
 	size_t	hexToDecimal(char digit) const;
 	bool	parseChunkSize(void);
     void	parseChunkedBody(void);
@@ -52,7 +53,6 @@ public:
 	Request&	operator=(const Request& copy);
 private:
 	size_t	findHeaderEnd(void) const;
-	bool	isChunkEnd(void) const;
 public:
 	Request::METHOD				getMethod(void) const;
 	const std::vector<char>&	getRequestStr(void) const;

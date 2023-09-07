@@ -12,12 +12,13 @@ Request::Request()
     , values()
     , body()
     , bodyPos(0)
-    , chunkSize(-1)
+    , chunkSize(0)
     , chunkStart()
     , haveHeader(false)
     , haveBody(false) {
         static const size_t BUFFER_SIZE = 20000000;
         requestStr.reserve(BUFFER_SIZE);
+        body.reserve(BUFFER_SIZE);
     }
 
 Request::Request(const Request& copy)
@@ -61,20 +62,6 @@ size_t Request::findHeaderEnd(void) const {
         }
     }
     return ret;
-}
-
-bool Request::isChunkEnd(void) const {
-    size_t  requestSize = requestStr.size();
-
-    if (requestSize < 5)
-        return false;
-    if (requestStr[requestSize - 1] == '\n' &&
-        requestStr[requestSize - 2] == '\r' &&
-        requestStr[requestSize - 3] == '\n' &&
-        requestStr[requestSize - 4] == '\r' &&
-        requestStr[requestSize - 5] == '0')
-        return true;
-    return false;
 }
 
 Request::METHOD Request::getMethod(void) const {

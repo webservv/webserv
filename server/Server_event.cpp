@@ -92,20 +92,28 @@ std::cout << "Send OK: " << ++num << std::endl;
 	clientSockets.erase(client_sockfd);
 }
 
+static void timeStamp(int i) {
+    std::time_t Time = std::time(NULL);
+    std::string timeStr = std::ctime(&Time);
+    std::cout << "Time" << i << " : " << timeStr << std::endl;
+}
+
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
 	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
-
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
+std::cout << "recvByte: " << recvByte << std::endl;
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
     router.addRequest(buf);
 	if (router.isHeaderEnd()) {
+timeStamp(0);
         router.parseRequest();
+timeStamp(1);
 		if (router.isRequestEnd()) {
 // const std::vector<char>&    rq = router.getRequest();
 // const size_t                size = rq.size() < 500 ? rq.size() : 500;
