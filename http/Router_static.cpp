@@ -15,7 +15,7 @@ void Router::processStaticGet(void) {
 		return;
 	}
     readFile(filePath, content);
-    std::string mimeType = getMIME(configURL);
+    const std::string& mimeType = getMIME(configURL);
     response.makeStatusLine("HTTP/1.1", "200", "OK");
     response.makeBody(content, content.size(), mimeType);
 	haveResponse = true;
@@ -65,7 +65,7 @@ void Router::processStaticPut(void) {
 }
 
 void Router::processStaticDelete(void) {
-	const std::string	filePath = '.' + configURL;
+	const std::string& filePath = '.' + configURL;
 
 	if (access(configURL.c_str(), F_OK)) {
 		throw Router::ErrorException(404, "processStaticDelete: file not found");

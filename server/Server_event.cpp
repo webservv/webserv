@@ -1,33 +1,11 @@
 #include "Server.hpp"
-#include "Request.hpp"
-#include "Router.hpp"
-#include <arpa/inet.h>
-#include <cstring>
-#include <fstream>
-#include <netinet/in.h>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <sys/_types/_in_addr_t.h>
-#include <sys/_types/_int16_t.h>
-#include <sys/_types/_intptr_t.h>
-#include <sys/_types/_size_t.h>
-#include <sys/_types/_ssize_t.h>
-#include <sys/_types/_uintptr_t.h>
-#include <sys/event.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
-#include <cstdio>
-#include <utility>
-#define BUFFER_SIZE 1000 // we should put it 100
-#define DEBUG_BUFFER_SIZE 1000000
 
 void Server::handleEvent(const struct kevent& cur) {
     if (cur.flags & EV_ERROR) {
         throw std::runtime_error("waitEvents: " + std::string(strerror(errno)));
     }
 
-    int identifier = static_cast<int>(cur.ident);
+    const int identifier = static_cast<int>(cur.ident);
     if (listenSockets.find(identifier) != listenSockets.end()) {
         handleSocketEvent(identifier);
     } else if (clientSockets.find(identifier) != clientSockets.end()) {
@@ -79,14 +57,12 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 }
 
 void Server::disconnect(const int client_sockfd) {
-// const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
-// const size_t                size = (response.size() < 500) ? response.size() : 500;
-// for (size_t i = 0; i < size; ++i) {
-//     std::cout << response[i];
-// }
-// std::cout << std::endl;
-static size_t   num = 0;
-std::cout << "Send OK: " << ++num << std::endl;
+const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
+const size_t                size = (response.size() < 500) ? response.size() : 500;
+for (size_t i = 0; i < size; ++i) {
+    std::cout << response[i];
+}
+std::cout << std::endl;
 	close(client_sockfd);
 	clientSockets.erase(client_sockfd);
 }
