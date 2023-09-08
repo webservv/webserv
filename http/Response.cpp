@@ -24,7 +24,7 @@ static const size_t	BUFS = 120000000;
 Response::Response():
 	response(),
 	messageFromCGI(),
-	messageToCGI(),
+	messageToCGI(NULL),
 	writtenCgiLength(0),
 	sentLenghth(0),
 	writeFD(NULL_FD),
@@ -32,7 +32,6 @@ Response::Response():
 	cgiPid(NULL_PID) {
 		response.reserve(BUFS);
 		messageFromCGI.reserve(BUFS);
-		messageToCGI.reserve(BUFS);
 	}
 
 Response::Response(const Response& copy):
@@ -46,7 +45,6 @@ Response::Response(const Response& copy):
 	cgiPid(copy.cgiPid) {
 		response.reserve(BUFS);
 		messageFromCGI.reserve(BUFS);
-		messageToCGI.reserve(BUFS);
 	}
 
 Response& Response::operator=(const Response& copy) {
@@ -213,7 +211,7 @@ void Response::setResponse(const std::vector<char> &src) {
 }
 
 void Response::setMessageToCGI(const std::vector<char> &src) {
-	messageToCGI = src;
+	messageToCGI = &src;
 }
 
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
@@ -253,7 +251,7 @@ void Response::readFromCGI(void) {
 
 void Response::writeToCGI(const intptr_t fdBufferSize) {
 	const intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
-	const size_t	leftSize = messageToCGI.size() - writtenCgiLength;
+	const size_t	leftSize = messageToCGI->size() - writtenCgiLength;
 	ssize_t			writeLength;
 
 	if (leftSize == 0) {
@@ -262,16 +260,16 @@ void Response::writeToCGI(const intptr_t fdBufferSize) {
 		return;
 	}
 	if (leftSize <= static_cast<size_t>(bufSize)) {
-		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, leftSize);
+		writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, leftSize);
 		if (writeLength < 0)
 			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno)));
 	}
 	else {
-		writeLength = write(writeFD, messageToCGI.data() + writtenCgiLength, bufSize);
+		writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, bufSize);
 		if (writeLength < 0)
 			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno))); 
 	}
-	if (writeLength + writtenCgiLength == messageToCGI.size()) {
+	if (writeLength + writtenCgiLength == messageToCGI->size()) {
 			close(writeFD);
 			writeFD = NULL_FD;
 	}

@@ -6,14 +6,14 @@
 
 class Response {
 private:
-	std::vector<char>	response;
-	std::vector<char>	messageFromCGI;
-	std::vector<char>	messageToCGI;
-	size_t				writtenCgiLength;
-	size_t				sentLenghth;
-	int					writeFD;
-	int					readFD;
-	pid_t				cgiPid;
+	std::vector<char>			response;
+	std::vector<char>			messageFromCGI;
+	const std::vector<char>*	messageToCGI;
+	size_t						writtenCgiLength;
+	size_t						sentLenghth;
+	int							writeFD;
+	int							readFD;
+	pid_t						cgiPid;
 //Response.cpp
 public:
 	Response();
