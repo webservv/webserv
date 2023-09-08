@@ -191,7 +191,6 @@ void Router::setConfigURL() {
     if (access(path.c_str(), F_OK) || isRegularFile(path))
         ;
     else if (configURL.back() == '/' || isDirectory(path)) {
-        // handleDirectory(configURL);
         handleDirectory();
     }
     else
