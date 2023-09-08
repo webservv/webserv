@@ -15,6 +15,25 @@ void Server::handleEvent(const struct kevent& cur) {
     }
 }
 
+void Server::handleSocketEvent(int socket_fd) {
+    sockaddr_in         client_addr;
+    socklen_t           client_len = sizeof(client_addr);
+    static const size_t MAX_CLIENT_NUM = 3;
+
+    if (clientSockets.size() > MAX_CLIENT_NUM)
+        return;
+    const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
+    if (client_sockfd < 0) {
+        throw std::runtime_error("ERROR on accept");
+    }
+
+    if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
+        throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
+    }
+    addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
+}
+
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
     Router& tmp = *pipes[identifier];
     if (cur.flags & EV_EOF) {
@@ -26,6 +45,7 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
         tmp.writeToCGI(cur.data);
     }
 }
+
 
 void Server::waitEvents() {
     const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
