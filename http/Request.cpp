@@ -5,50 +5,44 @@
 #include <algorithm>
 #include <sys/_types/_size_t.h>
 
+static const size_t BUFFER_SIZE = 120000000;
+
 Request::Request()
     : requestStr()
-    , requestLines()
-    , method(OTHER)
     , values()
     , body()
-    , bodyPos(0)
+    , readPos(0)
     , chunkSize(0)
-    , chunkStart()
+    , valueStart()
     , haveHeader(false)
     , haveBody(false) {
-        static const size_t BUFFER_SIZE = 120000000;
         requestStr.reserve(BUFFER_SIZE);
         body.reserve(BUFFER_SIZE);
     }
 
 Request::Request(const Request& copy)
     : requestStr(copy.requestStr)
-    , requestLines(copy.requestLines)
-    , method(copy.method)
     , values(copy.values)
     , body(copy.body)
-    , bodyPos(copy.bodyPos)
+    , readPos(copy.readPos)
     , chunkSize(copy.chunkSize)
-    , chunkStart(copy.chunkStart)
+    , valueStart(copy.valueStart)
     , haveHeader(copy.haveHeader)
     , haveBody(copy.haveBody) {
-        static const size_t BUFFER_SIZE = 120000000;
         requestStr.reserve(BUFFER_SIZE);
         body.reserve(BUFFER_SIZE);
     }
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
-	requestLines = copy.requestLines;
-	method = copy.method;
 	values = copy.values;
     body = copy.body;
-    bodyPos = copy.bodyPos;
+    readPos = copy.readPos;
     chunkSize = copy.chunkSize;
-    chunkStart = copy.chunkStart;
+    valueStart = copy.valueStart;
     haveHeader = copy.haveHeader;
     haveBody = copy.haveBody;
-    haveHeader = copy.bodyPos;
+    haveHeader = copy.readPos;
 	return *this;
 }
 
@@ -68,15 +62,11 @@ size_t Request::findHeaderEnd(void) const {
     return ret;
 }
 
-Request::METHOD Request::getMethod(void) const {
-	return method;
-}
-
 const std::vector<char>& Request::getRequestStr(void) const {
     return requestStr;
 }
 
-const std::string& Request::getStrMethod(void) const {
+const std::string& Request::getMethod(void) const {
     return findValue("method");
 }
 
@@ -116,7 +106,7 @@ bool Request::isHeaderEnd(void) {
         return true;
     size_t pos = findHeaderEnd();
     if (pos != std::string::npos) {
-        bodyPos = pos + 4;
+        readPos = pos + 4;
         return true;
     } else {
         return false;

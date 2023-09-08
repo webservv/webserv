@@ -103,7 +103,7 @@ private:
     void                connectCGI(void);
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;
-    void                handleMethod(Request::METHOD method);
+    void                handleMethod(const std::string& method);
 public:
     void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);

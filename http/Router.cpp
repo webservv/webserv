@@ -143,30 +143,23 @@ void Router::connectCGI(void) {
 }
 
 bool Router::isBodyRequired(void) const {
-    Request::METHOD method = request.getMethod();
-    switch (method) {
-        case Request::POST:
-            return true;
-        default:
-            return false;
-    }
+    const std::string& method = request.getMethod();
+	if (method == "POST" || method == "PUT")
+		return true;
+	return false;
 }
 
 const std::string& Router::getParsedURL(void) const {
     return configURL;
 }
 
-void Router::handleMethod(Request::METHOD method) {
-    const std::vector<std::string>&	Methods = matchLocation->getLimitExcept();
+void Router::handleMethod(const std::string& method) {
+    const std::vector<std::string>&	limit = matchLocation->getLimitExcept();
 
-    if (Methods.empty()) {
-        method = Request::OTHER;
+    if (limit.empty())
         return ;
-    }
-    std::string methodStr = g_methodStr[method];
-    std::vector<std::string>::const_iterator it = std::find(Methods.begin(), \
-        Methods.end(), methodStr);
-    if (it == Methods.end()) {
+    std::vector<std::string>::const_iterator it = std::find(limit.begin(), limit.end(), method);
+    if (it == limit.end()) {
         throw Router::ErrorException(405, "Method Not Allowed");
     }
 }
@@ -179,7 +172,7 @@ void Router::handleRedirect(const std::string& url) {
 
 
 void Router::handleRequest() {
-    Request::METHOD method = request.getMethod();
+    const std::string& method = request.getMethod();
 	
 	try {
 		setConfigURL();
@@ -188,13 +181,13 @@ void Router::handleRequest() {
             return ;
         }
     	handleMethod(method);
-		if (method == Request::GET) {
+		if (method == "GET") {
     	    handleGet();
-		} else if (method == Request::POST) {
+		} else if (method == "POST") {
 			handlePost();
-		} else if (method == Request::DELETE) {
+		} else if (method == "DELETE") {
 			handleDelete();
-		} else if (method == Request::PUT)
+		} else if (method == "PUT")
 			handlePut();
 	}
 	catch (Router::ErrorException& e) {
