@@ -72,7 +72,7 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                handleDirectory(std::string& UrlFromRequest);
+    void                handleDirectory(void);
     void                replaceURL(const std::string& UrlFromRequest);
     void                setConfigURL(void);
     void                parseURL(void);

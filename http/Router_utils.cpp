@@ -135,18 +135,18 @@ void Router::validateContentType() {
     }
 }
 
-void Router::handleDirectory(std::string& replacedURL) {
+void Router::handleDirectory() {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
     const std::string& directoryPath = matchLocation ? matchLocation->getRoot() : config->getRoot();
     std::string testURL;
 
-    if (replacedURL.back() != '/')
-        replacedURL += "/";
+    if (configURL.back() != '/')
+        configURL += "/";
 
     for (size_t i = 0; i < indexFiles.size(); ++i) {
-        testURL = "." + replacedURL + indexFiles[i];
+        testURL = "." + configURL + indexFiles[i];
         if (access(testURL.c_str(), F_OK) == 0) {
-            configURL = replacedURL + indexFiles[i];
+            configURL = configURL + indexFiles[i];
             return ;
         }
     }
@@ -191,7 +191,7 @@ void Router::setConfigURL() {
     if (access(path.c_str(), F_OK) || isRegularFile(path))
         ;
     else if (configURL.back() == '/' || isDirectory(path)) {
-        handleDirectory(configURL);
+        handleDirectory();
     }
     else
         throw ErrorException(404, "setConfigURL: not a file or directory");
