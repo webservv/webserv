@@ -238,15 +238,14 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 }
 
 void Response::readFromCGI(void) {
-	ssize_t	read_size;
-	char	buf[BUFFER_SIZE + 1];
+	ssize_t				read_size;
+	std::vector<char>	buf(BUFFER_SIZE);
 
-	read_size = read(readFD, buf, BUFFER_SIZE);
+	read_size = read(readFD, buf.data(), BUFFER_SIZE);
 	if (read_size < 0)
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
-	buf[read_size] = '\0';
-	addResponse(response, buf);
-	// addResponse(messageFromCGI, buf);
+	buf.resize(read_size);
+	response.insert(response.end(), buf.begin(), buf.end());
 }
 
 void Response::writeToCGI(const intptr_t fdBufferSize) {
