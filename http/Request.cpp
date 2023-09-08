@@ -16,7 +16,7 @@ Request::Request()
     , chunkStart()
     , haveHeader(false)
     , haveBody(false) {
-        static const size_t BUFFER_SIZE = 20000000;
+        static const size_t BUFFER_SIZE = 120000000;
         requestStr.reserve(BUFFER_SIZE);
         body.reserve(BUFFER_SIZE);
     }
@@ -31,7 +31,11 @@ Request::Request(const Request& copy)
     , chunkSize(copy.chunkSize)
     , chunkStart(copy.chunkStart)
     , haveHeader(copy.haveHeader)
-    , haveBody(copy.haveBody) {}
+    , haveBody(copy.haveBody) {
+        static const size_t BUFFER_SIZE = 120000000;
+        requestStr.reserve(BUFFER_SIZE);
+        body.reserve(BUFFER_SIZE);
+    }
 
 Request& Request::operator=(const Request& copy) {
 	requestStr = copy.requestStr;
