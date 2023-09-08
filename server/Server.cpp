@@ -78,17 +78,6 @@ int Server::createSocket() {
     return new_socket_fd;
 }
 
-void Server::waitEvents() {
-    const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-    IOchanges.clear();
-
-    if (events < 0) {
-        throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
-    }
-    for (int i = 0; i < events; ++i) {
-        handleEvent(IOevents[i]);
-    }
-}
 
 Server& Server::getInstance(const Config& config) {
 	if (instance == NULL) {

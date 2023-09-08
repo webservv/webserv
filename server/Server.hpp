@@ -54,6 +54,7 @@ std::pair<int, Router>  CreateSocketRouterPair(int sockfd, Server* server, \
                             const void* data);
     void                AddIOReadChange(uintptr_t ident);
     void                AddIOWriteChange(uintptr_t ident);
+    void                AddIOReadDelete(uintptr_t ident);
 };
 
 #endif
