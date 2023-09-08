@@ -101,6 +101,7 @@ void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
 	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
+
 	if (router.getHaveResponse())
 		return;
 	recvByte = recv(client_sockfd, buf.data(), DEBUG_BUFFER_SIZE, 0);
@@ -143,7 +144,7 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 void Server::waitEvents() {
     const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
     IOchanges.clear();
-std::cout << "events: " << events << std::endl;
+
     if (events < 0) {
         throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
     }
