@@ -26,10 +26,10 @@ Server* Server::instance = NULL;
 Server::Server():
     kqueueFd(NULL_FD),
     listenSockets(),
-	IOchanges(),
-	IOevents(EVENTS_SIZE),
-	clientSockets(),
-	pipes(),
+    IOchanges(),
+    IOevents(EVENTS_SIZE),
+    clientSockets(),
+    pipes(),
     cookies(),
     configs() {}
 
@@ -66,8 +66,8 @@ Server::Server(const Config& config):
 Server::Server(const Server& copy) { static_cast<void>(copy); }
 
 Server& Server::operator=(const Server& copy) {
-	static_cast<void>(copy);
-	return *this;
+    static_cast<void>(copy);
+    return *this;
 }
 
 Server::~Server() {
@@ -81,42 +81,42 @@ Server::~Server() {
 }
 
 void Server::addIOchanges(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata) {
-	struct kevent	newEvents;
+    struct kevent   newEvents;
 
-	EV_SET(&newEvents, ident, filter, flags, fflags, data, udata);
-	IOchanges.push_back(newEvents);
+    EV_SET(&newEvents, ident, filter, flags, fflags, data, udata);
+    IOchanges.push_back(newEvents);
 }
 
 in_addr_t Server::IPToInt(const std::string& ip) const {
-	in_addr_t	ret = 0;
-	int			tmp = 0;
-	int			bitShift = 0;
-	
-	for (size_t i = 0; i < ip.size(); i++) {
-		if (ip[i] == '.') {
-			ret += tmp << bitShift;
-			tmp = 0;
-			bitShift += 8;
-			continue;
-		}
-		tmp = tmp * 10 + ip[i] - '0';
-	}
-	ret += tmp << bitShift;
-	return ret;
+    in_addr_t   ret = 0;
+    int         tmp = 0;
+    int         bitShift = 0;
+    
+    for (size_t i = 0; i < ip.size(); i++) {
+        if (ip[i] == '.') {
+            ret += tmp << bitShift;
+            tmp = 0;
+            bitShift += 8;
+            continue;
+        }
+        tmp = tmp * 10 + ip[i] - '0';
+    }
+    ret += tmp << bitShift;
+    return ret;
 }
 
 Server& Server::getInstance(const Config& config) {
-	if (instance == NULL) {
-		instance = new Server(config);
-	}
-	return *instance;
+    if (instance == NULL) {
+        instance = new Server(config);
+    }
+    return *instance;
 }
 
 void Server::addPipes(const int writeFd, const int readFd, Router* const router) {
-	pipes[writeFd] = router;
-	pipes[readFd] = router;
-	addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    pipes[writeFd] = router;
+    pipes[readFd] = router;
+    addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    addIOchanges(readFd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 }
 
 void Server::addCookie(const std::string& key, const std::string& value) {

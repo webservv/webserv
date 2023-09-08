@@ -66,8 +66,8 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath) {
     closedir(dir);
     html += "</pre><hr></body></html>";
 
-	const std::string autoFile = '.' + directoryPath + "/" + "autoindex.html";
-    std::ofstream     outputFile(autoFile);
+	const std::string&  autoFile = '.' + directoryPath + "/" + "autoindex.html";
+    std::ofstream       outputFile(autoFile);
     if (outputFile.is_open()) {
         outputFile << html;
         outputFile.close();

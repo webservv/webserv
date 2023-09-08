@@ -135,18 +135,18 @@ void Router::validateContentType() {
     }
 }
 
-void Router::handleDirectory(std::string& replacedURL) {
+void Router::handleDirectory() {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
     const std::string& directoryPath = matchLocation ? matchLocation->getRoot() : config->getRoot();
     std::string testURL;
 
-    if (replacedURL.back() != '/')
-        replacedURL += "/";
+    if (configURL.back() != '/')
+        configURL += "/";
 
     for (size_t i = 0; i < indexFiles.size(); ++i) {
-        testURL = "." + replacedURL + indexFiles[i];
+        testURL = "." + configURL + indexFiles[i];
         if (access(testURL.c_str(), F_OK) == 0) {
-            configURL = replacedURL + indexFiles[i];
+            configURL = configURL + indexFiles[i];
             return ;
         }
     }
@@ -157,46 +157,41 @@ void Router::handleDirectory(std::string& replacedURL) {
         configURL = testURL.erase(0, 1);
 }
 
-void Router::replaceURL(std::string& UrlFromRequest) const {
+void Router::replaceURL(const std::string& UrlFromRequest) {
     if (matchLocation) {
-        if (matchLocation->getURL() == "/")
-            UrlFromRequest = "/" + UrlFromRequest;
         if (matchLocation->getURL().front() == '.') {
-            UrlFromRequest.assign(matchLocation->getCgiPath());
+            configURL = matchLocation->getCgiPath();
         }
         else {
+            configURL = UrlFromRequest;
+            if (matchLocation->getURL() == "/")
+                configURL = "/" + UrlFromRequest;
             if (matchLocation->getRoot().empty())
-                UrlFromRequest.replace(0, matchLocation->getURL().size(), config->getRoot());
+                configURL.replace(0, matchLocation->getURL().size(), config->getRoot());
             else 
-                UrlFromRequest.replace(0, matchLocation->getURL().size(), matchLocation->getRoot());
+                configURL.replace(0, matchLocation->getURL().size(), matchLocation->getRoot());
         }
     }
     else {
-        UrlFromRequest = config->getRoot() + UrlFromRequest;
+        configURL = config->getRoot() + UrlFromRequest;
     }
 }
 
-
 void Router::setConfigURL() {
-    std::string URL = request.getURL();
+    const std::string& URLFromRequest = request.getURL();
     std::string path;
-
-    getBestMatchURL(config->getLocations(), URL);
+    
+    getBestMatchURL(config->getLocations(), URLFromRequest);
     if (!matchLocation->getReturnURL().empty()) {
         configURL = matchLocation->getReturnURL();
         return ;
     }
-    replaceURL(URL);
-    path = '.' + URL;
-    if (access(path.c_str(), F_OK))
-        configURL = URL;
-    else if (URL.back() == '/' || isDirectory(path)) {
-        handleDirectory(URL);
-        if (configURL.empty())
-            configURL = URL;
-    }
-    else if (isRegularFile(path)){
-        configURL = URL;
+    replaceURL(URLFromRequest);
+    path = '.' + configURL;
+    if (access(path.c_str(), F_OK) || isRegularFile(path))
+        ;
+    else if (configURL.back() == '/' || isDirectory(path)) {
+        handleDirectory();
     }
     else
         throw ErrorException(404, "setConfigURL: not a file or directory");

@@ -62,8 +62,7 @@ void Server::bindSocket(const ServerConfig& server, int socket_fd) const {
 }
 
 void Server::listenSocket(int socket_fd) const {
-	if (listen(socket_fd, backlog) < 0) {
-		throw std::runtime_error("ERROR on listening");
-	}
+    if (listen(socket_fd, backlog) < 0) {
+        throw std::runtime_error("ERROR on listening");
+    }
 }
-

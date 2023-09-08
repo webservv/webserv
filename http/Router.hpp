@@ -72,8 +72,8 @@ private:
     void                makeCgiVariables(void);
     void                validateHeaderLength(void);
     void                validateContentType(void);
-    void                handleDirectory(std::string& UrlFromRequest);
-    void                replaceURL(std::string& UrlFromRequest) const;
+    void                handleDirectory(void);
+    void                replaceURL(const std::string& UrlFromRequest);
     void                setConfigURL(void);
     void                parseURL(void);
     std::string         intToIP(in_addr_t ip) const;

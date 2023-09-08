@@ -87,8 +87,8 @@ void Server::disconnect(const int client_sockfd) {
 // std::cout << std::endl;
 static size_t   num = 0;
 std::cout << "Send OK: " << ++num << std::endl;
-	close(client_sockfd);
-	clientSockets.erase(client_sockfd);
+    close(client_sockfd);
+    clientSockets.erase(client_sockfd);
 }
 
 // static void timeStamp(int i) {
@@ -99,7 +99,7 @@ std::cout << "Send OK: " << ++num << std::endl;
 
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
-	std::vector<char>   buf(DEBUG_BUFFER_SIZE);
+    std::vector<char>   buf(DEBUG_BUFFER_SIZE);
     Router&             router = clientSockets[client_sockfd];
 
 	if (router.getHaveResponse())
@@ -109,12 +109,12 @@ void Server::receiveBuffer(const int client_sockfd) {
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
     router.addRequest(buf);
-	if (router.isHeaderEnd()) {
+    if (router.isHeaderEnd()) {
         router.parseRequest();
-		if (router.isRequestEnd()) {
-			router.handleRequest();
+        if (router.isRequestEnd()) {
+            router.handleRequest();
         }
-	}
+    }
     if (router.isRequestEnd() || router.getHaveResponse()) {
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
         addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
@@ -123,17 +123,17 @@ void Server::receiveBuffer(const int client_sockfd) {
 
 void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
     Router&                     router = clientSockets[client_sockfd];
-	const std::vector<char>&    message = router.getResponse();
+    const std::vector<char>&    message = router.getResponse();
     const size_t                sentLength = router.getSentLength();
     const size_t                leftLength = message.size() - sentLength;
     size_t                      sendLength;
 
-	if (bufSize < static_cast<intptr_t>(leftLength))
+    if (bufSize < static_cast<intptr_t>(leftLength))
         sendLength = send(client_sockfd, message.data() + sentLength, bufSize, 0);
-	else
+    else
         sendLength = send(client_sockfd, message.data() + sentLength, leftLength, 0);
     if (sendLength < 0)
-		throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
+        throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
     if (sentLength + sendLength == message.size()) {
         disconnect(client_sockfd);
     }
