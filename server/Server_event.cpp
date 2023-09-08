@@ -58,13 +58,14 @@ void Server::handleSocketEvent(int socket_fd) {
 
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
     Router& tmp = *pipes[identifier];
+
     if (cur.flags & EV_EOF) {
         tmp.readFromCGI();
         tmp.disconnectCGI();
     } else if (cur.filter == EVFILT_READ) {
         tmp.readFromCGI();
     } else if (cur.filter == EVFILT_WRITE) {
-        tmp.writeToCGI(cur.data);
+        tmp.writeToCGI();
     }
 }
 
@@ -73,7 +74,7 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
         disconnect(identifier);
     } else if (cur.filter == EVFILT_READ) {
         receiveBuffer(identifier);
-    } else if (cur.filter == EVFILT_WRITE) {
+    } else if (cur.filter == EVFILT_WRITE && clientSockets[identifier].getHaveResponse()) {
         sendBuffer(identifier, cur.data);
     }
 }

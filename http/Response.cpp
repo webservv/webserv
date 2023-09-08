@@ -15,7 +15,6 @@
 #define CHILD_PID 0
 #define READ 0
 #define WRITE 1
-#define BUFFER_SIZE 1000000
 #define NULL_FD -1
 #define NULL_PID -1
 
@@ -238,39 +237,35 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 }
 
 void Response::readFromCGI(void) {
-	ssize_t				read_size;
+	static const size_t BUFFER_SIZE = 1000000;
+	ssize_t				readSize;
 	std::vector<char>	buf(BUFFER_SIZE);
 
-	read_size = read(readFD, buf.data(), BUFFER_SIZE);
-	if (read_size < 0)
+	readSize = read(readFD, buf.data(), BUFFER_SIZE);
+	if (readSize < 0)
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
-	buf.resize(read_size);
+	buf.resize(readSize);
 	response.insert(response.end(), buf.begin(), buf.end());
+std::cout << "readFromCGI total size: " << response.size() << std::endl;
 }
 
-void Response::writeToCGI(const intptr_t fdBufferSize) {
-	const intptr_t	bufSize = fdBufferSize < BUFFER_SIZE ? fdBufferSize : BUFFER_SIZE;
-	const size_t	leftSize = messageToCGI->size() - writtenCgiLength;
-	ssize_t			writeLength;
+void Response::writeToCGI(void) {
+	static const size_t	BUFFER_SIZE = 6500000;
+	const size_t		leftSize = messageToCGI->size() - writtenCgiLength;
+	ssize_t				writeLength;
 
 	if (leftSize == 0) {
 		close(writeFD);
 		writeFD = NULL_FD;
 		return;
 	}
-	if (leftSize <= static_cast<size_t>(bufSize)) {
-		writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, leftSize);
-		if (writeLength < 0)
-			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno)));
-	}
-	else {
-		writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, bufSize);
-		if (writeLength < 0)
-			throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno))); 
-	}
+	writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, BUFFER_SIZE);
+	if (writeLength < 0)
+		throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno)));
+std::cout << "writeToCGI leftSize: " << leftSize << std::endl;
 	if (writeLength + writtenCgiLength == messageToCGI->size()) {
-			close(writeFD);
-			writeFD = NULL_FD;
+		close(writeFD);
+		writeFD = NULL_FD;
 	}
 	else
 		writtenCgiLength += writeLength;
