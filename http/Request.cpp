@@ -101,18 +101,6 @@ void Request::addRequest(const std::vector<char>& input) {
     requestStr.insert(requestStr.end(), input.begin(), input.end());
 }
 
-bool Request::isHeaderEnd(void) {
-    if (haveHeader)
-        return true;
-    size_t pos = findHeaderEnd();
-    if (pos != std::string::npos) {
-        readPos = pos + 4;
-        return true;
-    } else {
-        return false;
-    }
-}
-
 bool Request::isRequestEnd(void) const {
     return haveHeader && haveBody;
 }

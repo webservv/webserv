@@ -109,9 +109,7 @@ public:
 	void				        handleRequest(void);
     const ServerConfig*         getConfig(void) const;
     const sockaddr_in&          getClientAddr(void) const;
-    bool                        isHeaderEnd(void);
     bool                        isRequestEnd(void) const;
-    void                        parseRequest(void);
     bool                        getHaveResponse(void) const;
     const std::vector<char>&    getRequest(void) const;
     const std::vector<char>&    getResponse(void) const;

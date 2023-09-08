@@ -26,6 +26,7 @@ private:
 	bool	getValueSize(const std::string& spacer);
     bool	splitHeader(const std::string& spacer);
 	bool	parseRequestLine(void);
+	void	toLower(const std::string& src, std::string& out) const;
 	bool	parseKeyValues(void);
 	void	parseHeader(void);
 	void	parseBody(void);
@@ -51,7 +52,6 @@ public:
 	const std::string&			getVersion(void) const;
 	const std::string&			findValue(const std::string& headerName) const;
 	void						addRequest(const std::vector<char>& input);
-    bool						isHeaderEnd(void);
 	bool						isRequestEnd(void) const;
 };
 

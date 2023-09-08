@@ -73,7 +73,7 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
         disconnect(identifier);
     } else if (cur.filter == EVFILT_READ) {
         receiveBuffer(identifier);
-    } else if (cur.filter == EVFILT_WRITE && clientSockets[identifier].getHaveResponse()) {
+    } else if (cur.filter == EVFILT_WRITE) {
         sendBuffer(identifier, cur.data);
     }
 }
@@ -109,12 +109,8 @@ void Server::receiveBuffer(const int client_sockfd) {
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
     buf.resize(recvByte);
     router.addRequest(buf);
-    if (router.isHeaderEnd()) {
-        router.parseRequest();
-        if (router.isRequestEnd()) {
-            router.handleRequest();
-        }
-    }
+    if (router.isRequestEnd())
+        router.handleRequest();
     if (router.isRequestEnd() || router.getHaveResponse()) {
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
         addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);

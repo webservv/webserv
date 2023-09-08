@@ -41,6 +41,7 @@ bool Request::splitHeader(const std::string& spacer) {
     start = requestStr.begin() + valueStart;
     end = start +copySize;
     valueBuffer.assign(start, end);
+    valueStart = readPos;
     return true;
 }
 
@@ -52,7 +53,6 @@ bool Request::parseRequestLine() {
             throw Router::ErrorException(400, "parseRequestLine: invalid request");
         values["method"] = valueBuffer;
         valueBuffer.clear();
-        valueStart = readPos;
     }
     if (values.find("url") == values.end()) {
         if (!splitHeader(" "))
@@ -61,20 +61,29 @@ bool Request::parseRequestLine() {
             throw Router::ErrorException(400, "parseRequestLine: invalid request");
         values["url"] = valueBuffer;
         valueBuffer.clear();
-        valueStart = readPos;
     }
     if (values.find("version") == values.end()) {
         if (!splitHeader("\r\n"))
             return false;
         values["version"] = valueBuffer;
         valueBuffer.clear();
-        valueStart = readPos;
     }
     return true;
 }
 
+void Request::toLower(const std::string& src, std::string& out) const {
+    out.reserve(src.size());
+    for (size_t i = 0; i < src.size(); ++i) {
+        if (src[i] >= 'A' && src[i] <= 'Z')
+            out.push_back(src[i] + 32);
+        else
+            out.push_back(src[i]);
+    }
+}
+
 bool Request::parseKeyValues(void) {
-    size_t  spacer;
+    size_t      spacer;
+    std::string key;
 
     while (splitHeader("\r\n")) {
         if (valueBuffer.empty())
@@ -82,14 +91,20 @@ bool Request::parseKeyValues(void) {
         spacer = valueBuffer.find(':');
         if (spacer == std::string::npos)
             throw Router::ErrorException(400, "parseKeyValues: missing ':'");
-        values[valueBuffer.substr(0, spacer)] = valueBuffer.substr(spacer + 2, -1);
+        toLower(valueBuffer.substr(0, spacer), key);
+        if (key.empty())
+            throw Router::ErrorException(400, "parseKeyValues: empty header key");
+        if (values.find(key) == values.end())
+            values[key] = valueBuffer.substr(spacer + 2, -1);
+        else
+            values[key] += ", " + valueBuffer.substr(spacer + 2, -1);
+        valueBuffer.clear();
+        key.clear();
     }
     return false;
 }
 
 void Request::parseHeader(void) {
-    if (haveHeader)
-        return;
     if (!parseRequestLine())
         return;
     if (!parseKeyValues())
@@ -199,6 +214,7 @@ void Request::parseChunkedBody(void) {
 }
 
 void Request::parse() {
-    parseHeader();
+    if (!haveHeader)
+        parseHeader();
     parseBody();
 }

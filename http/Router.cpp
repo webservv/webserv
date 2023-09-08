@@ -204,22 +204,8 @@ const sockaddr_in& Router::getClientAddr(void) const {
 	return clientAddr;
 }
 
-bool Router::isHeaderEnd(void) {
-	return request.isHeaderEnd();
-}
-
 bool Router::isRequestEnd() const {
 	return request.isRequestEnd();
-}
-
-void Router::parseRequest(void) {
-	try {
-    	request.parse();
-	}
-	catch (Router::ErrorException& e) {
-		std::cerr << e.what() << std::endl;
-		makeErrorResponse(e.getErrorCode());
-	}
 }
 
 bool Router::getHaveResponse(void) const {
@@ -243,7 +229,14 @@ void Router::setSentLength(const size_t size) {
 }
 
 void Router::addRequest(const std::vector<char>& input) {
-	this->request.addRequest(input);
+	try {
+		request.addRequest(input);
+    	request.parse();
+	}
+	catch (Router::ErrorException& e) {
+		std::cerr << e.what() << std::endl;
+		makeErrorResponse(e.getErrorCode());
+	}
 }
 
 void Router::setResponse(const std::vector<char>& src) {
