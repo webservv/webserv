@@ -18,7 +18,6 @@ private:
 	size_t								readPos;
 	size_t								chunkSize;
 	size_t								valueStart;
-	bool								isLineEnd;
 	bool								haveHeader;
 	bool								haveBody;
 //Reqeust_parse.cpp

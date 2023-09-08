@@ -49,16 +49,12 @@ bool Request::parseRequestLine() {
     if (values.find("method") == values.end()) {
         if (!splitHeader(" "))
             return false;
-        if (isLineEnd)
-            throw Router::ErrorException(400, "parseRequestLine: invalid request");
         values["method"] = valueBuffer;
         valueBuffer.clear();
     }
     if (values.find("url") == values.end()) {
         if (!splitHeader(" "))
             return false;
-        if (isLineEnd)
-            throw Router::ErrorException(400, "parseRequestLine: invalid request");
         values["url"] = valueBuffer;
         valueBuffer.clear();
     }
