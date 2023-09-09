@@ -11,18 +11,17 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <fcntl.h>
 #include "Router.hpp"
 #define CHILD_PID 0
 #define READ 0
 #define WRITE 1
 #define NULL_FD -1
 #define NULL_PID -1
-
 static const size_t	BUFS = 120000000;
 
 Response::Response():
 	response(),
-	messageFromCGI(),
 	messageToCGI(NULL),
 	writtenCgiLength(0),
 	sentLenghth(0),
@@ -30,12 +29,10 @@ Response::Response():
 	readFD(NULL_FD),
 	cgiPid(NULL_PID) {
 		response.reserve(BUFS);
-		messageFromCGI.reserve(BUFS);
 	}
 
 Response::Response(const Response& copy):
 	response(copy.response),
-	messageFromCGI(),
 	messageToCGI(copy.messageToCGI),
 	writtenCgiLength(copy.writtenCgiLength),
 	sentLenghth(copy.writtenCgiLength),
@@ -43,12 +40,10 @@ Response::Response(const Response& copy):
 	readFD(copy.readFD),
 	cgiPid(copy.cgiPid) {
 		response.reserve(BUFS);
-		messageFromCGI.reserve(BUFS);
 	}
 
 Response& Response::operator=(const Response& copy) {
 	response = copy.response;
-	messageFromCGI = copy.messageFromCGI;
 	messageToCGI = copy.messageToCGI;
 	writtenCgiLength = copy.writtenCgiLength;
 	sentLenghth = copy.sentLenghth;
@@ -103,40 +98,6 @@ char** Response::makeEnvList(std::map<std::string, std::string>& envs) const {
 
 void Response::addResponse(std::vector<char>& src, const std::string& str) {
 	src.insert(src.end(), str.begin(), str.end());
-}
-
-void Response::checkCgiResponse(void) {
-	std::string header;
-	size_t		bodyPos = messageFromCGI.size();
-
-	for (size_t i = 0; i < messageFromCGI.size() - 3; ++i) {
-		if (messageFromCGI[i] == '\r' && messageFromCGI[i + 1] == '\n' && messageFromCGI[i + 2] == '\r' && messageFromCGI[i + 3] == '\n') {
-			bodyPos = i + 4;
-			header.assign(messageFromCGI.begin(), messageFromCGI.begin() + i);
-			if (findIgnoreCase(header, "content-length") != std::string::npos) {
-				return;
-			}
-			break;
-		}
-	}
-	if (bodyPos >= messageFromCGI.size())
-		return;
-	addCgiContentLength(messageFromCGI.size() - bodyPos);
-}
-//WIP
-void Response::addCgiContentLength(const size_t size) {
-	std::string			contentLength = "Content-Length";
-	std::string			strSize;
-	std::stringstream	ss;
-	std::vector<char>	newResponse;	
-
-	ss << size;
-	ss >> strSize;
-	contentLength += ": " + strSize + "\r\n";
-	newResponse.reserve(contentLength.size() + messageFromCGI.size());
-	newResponse.insert(newResponse.end(), contentLength.begin(), contentLength.end());
-	newResponse.insert(newResponse.end(), messageFromCGI.begin(), messageFromCGI.end());
-	messageFromCGI.swap(newResponse);
 }
 
 size_t Response::findIgnoreCase(const std::string& src, const std::string& find) const {
@@ -212,7 +173,7 @@ void Response::setResponse(const std::vector<char> &src) {
 void Response::setMessageToCGI(const std::vector<char> &src) {
 	messageToCGI = &src;
 }
-#include <fcntl.h>
+
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
@@ -241,14 +202,13 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 }
 
 void Response::readFromCGI(void) {
-	static const size_t BUFFER_SIZE = 1000000;
-	ssize_t				readSize;
-	std::vector<char>	buf(BUFFER_SIZE);
+	ssize_t	readSize;
+	Buffer	buf;
 
-	readSize = read(readFD, buf.data(), BUFFER_SIZE);
+	readSize = read(readFD, buf.begin(), buf.getSafeSize(1000000));
 	if (readSize < 0)
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
-	buf.resize(readSize);
+	buf.setSize(readSize);
 	response.insert(response.end(), buf.begin(), buf.end());
 }
 

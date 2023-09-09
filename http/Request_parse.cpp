@@ -216,7 +216,6 @@ void Request::parseChunkedBody(void) {
         body.push_back(*start);
         ++start;
     }
-std::cout << "bodySize: " << body.size() << std::endl;
     skipCRLF();
 }
 

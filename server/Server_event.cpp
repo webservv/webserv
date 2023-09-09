@@ -74,7 +74,6 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
 
 void Server::handleIOEvent(int identifier, const struct kevent& cur) {
     if (cur.flags & EV_EOF) {
-std::cout << "EOF disconnect" << std::endl;
         disconnect(identifier);
     } else if (cur.filter == EVFILT_READ) {
         receiveBuffer(identifier);
@@ -109,7 +108,7 @@ void Server::receiveBuffer(const int client_sockfd) {
 	recvByte = recv(client_sockfd, buf.begin(), buf.getSafeSize(DEBUG_BUFFER_SIZE), 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-std::cout << "recvByte: " << recvByte << std::endl;
+// std::cout << "recvByte: " << recvByte << std::endl;
     buf.setSize(recvByte);
     router.addRequest(buf);
     if (router.isRequestEnd()) {
@@ -136,8 +135,6 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
     if (sendLength < 0)
         throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
     if (sentLength + sendLength == message.size()) {
-std::cout << "sendMessage size: " << message.size() << std::endl;
-std::cout << "sendBuffer disconnect" << std::endl;
         disconnect(client_sockfd);
     }
     else

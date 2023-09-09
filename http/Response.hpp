@@ -4,10 +4,11 @@
 #include <map>
 #include <vector>
 
+#include "Buffer.hpp"
+
 class Response {
 private:
 	std::vector<char>			response;
-	std::vector<char>			messageFromCGI;
 	const std::vector<char>*	messageToCGI;
 	size_t						writtenCgiLength;
 	size_t						sentLenghth;
@@ -24,9 +25,7 @@ private:
 	void	bootCGI(int readPipe[2], int writePipe[2], std::map<std::string, std::string>& envs) const;
 	char**	makeEnvList(std::map<std::string, std::string>& envs) const;
 	void	addResponse(std::vector<char>& src, const std::string& str);
-	void	checkCgiResponse(void);
 	size_t	findIgnoreCase(const std::string& src, const std::string& find) const;
-	void	addCgiContentLength(const size_t size);
 public:
 	void						makeStatusLine(const std::string& version, const std::string& statusCode, const std::string& statusMessage);
 	void						makeHeader(const std::string& key, const std::string& value);
