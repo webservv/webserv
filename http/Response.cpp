@@ -212,7 +212,7 @@ void Response::setResponse(const std::vector<char> &src) {
 void Response::setMessageToCGI(const std::vector<char> &src) {
 	messageToCGI = &src;
 }
-
+#include <fcntl.h>
 void Response::connectCGI(std::map<std::string, std::string>& envs) {
 	int		readPipe[2];
 	int		writePipe[2];
@@ -225,6 +225,10 @@ void Response::connectCGI(std::map<std::string, std::string>& envs) {
 		throw Router::ErrorException(500, "connectCGI1: " + std::string(strerror(errno)));
 	if (pipe(readPipe) < 0 || pipe(writePipe) < 0)
 		throw Router::ErrorException(500, "connectCGI2: " + std::string(strerror(errno)));
+	if (fcntl(readPipe[READ], F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0 ||
+		fcntl(writePipe[WRITE], F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0) {
+		throw Router::ErrorException(500, "connectCGI: " + std::string(strerror(errno)));
+	}
 	cgiPid = fork();
 	if (cgiPid < 0)
 		throw Router::ErrorException(500, "connectCGI3: " + std::string(strerror(errno)));
