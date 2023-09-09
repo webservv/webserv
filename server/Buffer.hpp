@@ -18,6 +18,7 @@ public:
 public:
 	const char*	getBuf(void) const;
 	size_t		getSize(void) const;
+	size_t		getSafeSize(const size_t demandedSize) const;
 	void		setSize(const size_t newSize);
 	char*		begin(void);
 	const char*	begin(void) const;

@@ -25,6 +25,12 @@ size_t Buffer::getSize(void) const {
 	return size;
 }
 
+size_t Buffer::getSafeSize(const size_t demandedSize) const {
+	if (demandedSize < capacity)
+		return demandedSize;
+	return capacity;
+}
+
 void Buffer::setSize(const size_t newSize) {
 	size = newSize;
 }
