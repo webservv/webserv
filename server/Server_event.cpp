@@ -16,6 +16,7 @@
 #include <sys/_types/_uintptr_t.h>
 #include <sys/event.h>
 #include <sys/fcntl.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
@@ -41,6 +42,7 @@ void Server::handleSocketEvent(int socket_fd) {
     sockaddr_in         client_addr;
     socklen_t           client_len = sizeof(client_addr);
     static const size_t MAX_CLIENT_NUM = 3;
+    struct linger       opt = {1, 0};
 
     if (clientSockets.size() > MAX_CLIENT_NUM)
         return;
@@ -48,7 +50,8 @@ void Server::handleSocketEvent(int socket_fd) {
     if (client_sockfd < 0) {
         throw std::runtime_error("ERROR on accept");
     }
-
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, &opt, sizeof(opt)) < 0)
+        throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
@@ -71,6 +74,7 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
 
 void Server::handleIOEvent(int identifier, const struct kevent& cur) {
     if (cur.flags & EV_EOF) {
+std::cout << "EOF disconnect" << std::endl;
         disconnect(identifier);
     } else if (cur.filter == EVFILT_READ) {
         receiveBuffer(identifier);
@@ -80,14 +84,9 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 }
 
 void Server::disconnect(const int client_sockfd) {
-// const std::vector<char>&    response = clientSockets[client_sockfd].getResponse();
-// const size_t                size = (response.size() < 500) ? response.size() : 500;
-// for (size_t i = 0; i < size; ++i) {
-//     std::cout << response[i];
-// }
-// std::cout << std::endl;
 static size_t   num = 0;
-std::cout << "Send OK: " << ++num << std::endl;
+
+std::cout << "disconnect: " << ++num << std::endl;
     close(client_sockfd);
     clientSockets.erase(client_sockfd);
 }
@@ -107,13 +106,15 @@ void Server::receiveBuffer(const int client_sockfd) {
 
 	if (router.getHaveResponse())
 		return;
-	recvByte = recv(client_sockfd, buf.begin(), DEBUG_BUFFER_SIZE, 0);
+	recvByte = recv(client_sockfd, buf.begin(), buf.getSafeSize(DEBUG_BUFFER_SIZE), 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
+std::cout << "recvByte: " << recvByte << std::endl;
     buf.setSize(recvByte);
     router.addRequest(buf);
-    if (router.isRequestEnd())
+    if (router.isRequestEnd()) {
         router.handleRequest();
+    }
     if (router.isRequestEnd() || router.getHaveResponse()) {
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
         addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
@@ -131,9 +132,12 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
         sendLength = send(client_sockfd, message.data() + sentLength, bufSize, 0);
     else
         sendLength = send(client_sockfd, message.data() + sentLength, leftLength, 0);
+// std::cout << "sendSize: " << sendLength << std::endl;
     if (sendLength < 0)
         throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
     if (sentLength + sendLength == message.size()) {
+std::cout << "sendMessage size: " << message.size() << std::endl;
+std::cout << "sendBuffer disconnect" << std::endl;
         disconnect(client_sockfd);
     }
     else
@@ -142,8 +146,8 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
 
 void Server::waitEvents() {
     const int events = kevent(kqueueFd, &IOchanges[0], IOchanges.size(), &IOevents[0], IOevents.size(), NULL);
-    IOchanges.clear();
 
+    IOchanges.clear();
     if (events < 0) {
         throw std::runtime_error("kevent error: " + std::string(strerror(errno)));
     }

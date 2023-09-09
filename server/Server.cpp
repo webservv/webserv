@@ -113,7 +113,6 @@ Server& Server::getInstance(const Config& config) {
 }
 
 void Server::addPipes(const int writeFd, const int readFd, Router* const router) {
-std::cout << "addPipes: " << router << std::endl;
     pipes[writeFd] = router;
     pipes[readFd] = router;
     addIOchanges(writeFd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
