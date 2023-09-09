@@ -52,7 +52,7 @@ void Server::handleSocketEvent(int socket_fd) {
     }
     if (setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, &opt, sizeof(opt)) < 0)
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
-    if (fcntl(client_sockfd, F_SETFL, fcntl(client_sockfd, F_GETFL, 0) | O_NONBLOCK) < 0) {
+    if (fcntl(client_sockfd, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
     addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
