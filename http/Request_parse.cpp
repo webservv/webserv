@@ -119,8 +119,10 @@ void Request::parseHeader(void) {
 void Request::parseBody(void) {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
     if (it != values.end() && it->second == "chunked") {
-        while (readPos != requestStr.size())
+        while (readPos != requestStr.size() && !haveBody) {
+            skipCRLF();
             parseChunkedBody();
+        }
         }
     else {
         std::vector<char>::iterator st = requestStr.begin() + readPos;
@@ -150,24 +152,30 @@ size_t Request::hexToDecimal(char digit) const {
 }
 
 void Request::skipCRLF(void) {
-    if (requestStr.size() - readPos >= 2) {
-        if (requestStr[readPos] == '\r' && requestStr[readPos + 1] == '\n')
-            readPos += 2;
+    for (; readPos < requestStr.size(); ++readPos) {
+        if (requestStr[readPos] != '\r' && requestStr[readPos] != '\n')
+            return;
     }
 }
 
 bool Request::parseChunkSize(void) {
     size_t  hexDigit;
+    bool    find = false;
 
     for (; readPos < requestStr.size() - 1; ++readPos) {
-        if ((requestStr[readPos] == '\r' && requestStr[readPos + 1] == '\n')) {
+        if (!find && (requestStr[readPos] == '\r' || requestStr[readPos] == '\n'))
+            continue;
+        if (requestStr[readPos] == '\r' && requestStr[readPos + 1] == '\n') {
             readPos += 2;
             valueStart = readPos;
+std::cout << "final chunkSize: " << chunkSize << std::endl;
             return true;
         }
         hexDigit = hexToDecimal(requestStr[readPos]);
-        if (hexDigit == static_cast<size_t>(-1))
+        if (hexDigit == static_cast<size_t>(-1)) {
             throw Router::ErrorException(400, "parseChunkSize: invalid chunk size");
+        }
+        find = true;
         chunkSize =  chunkSize * 16 + hexDigit;
     }
     return false;
@@ -180,8 +188,11 @@ void Request::parseChunkedBody(void) {
     std::vector<char>::const_iterator   end;
 
     if (chunkSize == 0) {
-        if (!parseChunkSize())
+        if (!parseChunkSize()) {
             return;
+        }
+        if (chunkSize == 0) {
+        }
     }
     if (chunkSize == 0) {
         skipCRLF();
@@ -201,12 +212,16 @@ void Request::parseChunkedBody(void) {
     }
     start = requestStr.begin() + valueStart;
     end = start + copySize;
+    valueStart += copySize; //WIP
     body.insert(body.end(), start, end);
     skipCRLF();
 }
 
 void Request::parse() {
-    if (!haveHeader)
+    if (!haveHeader) {
         parseHeader();
-    parseBody();
+    }
+    if (haveHeader) {
+        parseBody();
+    }
 }
