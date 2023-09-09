@@ -97,7 +97,7 @@ const std::string& Request::findValue(const std::string& headerName) const {
     return emptyString;
 }
 
-void Request::addRequest(const std::vector<char>& input) {
+void Request::addRequest(const Buffer& input) {
     requestStr.insert(requestStr.end(), input.begin(), input.end());
 }
 

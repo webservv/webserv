@@ -228,7 +228,15 @@ void Router::setSentLength(const size_t size) {
 	response.setSentLength(size);
 }
 
-void Router::addRequest(const std::vector<char>& input) {
+// #include <sys/time.h>
+// static void timeStamp(const std::string& str) {
+//     timeval currentTime;
+//     gettimeofday(&currentTime, NULL);
+//     long milliseconds = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+//     std::cout << str << ": " << milliseconds << std::endl;
+// }
+
+void Router::addRequest(const Buffer& input) {
 	try {
 		request.addRequest(input);
     	request.parse();

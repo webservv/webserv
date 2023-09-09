@@ -9,6 +9,8 @@
 #include <cctype>
 #include <string>
 
+#include "Buffer.hpp"
+
 class Request {
 private:
 	std::vector<char>					requestStr;
@@ -50,7 +52,7 @@ public:
 	const std::vector<char>&	getBody(void) const;
 	const std::string&			getVersion(void) const;
 	const std::string&			findValue(const std::string& headerName) const;
-	void						addRequest(const std::vector<char>& input);
+	void						addRequest(const Buffer& input);
 	bool						isRequestEnd(void) const;
 };
 

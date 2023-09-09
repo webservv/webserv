@@ -1,10 +1,6 @@
 #ifndef ROUTER_HPP
 #define ROUTER_HPP
 
-#include "Request.hpp"
-#include "Response.hpp"
-#include "Config.hpp"
-
 #include <exception>
 #include <netinet/in.h>
 #include <string>
@@ -12,6 +8,11 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Config.hpp"
+#include "Buffer.hpp"
 
 static const std::string    CGI_PATH = "./document/cgi";
 
@@ -115,7 +116,7 @@ public:
     const std::vector<char>&    getResponse(void) const;
     size_t                      getSentLength(void) const;
     void                        setSentLength(const size_t size);
-    void                        addRequest(const std::vector<char>& input);
+    void                        addRequest(const Buffer& input);
     void                        setResponse(const std::vector<char>& src);
     void                        readFromCGI(void);
     void                        writeToCGI(const intptr_t fdBufferSize);

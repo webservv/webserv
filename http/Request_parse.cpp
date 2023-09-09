@@ -108,10 +108,12 @@ void Request::parseHeader(void) {
     haveHeader = true;
 }
 
-// static void timeStamp(int i) {
-//     std::time_t Time = std::time(NULL);
-//     std::string timeStr = std::ctime(&Time);
-//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+// #include <sys/time.h>
+// static void timeStamp(const std::string& str) {
+//     timeval currentTime;
+//     gettimeofday(&currentTime, NULL);
+//     long milliseconds = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+//     std::cout << str << ": " << milliseconds << std::endl;
 // }
 
 void Request::parseBody(void) {
@@ -170,12 +172,6 @@ bool Request::parseChunkSize(void) {
     }
     return false;
 }
-
-// static void timeStamp(int i) {
-//     std::time_t Time = std::time(NULL);
-//     std::string timeStr = std::ctime(&Time);
-//     std::cout << "Time" << i << " : " << timeStr << std::endl;
-// }
 
 void Request::parseChunkedBody(void) {
     size_t                              copySize;
