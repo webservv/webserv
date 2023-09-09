@@ -162,21 +162,21 @@ bool Request::parseChunkSize(void) {
     size_t  hexDigit;
     bool    find = false;
 
-    for (; readPos < requestStr.size() - 1; ++readPos) {
+    for (; readPos < requestStr.size(); ++readPos) {
         if (!find && (requestStr[readPos] == '\r' || requestStr[readPos] == '\n'))
             continue;
-        if (requestStr[readPos] == '\r' && requestStr[readPos + 1] == '\n') {
-            readPos += 2;
-            valueStart = readPos;
-std::cout << "final chunkSize: " << chunkSize << std::endl;
-            return true;
-        }
         hexDigit = hexToDecimal(requestStr[readPos]);
         if (hexDigit == static_cast<size_t>(-1)) {
+            if (find) {
+                return true;
+            }
             throw Router::ErrorException(400, "parseChunkSize: invalid chunk size");
         }
         find = true;
         chunkSize =  chunkSize * 16 + hexDigit;
+    }
+    if (find) {
+        return true;
     }
     return false;
 }
@@ -191,18 +191,17 @@ void Request::parseChunkedBody(void) {
         if (!parseChunkSize()) {
             return;
         }
-        if (chunkSize == 0) {
-        }
+        skipCRLF();
     }
     if (chunkSize == 0) {
-        skipCRLF();
         haveBody = true;
         return;
     }
+    valueStart = readPos;
     bodySize = requestStr.size() - valueStart;
     if (bodySize < chunkSize) {
         copySize = bodySize;
-        readPos = requestStr.size();
+        readPos += bodySize;
         chunkSize -= bodySize;
     }
     else {
@@ -213,7 +212,11 @@ void Request::parseChunkedBody(void) {
     start = requestStr.begin() + valueStart;
     end = start + copySize;
     valueStart += copySize; //WIP
-    body.insert(body.end(), start, end);
+    while (start != end && *start != '\r') {
+        body.push_back(*start);
+        ++start;
+    }
+std::cout << "bodySize: " << body.size() << std::endl;
     skipCRLF();
 }
 

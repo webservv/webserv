@@ -117,7 +117,7 @@ std::cout << "recvByte: " << recvByte << std::endl;
     }
     if (router.isRequestEnd() || router.getHaveResponse()) {
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-        addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+        // addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
     }
 }
 
