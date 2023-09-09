@@ -173,7 +173,6 @@ void Router::handleRedirect(const std::string& url) {
 
 void Router::handleRequest() {
     const std::string& method = request.getMethod();
-	
 	try {
 		setConfigURL();
         if (!matchLocation->getReturnURL().empty()) {
