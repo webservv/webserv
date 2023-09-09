@@ -253,9 +253,9 @@ void Router::readFromCGI(void) {
 	}
 }
 
-void Router::writeToCGI(void) {
+void Router::writeToCGI(const intptr_t fdBufferSize) {
 	try {
-		response.writeToCGI();
+		response.writeToCGI(fdBufferSize);
 	}
 	catch (Router::ErrorException& e) {
 		std::cerr << e.what() << std::endl;

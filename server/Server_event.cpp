@@ -65,7 +65,7 @@ void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
     } else if (cur.filter == EVFILT_READ) {
         tmp.readFromCGI();
     } else if (cur.filter == EVFILT_WRITE) {
-        tmp.writeToCGI();
+        tmp.writeToCGI(cur.data);
     }
 }
 

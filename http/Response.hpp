@@ -40,7 +40,7 @@ public:
 	void						setMessageToCGI(const std::vector<char>& src);
 	void						connectCGI(std::map<std::string, std::string>& envs);
 	void						readFromCGI(void);
-	void						writeToCGI(void);
+	void						writeToCGI(const intptr_t fdBufferSize);
 	void						disconnectCGI(void);
 	void						endResponse(void);
 };

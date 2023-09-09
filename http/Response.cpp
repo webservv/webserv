@@ -246,12 +246,11 @@ void Response::readFromCGI(void) {
 		throw Router::ErrorException(500, "readCGI: " + std::string(strerror(errno)));
 	buf.resize(readSize);
 	response.insert(response.end(), buf.begin(), buf.end());
-std::cout << "readFromCGI total size: " << response.size() << std::endl;
 }
 
-void Response::writeToCGI(void) {
-	static const size_t	BUFFER_SIZE = 6500000;
+void Response::writeToCGI(const intptr_t fdBufferSize) {
 	const size_t		leftSize = messageToCGI->size() - writtenCgiLength;
+	const size_t		bufferSize = leftSize <= static_cast<size_t>(fdBufferSize) ? leftSize : fdBufferSize;
 	ssize_t				writeLength;
 
 	if (leftSize == 0) {
@@ -259,10 +258,9 @@ void Response::writeToCGI(void) {
 		writeFD = NULL_FD;
 		return;
 	}
-	writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, BUFFER_SIZE);
+	writeLength = write(writeFD, messageToCGI->data() + writtenCgiLength, bufferSize);
 	if (writeLength < 0)
-		throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno)));
-std::cout << "writeToCGI leftSize: " << leftSize << std::endl;
+		throw Router::ErrorException(500, "writeCGI: " + std::string(strerror(errno))); 
 	if (writeLength + writtenCgiLength == messageToCGI->size()) {
 		close(writeFD);
 		writeFD = NULL_FD;

@@ -118,7 +118,7 @@ public:
     void                        addRequest(const std::vector<char>& input);
     void                        setResponse(const std::vector<char>& src);
     void                        readFromCGI(void);
-    void                        writeToCGI(void);
+    void                        writeToCGI(const intptr_t fdBufferSize);
     void                        disconnectCGI(void);
     int                         getWriteFD(void) const;
     int                         getReadFD(void) const;
