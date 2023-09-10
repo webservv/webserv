@@ -9,40 +9,32 @@
 #include <cctype>
 #include <string>
 
+#include "Buffer.hpp"
+
 class Request {
-public:
-	enum METHOD {
-		GET,
-		POST,
-		DELETE,
-		PUT,
-		OTHER
-	};
 private:
 	std::vector<char>					requestStr;
-	std::queue<std::string>				requestLines;
-	METHOD								method;
 	std::map<std::string, std::string>	values;
 	std::vector<char>					body;
-	size_t								bodyPos;
+	std::string							valueBuffer;
+	size_t								readPos;
 	size_t								chunkSize;
-	size_t								chunkStart;
+	size_t								valueStart;
 	bool								haveHeader;
 	bool								haveBody;
 //Reqeust_parse.cpp
 private:
-    void	parseMethod(std::string& line);
-    void	parseURL(const std::string& line);
-    void	parseVersion(const std::string& line, const size_t space);
+	bool	getValueSize(const std::string& spacer);
+    bool	splitHeader(const std::string& spacer);
+	bool	parseRequestLine(void);
+	void	toLower(const std::string& src, std::string& out) const;
+	bool	parseKeyValues(void);
+	void	parseHeader(void);
 	void	parseBody(void);
-    void	addRequestLines(void);
 	void	skipCRLF(void);
 	size_t	hexToDecimal(char digit) const;
 	bool	parseChunkSize(void);
     void	parseChunkedBody(void);
-	void	parseRequestLine(void);
-	void	parseKeyValues(void);
-	void	parseHeader(void);
 public:
     void	parse(void);
 //Request.cpp
@@ -54,15 +46,13 @@ public:
 private:
 	size_t	findHeaderEnd(void) const;
 public:
-	Request::METHOD				getMethod(void) const;
 	const std::vector<char>&	getRequestStr(void) const;
-	const std::string&			getStrMethod(void) const;
+	const std::string&			getMethod(void) const;
 	const std::string&			getURL(void) const;
 	const std::vector<char>&	getBody(void) const;
 	const std::string&			getVersion(void) const;
 	const std::string&			findValue(const std::string& headerName) const;
-	void						addRequest(const std::vector<char>& input);
-    bool						isHeaderEnd(void);
+	void						addRequest(const Buffer& input);
 	bool						isRequestEnd(void) const;
 };
 
