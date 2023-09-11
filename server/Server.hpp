@@ -15,6 +15,7 @@
 #include <map>
 #include "Router.hpp"
 #include "Config.hpp"
+#include "Buffer.hpp"
 
 class Server
 {

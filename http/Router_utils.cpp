@@ -82,7 +82,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_HOST"] = request.findValue("REMOTE_HOST");
     CgiVariables["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
-    CgiVariables["REQUEST_METHOD"] = request.getStrMethod();
+    CgiVariables["REQUEST_METHOD"] = request.getMethod();
     CgiVariables["SERVER_NAME"] = config->getServerName();
     CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
@@ -268,7 +268,7 @@ void Router::getBestMatchURL(
         }
         else if (!extension.empty() && extension == url) {
             const std::vector<std::string>& methodLimit = it->getCgiLimit();
-            if (std::find(methodLimit.begin(), methodLimit.end(), request.getStrMethod()) == methodLimit.end())
+            if (std::find(methodLimit.begin(), methodLimit.end(), request.getMethod()) == methodLimit.end())
                 continue;
             matchLocation = &(*it);
             return;

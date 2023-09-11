@@ -10,89 +10,134 @@
 
 static const std::string POST_URL = "/cgi/index.php";
 
-void Request::parseMethod(std::string& line) {
-    size_t space = line.find(' ');
-    if (space == std::string::npos) {
-        throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
+bool Request::getValueSize(const std::string& spacer) {
+    const size_t    searchSize = requestStr.size() - (spacer.size() - 1);
+    size_t          count;
+
+    for (size_t i = readPos; i < searchSize; ++i) {
+        count = 0;
+        for (size_t j = 0; j < spacer.size(); ++j) {
+            if (spacer[j] != requestStr[i + j])
+                break;
+            ++count;
+        }
+        if (count == spacer.size()) {
+            readPos = i;
+            return true;
+        }
     }
-    std::string methodString = line.substr(0, space);
-    line = line.substr(space + 1);
-    if (methodString == "GET") {
-        method = GET;
-    }
-    else if (methodString == "POST") {
-        method = POST;
-    }
-    else if (methodString == "DELETE") {
-        method = DELETE;
-    }
-    else if (methodString == "PUT") {
-        method = PUT;
-    }
-    else {
-        method = OTHER;
-        throw Router::ErrorException(405, "invalid http, request line! Unsupported method: " + methodString);
-    }
-    values["method"] = methodString;
+    return false;
 }
 
-void Request::parseURL(const std::string& line) {
-    const size_t space = line.find(' ');
-    if (space == std::string::npos) {
-        throw Router::ErrorException(400, "invalid http, request line! Missing or misplaced space");
-    }
-    values["url"] = line.substr(0, space);
+bool Request::splitHeader(const std::string& spacer) {
+    size_t                      copySize;
+    std::string::const_iterator start;
+    std::string::const_iterator end;
+
+    if (!getValueSize(spacer))
+        return false;
+    copySize = readPos - valueStart;
+    readPos += spacer.size();
+    start = requestStr.begin() + valueStart;
+    end = start +copySize;
+    valueBuffer.assign(start, end);
+    valueStart = readPos;
+    return true;
 }
 
-void Request::parseVersion(const std::string& line, const size_t space) {
-    values["version"] = line.substr(space + 1);
-    if (values["version"] != "HTTP/1.1") {
-        throw Router::ErrorException(505, "invalid http, request line! Unsupported version: " + values["version"]);
+bool Request::parseRequestLine() {
+    if (values.find("method") == values.end()) {
+        if (!splitHeader(" "))
+            return false;
+        values["method"] = valueBuffer;
+        valueBuffer.clear();
+    }
+    if (values.find("url") == values.end()) {
+        if (!splitHeader(" "))
+            return false;
+        values["url"] = valueBuffer;
+        valueBuffer.clear();
+    }
+    if (values.find("version") == values.end()) {
+        if (!splitHeader("\r\n"))
+            return false;
+        values["version"] = valueBuffer;
+        valueBuffer.clear();
+    }
+    return true;
+}
+
+void Request::toLower(const std::string& src, std::string& out) const {
+    out.reserve(src.size());
+    for (size_t i = 0; i < src.size(); ++i) {
+        if (src[i] >= 'A' && src[i] <= 'Z')
+            out.push_back(src[i] + 32);
+        else
+            out.push_back(src[i]);
     }
 }
 
-// static void timeStamp(int i) {
-//     std::time_t Time = std::time(NULL);
-//     std::string timeStr = std::ctime(&Time);
-//     std::cout << "Time" << i << " : " << timeStr << std::endl;
+bool Request::parseKeyValues(void) {
+    size_t      spacer;
+    std::string key;
+
+    while (splitHeader("\r\n")) {
+        if (valueBuffer.empty())
+            return true;
+        spacer = valueBuffer.find(':');
+        if (spacer == std::string::npos)
+            throw Router::ErrorException(400, "parseKeyValues: missing ':'");
+        toLower(valueBuffer.substr(0, spacer), key);
+        if (key.empty())
+            throw Router::ErrorException(400, "parseKeyValues: empty header key");
+        if (values.find(key) == values.end())
+            values[key] = valueBuffer.substr(spacer + 2, -1);
+        else
+            values[key] += ", " + valueBuffer.substr(spacer + 2, -1);
+        valueBuffer.clear();
+        key.clear();
+    }
+    return false;
+}
+
+void Request::parseHeader(void) {
+    if (!parseRequestLine())
+        return;
+    if (!parseKeyValues())
+        return;
+    haveHeader = true;
+}
+
+// #include <sys/time.h>
+// static void timeStamp(const std::string& str) {
+//     timeval currentTime;
+//     gettimeofday(&currentTime, NULL);
+//     long milliseconds = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
+//     std::cout << str << ": " << milliseconds << std::endl;
 // }
 
 void Request::parseBody(void) {
     std::map<std::string, std::string>::const_iterator it = values.find("transfer-encoding");
-// timeStamp(1);
     if (it != values.end() && it->second == "chunked") {
-        while (bodyPos != requestStr.size())
+        while (readPos != requestStr.size() && !haveBody) {
+            skipCRLF();
             parseChunkedBody();
         }
+        }
     else {
-        std::vector<char>::iterator st = requestStr.begin() + bodyPos;
+        std::vector<char>::iterator st = requestStr.begin() + readPos;
         if (st < requestStr.end()) {
             body.insert(body.end(), st, requestStr.end());
-            bodyPos = requestStr.size();
+            readPos = requestStr.size();
         }
         it = values.find("content-length");
         if (it == values.end()) {
             haveBody = true;
             return;
         }
-        size_t len = std::atoi(it->second.c_str());
+        size_t len = std::stol(it->second.c_str());
         if (body.size() == len)
             haveBody = true;
-    }
-// timeStamp(2);
-}
-//WIP
-void Request::addRequestLines(void) {
-    std::stringstream   parser;
-    std::string         line;
-
-    for (size_t i = 0; i < bodyPos; ++i) {
-        parser << requestStr[i];
-    }
-    while (std::getline(parser, line) && !line.empty()) {
-        if (line.back() == '\r')
-            line.pop_back();
-        requestLines.push(line);
     }
 }
 
@@ -107,34 +152,34 @@ size_t Request::hexToDecimal(char digit) const {
 }
 
 void Request::skipCRLF(void) {
-    if (requestStr.size() - bodyPos >= 2) {
-        if (requestStr[bodyPos] == '\r' && requestStr[bodyPos + 1] == '\n')
-            bodyPos += 2;
+    for (; readPos < requestStr.size(); ++readPos) {
+        if (requestStr[readPos] != '\r' && requestStr[readPos] != '\n')
+            return;
     }
 }
 
 bool Request::parseChunkSize(void) {
     size_t  hexDigit;
+    bool    find = false;
 
-    for (; bodyPos < requestStr.size() - 1; ++bodyPos) {
-        if ((requestStr[bodyPos] == '\r' && requestStr[bodyPos + 1] == '\n')) {
-            bodyPos += 2;
-            chunkStart = bodyPos;
-            return true;
-        }
-        hexDigit = hexToDecimal(requestStr[bodyPos]);
-        if (hexDigit == static_cast<size_t>(-1))
+    for (; readPos < requestStr.size(); ++readPos) {
+        if (!find && (requestStr[readPos] == '\r' || requestStr[readPos] == '\n'))
+            continue;
+        hexDigit = hexToDecimal(requestStr[readPos]);
+        if (hexDigit == static_cast<size_t>(-1)) {
+            if (find) {
+                return true;
+            }
             throw Router::ErrorException(400, "parseChunkSize: invalid chunk size");
+        }
+        find = true;
         chunkSize =  chunkSize * 16 + hexDigit;
+    }
+    if (find) {
+        return true;
     }
     return false;
 }
-
-// static void timeStamp(int i) {
-//     std::time_t Time = std::time(NULL);
-//     std::string timeStr = std::ctime(&Time);
-//     std::cout << "Time" << i << " : " << timeStr << std::endl;
-// }
 
 void Request::parseChunkedBody(void) {
     size_t                              copySize;
@@ -143,77 +188,42 @@ void Request::parseChunkedBody(void) {
     std::vector<char>::const_iterator   end;
 
     if (chunkSize == 0) {
-        if (!parseChunkSize())
+        if (!parseChunkSize()) {
             return;
+        }
+        skipCRLF();
     }
     if (chunkSize == 0) {
-        skipCRLF();
         haveBody = true;
         return;
     }
-    bodySize = requestStr.size() - chunkStart;
+    valueStart = readPos;
+    bodySize = requestStr.size() - valueStart;
     if (bodySize < chunkSize) {
         copySize = bodySize;
-        bodyPos = requestStr.size();
+        readPos += bodySize;
         chunkSize -= bodySize;
     }
     else {
         copySize = chunkSize;
-        bodyPos += chunkSize;
+        readPos += chunkSize;
         chunkSize = 0;
     }
-    start = requestStr.begin() + chunkStart;
+    start = requestStr.begin() + valueStart;
     end = start + copySize;
-    body.insert(body.end(), start, end);
+    valueStart += copySize; //WIP
+    while (start != end && *start != '\r') {
+        body.push_back(*start);
+        ++start;
+    }
     skipCRLF();
 }
 
-void Request::parseRequestLine() {
-    if (requestLines.empty()) {
-        throw Router::ErrorException(400, "invalid http, empty request line!");
-    }
-    std::string line = requestLines.front();
-    requestLines.pop();
-    parseMethod(line);
-    size_t space = line.find(' ');
-    parseURL(line);
-    parseVersion(line, space);
-}
-
-void Request::parseKeyValues(void) {
-    std::string line;
-    std::string headerName;
-    size_t      index;
-
-	while (!requestLines.empty()) {
-		line = requestLines.front();
-		requestLines.pop();
-		if (line.size() == 0)
-			break;
-		index = line.find(": ");
-		if (index == std::string::npos || index + 2 >= line.size()) {
-			throw Router::ErrorException(400, "invalid http, header!");
-        }
-        headerName = line.substr(0, index);
-        std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
-        std::map<std::string, std::string>::iterator    it = values.find(headerName);
-        if (it != values.end())
-            it->second += ", " + line.substr(index + 2);
-        else
-	    	values[headerName] = line.substr(index + 2);
-	}
-}
-
-void Request::parseHeader(void) {
-    if (haveHeader)
-        return;
-    addRequestLines();
-    parseRequestLine();
-    parseKeyValues();
-    haveHeader = true;
-}
-
 void Request::parse() {
-    parseHeader();
-    parseBody();
+    if (!haveHeader) {
+        parseHeader();
+    }
+    if (haveHeader) {
+        parseBody();
+    }
 }
