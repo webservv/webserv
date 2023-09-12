@@ -1,48 +1,9 @@
 #!/usr/bin/php
 <?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    echo "REQUEST_METHOD: POST\n";
-    // Content-Type을 확인할 때 multipart/form-data를 포함하는지 여부를 검사합니다.
-    if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
-        echo "CONTENT_TYPE: multipart/form-data\n";
-        
-        // 파일 업로드를 처리하기 위해 $_FILES 슈퍼 글로벌 배열을 사용합니다.
-        if (isset($_FILES['image'])) {
-            $file_name = $_FILES['image']['name'];
-            echo "Uploaded File Name: $file_name\n";
-        }
-        else
-            echo 'No $_FILES\n';
-    } else {
-        echo "CONTENT_TYPE: NONE\n";
-    }
-    // $_POST 배열을 확인하여 텍스트 필드 값을 얻습니다.
-    if (isset($_POST["title"])) {
-        $title = $_POST["title"];
-        echo "Title: $title\n";
-    }
-    if (isset($_POST["content"])) {
-        $content = $_POST["content"];
-        echo "Content: $content\n";
-    }
-    
-    // $_POST 배열의 크기를 확인합니다.
-    $post_data_count = count($_POST);
-    echo "POST size: " . $post_data_count . "\n";
-    
-} else {
-    echo "REQUEST_METHOD: NOT POST\n";
-}
-// stdin을 읽어와서 출력합니다.
 $data = fread(STDIN, $_SERVER["CONTENT_LENGTH"]);
-if ($data !== false) {
-    echo "################################\n" . $data;
-}
-else {
-    echo "Failed to read data from stdin.\n";
-    $title = "";
-    $content = "";
-}
+parse_str($data, $postData);
+$title = $postData["title"];
+$content = $postData["content"];
 $data_dir = "./DB";
 $post_file = $data_dir . "/posts.txt";
 $id = 0;
