@@ -134,9 +134,7 @@ void Router::validateContentType() {
         throw Router::ErrorException(415, "Unsupported Media Type");
     }
 }
-// http://localhost:8080/image
-// /image/yoonseo.jpg 
-// http://localhost:8080/document/images/yoonseo.jpg
+
 void Router::handleDirectory() {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
     const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : config->getAlias();
