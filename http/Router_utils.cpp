@@ -86,7 +86,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["SERVER_NAME"] = config->getServerName();
     CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
-    CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
+    CgiVariables["SERVER_SOFTWARE"] = "webserv/0.42";
     CgiVariables["HTTP_COOKIE"] = request.findValue("cookie");
     CgiVariables["HTTP_USER_AGENT"] = request.findValue("user-agent");
     CgiVariables["HTTP_ACCEPT_LANGUAGE"] = request.findValue("accept-encoding");
@@ -110,9 +110,6 @@ void Router::validateHeaderLength() {
     int contentLength = std::stoi(contentLengthHeader);
     if (contentLength < 0) {
         throw Router::ErrorException(400, "Content-Length is not a valid integer");
-    }
-    else if (contentLength > MAX_POST_SIZE) {
-        throw Router::ErrorException(413, "Content-Length is too large");
     }
 }
 
