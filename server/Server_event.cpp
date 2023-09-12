@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <utility>
+#include <vector>
 #define BUFFER_SIZE 1000 // we should put it 100
 #define DEBUG_BUFFER_SIZE 1000000
 
@@ -83,9 +84,17 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
     }
 }
 
+// static void printResponse(const std::vector<char>& response) {
+//     std::cout << "@@@@@@@@@@@Response@@@@@@@@@@@@@" << std::endl;
+//     for (size_t i = 0; i < response.size(); ++i) {
+//         std::cout << response[i];
+//     }
+//     std::cout << std::endl;
+// }
+
 void Server::disconnect(const int client_sockfd) {
 static size_t   num = 0;
-
+// printResponse(clientSockets[client_sockfd].getResponse());
 std::cout << "disconnect: " << ++num << std::endl;
     close(client_sockfd);
     clientSockets.erase(client_sockfd);
@@ -99,6 +108,14 @@ std::cout << "disconnect: " << ++num << std::endl;
 //     std::cout << str << ": " << milliseconds << std::endl;
 // }
 
+static void printRequest(const std::vector<char>& request) {
+    std::cout << "#############Request###########" << std::endl;
+    for (size_t i = 0; i < request.size(); ++i) {
+        std::cout << request[i];
+    }
+    std::cout << std::endl;
+}
+
 void Server::receiveBuffer(const int client_sockfd) {
     ssize_t             recvByte;
     Buffer              buf;
@@ -109,13 +126,13 @@ void Server::receiveBuffer(const int client_sockfd) {
 	recvByte = recv(client_sockfd, buf.begin(), buf.getSafeSize(DEBUG_BUFFER_SIZE), 0);
 	if (recvByte == -1)
 		throw std::runtime_error("ERROR on accept. " + std::string(strerror(errno)));
-// std::cout << "recvByte: " << recvByte << std::endl;
     buf.setSize(recvByte);
     router.addRequest(buf);
     if (router.isRequestEnd()) {
         router.handleRequest();
     }
     if (router.isRequestEnd() || router.getHaveResponse()) {
+printRequest(router.getRequest());
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
         // addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
     }
@@ -132,7 +149,6 @@ void Server::sendBuffer(const int client_sockfd, const intptr_t bufSize) {
         sendLength = send(client_sockfd, message.data() + sentLength, bufSize, 0);
     else
         sendLength = send(client_sockfd, message.data() + sentLength, leftLength, 0);
-// std::cout << "sendSize: " << sendLength << std::endl;
     if (sendLength < 0)
         throw std::runtime_error("send error. Server::receiveFromSocket" + std::string(strerror(errno)));
     if (sentLength + sendLength == message.size()) {

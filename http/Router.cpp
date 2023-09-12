@@ -103,7 +103,7 @@ void Router::handlePost() {
 		throw Router::ErrorException(413, "handlePost: body size is too large");
 	validateHeaderLength();
 	validateContentType();
-	if (!configURL.compare(0, 4, "/cgi")) {
+	if (configURL.find("/cgi/") != std::string::npos) {
 		connectCGI();
 	}
 	else
