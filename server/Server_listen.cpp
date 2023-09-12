@@ -18,7 +18,7 @@
 #include <cstdio>
 #include <utility>
 
-static int backlog = 1000;
+static int backlog = 128;
 static const std::string    default_host = "127.0.0.1";
 
 int Server::createSocket() {
