@@ -10,7 +10,7 @@ class ServerConfig;
 class LocationConfig {
 private:
     std::string             	URL;
-    std::string             	root;
+    std::string             	alias;
     std::vector<std::string>	index;
 	std::vector<std::string>	limitExcept;
     int                     	returnCode;
@@ -31,7 +31,7 @@ private:
 	bool	isNumber(const std::string& str) const;
 public:
 	void	parseURL(std::queue<std::string>& tokens);
-	void	parseRoot(std::queue<std::string>& tokens);
+	void	parseAlias(std::queue<std::string>& tokens);
 	void	parseIndex(std::queue<std::string>& tokens);
 	void	parseLimitExcept(std::queue<std::string>& tokens);
 	void	parseAutoIndex(std::queue<std::string>& tokens);
@@ -41,7 +41,7 @@ public:
 	void	parseClientMaxBodySize(std::queue<std::string>& tokens);
 public:
 	const std::string&				getURL(void) const;
-	const std::string&				getRoot(void) const;
+	const std::string&				getAlias(void) const;
 	const std::vector<std::string>&	getIndex(void) const;
 	const std::vector<std::string>&	getLimitExcept(void) const;
 	int								getReturnCode(void) const;
