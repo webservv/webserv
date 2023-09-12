@@ -2,11 +2,8 @@
 use strict;
 use warnings;
 
-# HTTP 요청 메서드와 환경 변수를 읽어옴
 my $request_method = $ENV{'REQUEST_METHOD'};
 my $query_string = $ENV{'QUERY_STRING'};
-
-# 데이터 디렉토리와 게시물 파일 경로 설정
 my $data_dir = "./DB";
 my $post_file = "$data_dir/posts.txt";
 
@@ -20,15 +17,12 @@ if ($request_method eq 'DELETE' && $query_string =~ /id=(\d+)/) {
         while (my $line = <$fh>) {
             my ($title, $content, $id, $sessionID) = split("\t", $line);
 
-            # 삭제하려는 id와 일치하지 않는 항목만 새로운 배열에 추가
             if ($id != $idToDelete) {
                 push @newLines, $line;
             }
         }
 
         close $fh;
-
-        # 파일에 변경된 내용을 저장
         open my $out_fh, '>', $post_file or die "Failed to open $post_file: $!";
         print $out_fh @newLines;
         close $out_fh;
