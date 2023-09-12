@@ -7,7 +7,7 @@
 ServerConfig::ServerConfig()
 	: serverName()
 	, listenPort()
-	, root("index.html")
+	, alias("index.html")
 	, locations()
 	, errorPages()
 	, index()
@@ -18,7 +18,7 @@ ServerConfig::ServerConfig()
 ServerConfig::ServerConfig(const ServerConfig& src)
 	: serverName(src.serverName)
 	, listenPort(src.listenPort)
-	, root(src.root)
+	, alias(src.alias)
 	, locations(src.locations)
 	, errorPages(src.errorPages)
 	, index(src.index)
@@ -31,7 +31,7 @@ ServerConfig::~ServerConfig() {}
 ServerConfig& ServerConfig::operator=(const ServerConfig &src) {
 	serverName = src.serverName;
 	listenPort = src.listenPort;
-	root = src.root;
+	alias = src.alias;
 	locations = src.locations;
 	errorPages = src.errorPages;
 	index = src.index;
@@ -95,14 +95,14 @@ void ServerConfig::parseListenPort(std::queue<std::string> &tokens) {
 		throw std::out_of_range("parseListenPort: port number out of range");
 }
 
-void ServerConfig::parseRoot(std::queue<std::string> &tokens) {
+void ServerConfig::parseAlias(std::queue<std::string> &tokens) {
 	if (tokens.empty())
-        throw std::out_of_range("parseRoot: no value");
-	root = tokens.front();
+        throw std::out_of_range("parseAlias: no value");
+	alias = tokens.front();
 	tokens.pop();
-	if (root.back() != ';')
-		throw std::out_of_range("parseRoot: missing ';' after root path");
-	root.pop_back();
+	if (alias.back() != ';')
+		throw std::out_of_range("parseAlias: missing ';' after root path");
+	alias.pop_back();
 }
 
 void ServerConfig::parseIndex(std::queue<std::string>& tokens) {
@@ -127,8 +127,8 @@ void ServerConfig::parseLocation(std::queue<std::string> &tokens) {
     while (!tokens.empty() && tokens.front() != "}") {
         std::string key = tokens.front();
         tokens.pop();
-        if (key == "root") {
-            newLocation.parseRoot(tokens);
+        if (key == "alias") {
+            newLocation.parseAlias(tokens);
         } else if (key == "index") {
             newLocation.parseIndex(tokens);
         } else if (key == "limit_except") {
@@ -226,8 +226,8 @@ int ServerConfig::getListenPort(void) const {
 	return listenPort;
 }
 
-const std::string& ServerConfig::getRoot(void) const {
-	return root;
+const std::string& ServerConfig::getAlias(void) const {
+	return alias;
 }
 
 const std::vector<LocationConfig>& ServerConfig::getLocations(void) const {

@@ -10,7 +10,7 @@ class ServerConfig {
 private:
 	std::string                	serverName;
 	int                        	listenPort;
-    std::string                	root;
+    std::string                	alias;
 	std::vector<LocationConfig>	locations;
 	std::map<int, std::string> 	errorPages;
     std::vector<std::string>   	index;
@@ -28,7 +28,7 @@ private:
 public:
 	void	parseServerName(std::queue<std::string>& tokens);
 	void	parseListenPort(std::queue<std::string>& tokens);
-	void	parseRoot(std::queue<std::string>& tokens);
+	void	parseAlias(std::queue<std::string>& tokens);
 	void	parseIndex(std::queue<std::string>& tokens);
 	void	parseLocation(std::queue<std::string>& tokens);
 	void	parseErrorPages(std::queue<std::string>& tokens);
@@ -36,7 +36,7 @@ public:
 public:
 	const std::string&					getServerName(void) const;
 	int									getListenPort(void) const;
-	const std::string&					getRoot(void) const;
+	const std::string&					getAlias(void) const;
 	const std::vector<LocationConfig>&	getLocations(void) const;
 	const std::map<int, std::string>&	getErrorPages(void) const;
 	const std::vector<std::string>&		getIndex(void) const;
