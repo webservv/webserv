@@ -42,6 +42,7 @@ public:
 	void						writeToCGI(const intptr_t fdBufferSize);
 	void						disconnectCGI(void);
 	void						endResponse(void);
+	void						clear(void);
 };
 
 #endif
