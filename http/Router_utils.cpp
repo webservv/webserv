@@ -137,7 +137,7 @@ void Router::validateContentType() {
 
 void Router::handleDirectory() {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
-    const std::string& directoryPath = matchLocation ? matchLocation->getRoot() : config->getRoot();
+    const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : config->getAlias();
     std::string testURL;
 
     if (configURL.back() != '/')
@@ -166,14 +166,14 @@ void Router::replaceURL(const std::string& UrlFromRequest) {
             configURL = UrlFromRequest;
             if (matchLocation->getURL() == "/")
                 configURL = "/" + UrlFromRequest;
-            if (matchLocation->getRoot().empty())
-                configURL.replace(0, matchLocation->getURL().size(), config->getRoot());
+            if (matchLocation->getAlias().empty())
+                configURL.replace(0, matchLocation->getURL().size(), config->getAlias());
             else 
-                configURL.replace(0, matchLocation->getURL().size(), matchLocation->getRoot());
+                configURL.replace(0, matchLocation->getURL().size(), matchLocation->getAlias());
         }
     }
     else {
-        configURL = config->getRoot() + UrlFromRequest;
+        configURL = config->getAlias() + UrlFromRequest;
     }
 }
 
