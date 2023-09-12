@@ -111,7 +111,12 @@ void Router::handlePost() {
 }
 
 void Router::handleDelete() {
-	connectCGI();
+	if (configURL.find("/cgi/") != std::string::npos) {
+		connectCGI();
+	}
+	else {
+		processStaticDelete();
+	}
 }
 
 void Router::handlePut(void) {
