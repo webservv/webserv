@@ -241,9 +241,9 @@ std::string Router::intToIP(in_addr_t ip) const {
 }
 
 bool Router::needCookie(void) const {
-    const static std::string                            CGI_PATH = "/documents/cgi/index.py";
+    const static std::string                            CGI_PATH = "/document/cgi/index.py";
     std::map<std::string, std::string>::const_iterator  it = CgiVariables.find("SCRIPT_NAME");
-    if (it->second.substr(0, CGI_PATH.length()) == CGI_PATH)
+    if (it->second == CGI_PATH)
         return true;
     return false;
 }
