@@ -76,9 +76,9 @@ void Router::setCustomErrorPage(const std::string& customPath) {
 }
 
 void Router::makeErrorResponse(int statusCode) {
-    std::map<int, std::string>::const_iterator  it = config->getErrorPages().find(statusCode);
+    std::map<int, std::string>::const_iterator  it = myConfig->getErrorPages().find(statusCode);
 
-    if (it == config->getErrorPages().end()) {
+    if (it == myConfig->getErrorPages().end()) {
         makeDefaultErrorResponse(statusCode);
         return;
     }

@@ -22,14 +22,14 @@ class Server
 private:
     static Server* instance;
 private:
-    int                                     kqueueFd;
-    std::map<int, int>                      listenSockets;
-    std::vector<struct kevent>              IOchanges;
-    std::vector<struct kevent>              IOevents;
-    std::map<int, Router>                   clientSockets;
-    std::map<int, Router*>                  pipes;
-    std::map<std::string, std::string>      cookies;
-    std::map<int, const ServerConfig*>      configs;
+    int                                         kqueueFd;
+    std::map<int, int>                          listenSockets;
+    std::vector<struct kevent>                  IOchanges;
+    std::vector<struct kevent>                  IOevents;
+    std::map<int, Router>                       clientSockets;
+    std::map<int, Router*>                      pipes;
+    std::map<std::string, std::string>          cookies;
+    std::map<int, std::vector<const ServerConfig*> >  configs;
 //Server_event.cpp
 private:
     void    handleEvent(const struct kevent& cur);

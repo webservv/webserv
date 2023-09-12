@@ -83,7 +83,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
     CgiVariables["REQUEST_METHOD"] = request.getMethod();
-    CgiVariables["SERVER_NAME"] = config->getServerName();
+    CgiVariables["SERVER_NAME"] = myConfig->getServerName();
     CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
@@ -137,8 +137,8 @@ void Router::validateContentType() {
 }
 
 void Router::handleDirectory() {
-    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
-    const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : config->getAlias();
+    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : myConfig->getIndex();
+    const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : myConfig->getAlias();
     const std::string& URLPath = matchLocation->getURL();
     std::string testURL;
 
@@ -169,13 +169,13 @@ void Router::replaceURL(const std::string& UrlFromRequest) {
             if (matchLocation->getURL() == "/")
                 configURL = "/" + UrlFromRequest;
             if (matchLocation->getAlias().empty())
-                configURL.replace(0, matchLocation->getURL().size(), config->getAlias());
+                configURL.replace(0, matchLocation->getURL().size(), myConfig->getAlias());
             else 
                 configURL.replace(0, matchLocation->getURL().size(), matchLocation->getAlias());
         }
     }
     else {
-        configURL = config->getAlias() + UrlFromRequest;
+        configURL = myConfig->getAlias() + UrlFromRequest;
     }
 }
 
@@ -183,7 +183,7 @@ void Router::setConfigURL() {
     const std::string& URLFromRequest = request.getURL();
     std::string path;
     
-    getBestMatchURL(config->getLocations(), URLFromRequest);
+    getBestMatchURL(myConfig->getLocations(), URLFromRequest);
     if (!matchLocation->getReturnURL().empty()) {
         configURL = matchLocation->getReturnURL();
         return ;
@@ -206,7 +206,7 @@ void Router::parseURL() {
     size_t      pathIndex;
     size_t      queryIndex;
 
-    if (configURL == "/cgi/cgi_tester")  {//tester only
+    if (configURL == "/cgi/cgi_tester")  { //tester only
         CgiVariables["PATH_INFO"] = request.getURL();
         CgiVariables["REQUEST_URI"] = request.getURL();
         CgiVariables["SCRIPT_NAME"] = request.getURL();
