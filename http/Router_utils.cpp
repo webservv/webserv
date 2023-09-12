@@ -138,6 +138,7 @@ void Router::validateContentType() {
 void Router::handleDirectory() {
     const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
     const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : config->getAlias();
+    const std::string& URLPath = matchLocation->getURL();
     std::string testURL;
 
     if (configURL.back() != '/')
@@ -152,7 +153,7 @@ void Router::handleDirectory() {
     }
     
     if (matchLocation && matchLocation->getAutoIndex())
-        configURL = generateDirectoryListing(directoryPath);
+        configURL = generateDirectoryListing(directoryPath, URLPath);
     else 
         configURL = testURL.erase(0, 1);
 }
