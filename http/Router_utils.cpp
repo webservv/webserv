@@ -198,8 +198,8 @@ void Router::setConfigURL() {
 }
 
 void Router::parseURL() {
-    const std::string& url = request.getURL();
-    std::string path_info, query_string;
+    std::string path_info;
+    std::string query_string;
 
     if (configURL == "/cgi/cgi_tester")  {//tester only
         CgiVariables["PATH_INFO"] = request.getURL();
@@ -207,22 +207,19 @@ void Router::parseURL() {
         CgiVariables["SCRIPT_NAME"] = request.getURL();
         return;
     }
-    size_t isCGI = url.find("/cgi/", 0);
-    if (isCGI == std::string::npos)
-        return;
-    size_t pathIndex = url.find('/', 5);
-    size_t queryIndex = url.find('?');
-
+    size_t  cgiIndex = configURL.find("/cgi/");
+    size_t  pathIndex = configURL.find("/", cgiIndex + 5);
+    size_t  queryIndex = configURL.find('?', pathIndex);
     if (pathIndex != std::string::npos) {
         size_t beginIndex = pathIndex;
-        size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : url.length();
-        path_info = url.substr(beginIndex, endIndex - beginIndex);
+        size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : configURL.length();
+        path_info = configURL.substr(beginIndex, endIndex - beginIndex);
     }
     if (queryIndex != std::string::npos) {
-        query_string = url.substr(queryIndex + 1);
+        query_string = configURL.substr(queryIndex + 1);
     }
     CgiVariables["REQEUST_URI"] = request.getURL();
-    CgiVariables["SCRIPT_NAME"] = url.substr(0, queryIndex - 1);
+    CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
 }
@@ -244,7 +241,8 @@ std::string Router::intToIP(in_addr_t ip) const {
 }
 
 bool Router::needCookie(void) const {
-    std::map<std::string, std::string>::const_iterator it = CgiVariables.find("SCRIPT_NAME");
+    const static std::string                            CGI_PATH = "/documents/cgi/index.py";
+    std::map<std::string, std::string>::const_iterator  it = CgiVariables.find("SCRIPT_NAME");
     if (it->second.substr(0, CGI_PATH.length()) == CGI_PATH)
         return true;
     return false;

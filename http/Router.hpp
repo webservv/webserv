@@ -14,8 +14,6 @@
 #include "Config.hpp"
 #include "Buffer.hpp"
 
-static const std::string    CGI_PATH = "./document/cgi";
-
 class Server;
 
 class Router {
