@@ -83,7 +83,7 @@ void Router::makeErrorResponse(int statusCode) {
         makeDefaultErrorResponse(statusCode);
         return;
     }
-    const std::string&  customPath = it->second;
+    const std::string&  customPath = '.' + it->second;
     try {
         response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), "Custom Error");
         setCustomErrorPage(customPath);
@@ -101,6 +101,7 @@ void Router::makeDefaultErrorResponse(int statusCode) {
     const std::string&                  body = defaultPage.second;
     std::vector<char>                   vBody;
 
+    response.clear();
     vBody.assign(body.begin(), body.end());
     response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), reasonPhrase);
     response.makeBody(vBody, body.length(), "text/plain");
