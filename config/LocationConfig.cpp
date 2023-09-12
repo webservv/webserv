@@ -8,7 +8,7 @@
 
 LocationConfig::LocationConfig()
 	: URL()
-	, root()
+	, alias()
 	, index()
 	, limitExcept()
 	, returnCode()
@@ -20,7 +20,7 @@ LocationConfig::LocationConfig()
 
 LocationConfig::LocationConfig(const ServerConfig& server)
 	: URL()
-	, root(server.getRoot())
+	, alias(server.getAlias())
 	, index(server.getIndex())
 	, limitExcept()
 	, returnCode(server.getReturnCode())
@@ -32,7 +32,7 @@ LocationConfig::LocationConfig(const ServerConfig& server)
 
 LocationConfig::LocationConfig(const LocationConfig& src)
 	: URL(src.URL)
-	, root(src.root)
+	, alias(src.alias)
 	, index(src.index)
 	, limitExcept(src.limitExcept)
 	, returnCode(src.returnCode)
@@ -46,7 +46,7 @@ LocationConfig::~LocationConfig() {}
 
 LocationConfig& LocationConfig::operator=(const LocationConfig &src) {
 	URL = src.URL;
-	root = src.root;
+	alias = src.alias;
 	index = src.index;
 	limitExcept = src.limitExcept;
 	returnCode = src.returnCode;
@@ -94,17 +94,17 @@ void LocationConfig::parseURL(std::queue<std::string> &tokens) {
     }
 }
 
-void LocationConfig::parseRoot(std::queue<std::string> &tokens) {
+void LocationConfig::parseAlias(std::queue<std::string> &tokens) {
 	if (tokens.empty()) {
-        throw std::out_of_range("parseRoot: root expects exactly 2 arguments");
+        throw std::out_of_range("parseAlias: root expects exactly 2 arguments");
     }
     std::string path = tokens.front();
     if (tokens.front().back() != ';') {
         throw std::out_of_range("missing ';' after root path");
     }
-    root = tokens.front();
+    alias = tokens.front();
 	tokens.pop();
-	root.pop_back();
+	alias.pop_back();
 }
 
 void LocationConfig::parseIndex(std::queue<std::string> &tokens) {
@@ -258,8 +258,8 @@ const std::string& LocationConfig::getURL(void) const {
 	return URL;
 }
 
-const std::string& LocationConfig::getRoot(void) const {
-	return root;
+const std::string& LocationConfig::getAlias(void) const {
+	return alias;
 }
 
 const std::vector<std::string>& LocationConfig::getIndex(void) const {

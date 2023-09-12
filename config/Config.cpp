@@ -135,11 +135,11 @@ void Config::parseServer(void) {
             hasServerName = true;
         } else if (title == "error_page") {
             newServer.parseErrorPages(tokens);
-        } else if (title == "root") {
+        } else if (title == "alias") {
             if (hasRoot) {
                 throw std::out_of_range("duplicate root entry in server");
             }
-            newServer.parseRoot(tokens);
+            newServer.parseAlias(tokens);
             hasRoot = true;
         } else if (title == "index") {
             newServer.parseIndex(tokens);
@@ -158,7 +158,7 @@ void Config::parseServer(void) {
         newServer.addIndex("index.html");
     if (newServer.getListenPort() == 0)
         throw std::out_of_range("parseServer: missing listen port");
-    if (newServer.getRoot().empty())
+    if (newServer.getAlias().empty())
         throw std::out_of_range("missing root directory of server");
     if (newServer.getLocations().empty())
         throw std::out_of_range("missing location entry in server");
