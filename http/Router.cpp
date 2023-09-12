@@ -91,8 +91,7 @@ Router& Router::operator=(const Router& copy) {
 Router::~Router() {}
 
 void Router::handleGet() {
-	if (!configURL.compare(0, 4, "/cgi")) {
-		response.makeStatusLine("HTTP/1.1", "200", "OK");
+	if (configURL.find("/cgi/") != std::string::npos) {
         connectCGI();
 	}
 	else
@@ -112,7 +111,6 @@ void Router::handlePost() {
 }
 
 void Router::handleDelete() {
-	response.makeStatusLine("HTTP/1.1", "200", "OK");
 	connectCGI();
 }
 

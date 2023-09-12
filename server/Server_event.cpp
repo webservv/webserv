@@ -41,11 +41,12 @@ void Server::handleEvent(const struct kevent& cur) {
 void Server::handleSocketEvent(int socket_fd) {
     sockaddr_in         client_addr;
     socklen_t           client_len = sizeof(client_addr);
-    static const size_t MAX_CLIENT_NUM = 3;
+    static const size_t MAX_CLIENT_NUM = 1000;
     struct linger       opt = {1, 0};
 
-    if (clientSockets.size() > MAX_CLIENT_NUM)
+    if (clientSockets.size() > MAX_CLIENT_NUM) {
         return;
+    }
     const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
     if (client_sockfd < 0) {
         throw std::runtime_error("ERROR on accept");
