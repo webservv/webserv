@@ -55,7 +55,7 @@ private:
     const std::string   makeSpacedStr(const int desiredSpaces, std::string target) const;
     
 public:
-    std::string generateDirectoryListing(const std::string& directoryPath);               
+    std::string generateDirectoryListing(const std::string& directoryPath, const std::string& URLPath);               
 //Router_error.cpp
 private:
     std::pair<std::string, std::string> \
