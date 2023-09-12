@@ -130,7 +130,8 @@ void Router::validateContentType() {
     }
     if (type != "application/x-www-form-urlencoded"
         && type != "multipart/form-data"
-        && type != "text/plain") {
+        && type != "text/plain"
+        && type != "image/png") {
         throw Router::ErrorException(415, "Unsupported Media Type");
     }
 }
