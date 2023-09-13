@@ -293,3 +293,7 @@ bool LocationConfig::getAutoIndex(void) const {
 size_t LocationConfig::getClientMaxBodySize(void) const {
 	return clientMaxBodySize;
 }
+
+void LocationConfig::addIndex(const std::string &src) {
+	index.push_back(src);
+}

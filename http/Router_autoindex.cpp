@@ -80,7 +80,7 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath, c
     if (outputFile.is_open()) {
         outputFile << html;
         outputFile.close();
-        std::cout << "HTML directory listing generated successfully." << std::endl;
+        std::cout << "[autoindex] HTML directory listing generated successfully." << std::endl;
     } else {
         throw Router::ErrorException(500, "generateDirectoryListing: " + std::string(strerror(errno)));
     }
