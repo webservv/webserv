@@ -11,6 +11,14 @@
 			"program": "${workspaceFolder}/webserv",
 			"args": ["default.conf"],
 			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "debug - test1",
+			"program": "${workspaceFolder}/webserv",
+			"args": ["test1_multi server.conf"],
+			"cwd": "${workspaceFolder}"
 		}
 	]
 }

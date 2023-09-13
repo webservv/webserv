@@ -211,7 +211,7 @@ void Router::handleRequest() {
 			handlePut();
 	}
 	catch (Router::ErrorException& e) {
-		std::cout << e.what() << std::endl;
+		std::cout << "[error_" << e.getErrorCode() << "]  " <<  e.what() << std::endl;
 		makeErrorResponse(e.getErrorCode());
 	}
 }

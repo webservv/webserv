@@ -50,7 +50,7 @@ public:
 	const std::vector<std::string>&	getCgiLimit(void) const;
 	bool							getAutoIndex(void) const;
 	size_t							getClientMaxBodySize(void) const;
-
+	void							addIndex(const std::string &src);
 };
 
 

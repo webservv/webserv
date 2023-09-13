@@ -52,6 +52,7 @@ void Server::handleSocketEvent(int socket_fd) {
     if (client_sockfd < 0) {
         throw std::runtime_error("ERROR on accept");
     }
+std::cout << "[accept]     " << client_sockfd << " socket accepted client's access." << std::endl;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, &opt, sizeof(opt)) < 0)
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     if (fcntl(client_sockfd, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0) {
@@ -93,9 +94,10 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 // }
 
 void Server::disconnect(const int client_sockfd) {
-static size_t   num = 0;
+// static size_t   num = 0;
 // printResponse(clientSockets[client_sockfd].getResponse());
-std::cout << "disconnect: " << ++num << std::endl;
+// std::cout << "disconnect: " << ++num << std::endl;
+    std::cout << "[disconnect] " << client_sockfd << " socket is disconnected" << std::endl;
     close(client_sockfd);
     clientSockets.erase(client_sockfd);
 }
