@@ -83,19 +83,19 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
     }
 }
 
-static void printResponse(const std::vector<char>& response) {
-    const size_t    size = response.size() < 500 ? response.size() : 500;
+// static void printResponse(const std::vector<char>& response) {
+//     const size_t    size = response.size() < 500 ? response.size() : 500;
 
-    std::cout << "@@@@@@@@@@@Response@@@@@@@@@@@@@" << std::endl;
-    for (size_t i = 0; i < size; ++i) {
-        std::cout << response[i];
-    }
-    std::cout << std::endl;
-}
+//     std::cout << "@@@@@@@@@@@Response@@@@@@@@@@@@@" << std::endl;
+//     for (size_t i = 0; i < size; ++i) {
+//         std::cout << response[i];
+//     }
+//     std::cout << std::endl;
+// }
 
 void Server::disconnect(const int client_sockfd) {
 static size_t   num = 0;
-printResponse(clientSockets[client_sockfd].getResponse());
+// printResponse(clientSockets[client_sockfd].getResponse());
 std::cout << "disconnect: " << ++num << std::endl;
     close(client_sockfd);
     clientSockets.erase(client_sockfd);
