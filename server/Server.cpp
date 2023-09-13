@@ -70,8 +70,8 @@ Server::Server(const Config& config):
             std::cout << "[listen]     " << new_server->getServerName() << ":"
                   << new_server->getListenPort() << ", now waiting for connections..." << std::endl;
         #else
-            std::cout << "[" << new_server->getServerName() << ":"
-                  << new_server->getListenPort() << "] waiting for connections..." << std::endl;
+            std::cout << new_server->getServerName() << ":"
+                  << new_server->getListenPort() << " waiting for connections..." << std::endl;
         #endif
     }
 }
