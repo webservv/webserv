@@ -150,6 +150,8 @@ void ServerConfig::parseLocation(std::queue<std::string> &tokens) {
     if (tokens.empty() || tokens.front() != "}") {
         throw std::out_of_range("missing '}' in location block");
     }
+	if (newLocation.getIndex().empty())
+		newLocation.addIndex("index.html");
     tokens.pop();
     locations.push_back(newLocation);
 }
