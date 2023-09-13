@@ -25,6 +25,9 @@ Config::Config(const std::string& config_file)
     , servers()
     , hasHTTP(false)
     {
+    if (config_file.rfind(".conf") + 5 != config_file.size())
+        throw std::runtime_error("config file format error");
+
     std::fstream configParser;
     configParser.open(config_file.c_str());
     if (!configParser.is_open()) {
