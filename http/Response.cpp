@@ -259,3 +259,7 @@ void Response::disconnectCGI(void) {
 void Response::endResponse(void) {
 	addResponse(response, "\r\n");
 }
+
+void Response::clear(void) {
+	response.clear();
+}
