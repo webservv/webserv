@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv) {
 	static_cast<void>(argc);
-	const std::string configPath(argv[1] ? argv[1] : "server.conf");
+	const std::string configPath(argv[1] ? argv[1] : "default.conf");
 	try {
         Config config(configPath);
         Server& server = Server::getInstance(config);

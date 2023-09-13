@@ -5,10 +5,6 @@ RM				= rm -f
 EXEC			= webserv
 SRCS_PATH		= ./
 
-CGI_PATH		= cgi/
-CGI_SRCS		= $(wildcard $(CGI_PATH)*.cpp)
-CGI_HEAD		= $(wildcard $(CGI_PATH)*.hpp)
-
 CONFIG_PATH		= config/
 CONFIG_SRCS		= $(wildcard $(CONFIG_PATH)*.cpp)
 CONFIG_HEAD		= $(wildcard $(CONFIG_PATH)*.hpp)
@@ -19,23 +15,20 @@ HTTP_HEAD		= $(wildcard $(HTTP_PATH)*.hpp)
 
 MAIN_PATH		= main/
 MAIN_SRCS		= $(wildcard $(MAIN_PATH)*.cpp)
-MAIN_HEAD		= $(wildcard $(MAIN_PATH)*.hpp)
 
 SERVER_PATH		= server/
 SERVER_SRCS		= $(wildcard $(SERVER_PATH)*.cpp)
 SERVER_HEAD		= $(wildcard $(SERVER_PATH)*.hpp)
 
-SOURCES			= $(MAIN_SRCS) $(CGI_SRCS) $(CONFIG_SRCS) \
+SOURCES			= $(MAIN_SRCS) $(CONFIG_SRCS) \
 					 $(HTTP_SRCS) $(SERVER_SRCS)
 
 OBJECTS			= $(SOURCES:.cpp=.o)
 
-INCLUDE_DIRS	= $(CGI_PATH) $(CONFIG_PATH) $(HTTP_PATH) \
-				 $(SERVER_PATH)
+INCLUDE_DIRS	= $(CONFIG_PATH) $(HTTP_PATH) $(SERVER_PATH)
 INCLUDE_FLAGS	= $(addprefix -I, $(INCLUDE_DIRS))
 
-HEADER			= $(MAIN_HEAD) $(CGI_HEAD) $(CONFIG_HEAD) \
-					 $(HTTP_HEAD) $(SERVER_HEAD)
+HEADER			= $(CONFIG_HEAD) $(HTTP_HEAD) $(SERVER_HEAD)
 
 
 ifdef DEBUG

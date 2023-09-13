@@ -67,9 +67,6 @@ void Router::processStaticPut(void) {
 void Router::processStaticDelete(void) {
 	const std::string& filePath = '.' + configURL;
 
-	if (access(configURL.c_str(), F_OK)) {
-		throw Router::ErrorException(404, "processStaticDelete: file not found");
-	}
 	if (std::remove(filePath.c_str()) != 0) {
 		throw Router::ErrorException(500, "processStaticDelete: remove system call error");
 	}

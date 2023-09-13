@@ -47,19 +47,27 @@ Server::Server(const Config& config):
     if (kqueueFd < 0) {
         throw std::runtime_error("kqueue error: " + std::string(strerror(errno)));
     }
+    static int portBefore;
+    static int socketBefore;
 
-    const std::vector<ServerConfig>& servers = config.getServers();
-    for (std::vector<ServerConfig>::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        const ServerConfig& new_server = *it;
-
-        int new_socket_fd = createSocket();
-        setSocketOptions(new_socket_fd);
-        bindSocket(new_server, new_socket_fd);
-        listenSocket(new_socket_fd);
-        listenSockets[new_socket_fd] = new_socket_fd;
-        configs[new_socket_fd] = &new_server;
-        std::cout << "Server started on " << new_server.getServerName() << ":"
-                  << new_server.getListenPort() << ", waiting for connections..." << std::endl;
+    const std::vector<ServerConfig>& serversFromConfig = config.getServers();
+    for (std::vector<ServerConfig>::const_iterator it = serversFromConfig.begin(); it != serversFromConfig.end(); ++it) {
+        const ServerConfig* new_server = &(*it);
+        if (new_server->getListenPort() == portBefore) {
+            configs[socketBefore].push_back(new_server);
+        }
+        else {
+            int new_socket_fd = createSocket();
+            setSocketOptions(new_socket_fd);
+            bindSocket(*new_server, new_socket_fd);
+            listenSocket(new_socket_fd);
+            listenSockets[new_socket_fd] = new_socket_fd;
+            configs[new_socket_fd].push_back(new_server);
+            socketBefore = new_socket_fd;
+            portBefore = new_server->getListenPort();
+        }
+        std::cout << "Server started on " << new_server->getServerName() << ":"
+                  << new_server->getListenPort() << ", waiting for connections..." << std::endl;
     }
 }
 

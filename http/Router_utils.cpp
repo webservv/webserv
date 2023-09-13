@@ -83,7 +83,7 @@ void Router::makeCgiVariables(void) {
     CgiVariables["REMOTE_IDENT"] = request.findValue("REMOTE_IDENT");
     CgiVariables["REMOTE_USER"] = request.findValue("REMOTE_USER");
     CgiVariables["REQUEST_METHOD"] = request.getMethod();
-    CgiVariables["SERVER_NAME"] = config->getServerName();
+    CgiVariables["SERVER_NAME"] = myConfig->getServerName();
     CgiVariables["SERVER_HOST"] = host.substr(portPos + 1, -1);
     CgiVariables["SERVER_PROTOCOL"] = request.getVersion();
     CgiVariables["SERVER_SOFWARE"] = "webserv/0.42";
@@ -130,16 +130,15 @@ void Router::validateContentType() {
     }
     if (type != "application/x-www-form-urlencoded"
         && type != "multipart/form-data"
-        && type != "text/plain") {
+        && type != "text/plain"
+        && type != "image/png") {
         throw Router::ErrorException(415, "Unsupported Media Type");
     }
 }
-// http://localhost:8080/image
-// /image/yoonseo.jpg 
-// http://localhost:8080/document/images/yoonseo.jpg
+
 void Router::handleDirectory() {
-    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : config->getIndex();
-    const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : config->getAlias();
+    const std::vector<std::string>& indexFiles = matchLocation ? matchLocation->getIndex() : myConfig->getIndex();
+    const std::string& directoryPath = matchLocation ? matchLocation->getAlias() : myConfig->getAlias();
     const std::string& URLPath = matchLocation->getURL();
     std::string testURL;
 
@@ -170,13 +169,13 @@ void Router::replaceURL(const std::string& UrlFromRequest) {
             if (matchLocation->getURL() == "/")
                 configURL = "/" + UrlFromRequest;
             if (matchLocation->getAlias().empty())
-                configURL.replace(0, matchLocation->getURL().size(), config->getAlias());
+                configURL.replace(0, matchLocation->getURL().size(), myConfig->getAlias());
             else 
                 configURL.replace(0, matchLocation->getURL().size(), matchLocation->getAlias());
         }
     }
     else {
-        configURL = config->getAlias() + UrlFromRequest;
+        configURL = myConfig->getAlias() + UrlFromRequest;
     }
 }
 
@@ -184,7 +183,7 @@ void Router::setConfigURL() {
     const std::string& URLFromRequest = request.getURL();
     std::string path;
     
-    getBestMatchURL(config->getLocations(), URLFromRequest);
+    getBestMatchURL(myConfig->getLocations(), URLFromRequest);
     if (!matchLocation->getReturnURL().empty()) {
         configURL = matchLocation->getReturnURL();
         return ;
@@ -203,26 +202,35 @@ void Router::setConfigURL() {
 void Router::parseURL() {
     std::string path_info;
     std::string query_string;
+    size_t      cgiIndex;
+    size_t      pathIndex;
+    size_t      queryIndex;
 
-    if (configURL == "/cgi/cgi_tester")  {//tester only
+    if (configURL == "/cgi/cgi_tester")  { //tester only
         CgiVariables["PATH_INFO"] = request.getURL();
         CgiVariables["REQUEST_URI"] = request.getURL();
         CgiVariables["SCRIPT_NAME"] = request.getURL();
         return;
     }
-    size_t  cgiIndex = configURL.find("/cgi/");
-    size_t  pathIndex = configURL.find("/", cgiIndex + 5);
-    size_t  queryIndex = configURL.find('?', pathIndex);
+    cgiIndex = configURL.find("/cgi/");
+    pathIndex = configURL.find("/", cgiIndex + 5);
+    queryIndex = configURL.find('?');
     if (pathIndex != std::string::npos) {
         size_t beginIndex = pathIndex;
         size_t endIndex = (queryIndex != std::string::npos) ? queryIndex : configURL.length();
         path_info = configURL.substr(beginIndex, endIndex - beginIndex);
+        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, pathIndex);
     }
     if (queryIndex != std::string::npos) {
         query_string = configURL.substr(queryIndex + 1);
+        if (CgiVariables.find("SCRIPT_NAME") == CgiVariables.end()) {
+            CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex);
+        }
+    }
+    if (CgiVariables.find("SCRIPT_NAME") == CgiVariables.end()) {
+        CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
     }
     CgiVariables["REQEUST_URI"] = request.getURL();
-    CgiVariables["SCRIPT_NAME"] = configURL.substr(0, queryIndex - 1);
     CgiVariables["PATH_INFO"] = path_info;
     CgiVariables["QUERY_STRING"] = query_string;
 }
@@ -244,9 +252,9 @@ std::string Router::intToIP(in_addr_t ip) const {
 }
 
 bool Router::needCookie(void) const {
-    const static std::string                            CGI_PATH = "/documents/cgi/index.py";
+    const static std::string                            CGI_PATH = "/document/cgi/index.py";
     std::map<std::string, std::string>::const_iterator  it = CgiVariables.find("SCRIPT_NAME");
-    if (it->second.substr(0, CGI_PATH.length()) == CGI_PATH)
+    if (it->second == CGI_PATH)
         return true;
     return false;
 }
