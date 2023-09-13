@@ -211,7 +211,7 @@ void Request::parseChunkedBody(void) {
     }
     start = requestStr.begin() + valueStart;
     end = start + copySize;
-    valueStart += copySize; //WIP
+    valueStart += copySize;
     while (start != end && *start != '\r') {
         body.push_back(*start);
         ++start;
