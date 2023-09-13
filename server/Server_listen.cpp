@@ -60,7 +60,9 @@ void Server::bindSocket(const ServerConfig& server, int socket_fd) const {
     if (bind(socket_fd, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
         throw std::runtime_error("ERROR on binding: " + std::string(strerror(errno)));
     }
-    std::cout << "Binded with " << host << ", " << port << std::endl;
+    #ifdef LOG
+        std::cout << "[bind]       " << socket_fd << " socket is binded with " << host << ":" << port << std::endl;
+    #endif
 }
 
 void Server::listenSocket(int socket_fd) const {

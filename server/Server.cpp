@@ -66,8 +66,13 @@ Server::Server(const Config& config):
             socketBefore = new_socket_fd;
             portBefore = new_server->getListenPort();
         }
-        std::cout << "Server started on " << new_server->getServerName() << ":"
-                  << new_server->getListenPort() << ", waiting for connections..." << std::endl;
+        #ifdef LOG
+            std::cout << "[listen]     " << new_server->getServerName() << ":"
+                  << new_server->getListenPort() << ", now waiting for connections..." << std::endl;
+        #else
+            std::cout << "[" << new_server->getServerName() << ":"
+                  << new_server->getListenPort() << "] waiting for connections..." << std::endl;
+        #endif
     }
 }
 
