@@ -21,7 +21,6 @@
 #include <cstdio>
 #include <utility>
 #include <vector>
-#define BUFFER_SIZE 1000 // we should put it 100
 #define DEBUG_BUFFER_SIZE 1000000
 
 void Server::handleEvent(const struct kevent& cur) {
@@ -50,7 +49,7 @@ void Server::handleSocketEvent(int socket_fd) {
     }
     const int client_sockfd = accept(socket_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
     if (client_sockfd < 0) {
-        throw std::runtime_error("ERROR on accept");
+        return;
     }
 std::cout << "[accept]     " << client_sockfd << " socket accepted client's access." << std::endl;
     if (setsockopt(socket_fd, SOL_SOCKET, SO_LINGER, &opt, sizeof(opt)) < 0)
@@ -86,8 +85,10 @@ void Server::handleIOEvent(int identifier, const struct kevent& cur) {
 }
 
 // static void printResponse(const std::vector<char>& response) {
+//     const size_t    size = response.size() < 500 ? response.size() : 500;
+
 //     std::cout << "@@@@@@@@@@@Response@@@@@@@@@@@@@" << std::endl;
-//     for (size_t i = 0; i < response.size(); ++i) {
+//     for (size_t i = 0; i < size; ++i) {
 //         std::cout << response[i];
 //     }
 //     std::cout << std::endl;
@@ -111,8 +112,10 @@ void Server::disconnect(const int client_sockfd) {
 // }
 
 // static void printRequest(const std::vector<char>& request) {
+//     const size_t    size = request.size() < 500 ? request.size() : 500;
+
 //     std::cout << "#############Request###########" << std::endl;
-//     for (size_t i = 0; i < request.size(); ++i) {
+//     for (size_t i = 0; i < size; ++i) {
 //         std::cout << request[i];
 //     }
 //     std::cout << std::endl;
@@ -135,6 +138,7 @@ void Server::receiveBuffer(const int client_sockfd) {
     }
     if (router.isRequestEnd() || router.getHaveResponse()) {
 // printRequest(router.getRequest());
+        addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
     }
 }
