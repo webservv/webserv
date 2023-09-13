@@ -156,28 +156,35 @@ void ServerConfig::parseLocation(std::queue<std::string> &tokens) {
 
 void ServerConfig::parseErrorPages(std::queue<std::string> &tokens) {
 	std::stringstream	ss;
+	std::vector<int>	errorCodes;
 	std::string			errorCodeStr;
 	std::string			URL;
 	int					errorCode;
 
 	if (tokens.size() < 2)
         throw std::out_of_range("parseErrorPages: error_page expects at least 2 arguments");
-	errorCodeStr = tokens.front();
-	tokens.pop();
-	if (!isNumber(errorCodeStr))
-		throw std::out_of_range("parseErrorPages: invalid error code");
-	ss << errorCodeStr;
-	ss >> errorCode;
-	if (ss.fail())
-		throw std::out_of_range("parseErrorPages: invalid error code");
-	if (errorCode < 100 | errorCode > 599)
-		throw std::out_of_range("parseErrorPages: error code out of range");
+	while (tokens.front().back() != ';') {
+		errorCodeStr = tokens.front();
+		tokens.pop();
+		if (!isNumber(errorCodeStr))
+			throw std::out_of_range("parseErrorPages: invalid error code");
+		ss << errorCodeStr;
+		ss >> errorCode;
+		if (ss.fail())
+			throw std::out_of_range("parseErrorPages: invalid error code");
+		if (errorCode < 100 | errorCode > 599)
+			throw std::out_of_range("parseErrorPages: error code out of range");
+		errorCodes.push_back(errorCode);
+		ss.clear();
+	}
 	URL = tokens.front();
 	tokens.pop();
 	if (URL.back() != ';')
 		throw std::out_of_range("parseErrorPages: missing ';'");
 	URL.pop_back();
-	errorPages[errorCode] = URL;
+	for (size_t i = 0; i < errorCodes.size(); ++i) {
+		errorPages[errorCodes[i]] = URL;
+	}
 }
 
 void ServerConfig::parseClientMaxBodySize(std::queue<std::string> &tokens) {
