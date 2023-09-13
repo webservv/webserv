@@ -58,7 +58,7 @@ void Server::handleSocketEvent(int socket_fd) {
         throw std::runtime_error("fcntl error! " + std::string(strerror(errno)));
     }
     addIOchanges(client_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, configs[socket_fd])));
+    clientSockets.insert(std::make_pair(client_sockfd, Router(this, client_addr, &configs[socket_fd])));
 }
 
 void Server::handlePipeEvent(int identifier, const struct kevent& cur) {
@@ -136,9 +136,8 @@ void Server::receiveBuffer(const int client_sockfd) {
         router.handleRequest();
     }
     if (router.isRequestEnd() || router.getHaveResponse()) {
-printRequest(router.getRequest());
+// printRequest(router.getRequest());
         addIOchanges(client_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-        // addIOchanges(client_sockfd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
     }
 }
 

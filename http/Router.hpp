@@ -43,7 +43,8 @@ private:
     bool                                haveResponse;
     Server*                             server;
     sockaddr_in                         clientAddr;
-    const ServerConfig*                 config;
+    const ServerConfig*                 myConfig;
+    const std::vector<const ServerConfig*>*    configs;
     std::map<std::string, std::string>  CgiVariables;
     std::string                         configURL;
     const LocationConfig*               matchLocation;
@@ -90,7 +91,7 @@ private:
 //Router.cpp
 public:
 	Router();
-    Router(Server* const server, const sockaddr_in& clientAddr, const ServerConfig* config);
+    Router(Server* const server, const sockaddr_in& clientAddr, const std::vector<const ServerConfig*>* configs);
 	Router(const Router& src);
 	Router&	operator=(const Router& src);
 	~Router();
@@ -103,11 +104,10 @@ private:
     bool                isBodyRequired(void) const;
     const std::string&  getParsedURL(void) const;
     void                handleMethod(const std::string& method);
+    void                findMyConfig(void);
 public:
     void                        handleRedirect(const std::string& url);
 	void				        handleRequest(void);
-    const ServerConfig*         getConfig(void) const;
-    const sockaddr_in&          getClientAddr(void) const;
     bool                        isRequestEnd(void) const;
     bool                        getHaveResponse(void) const;
     const std::vector<char>&    getRequest(void) const;
