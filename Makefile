@@ -35,6 +35,10 @@ ifdef DEBUG
 	CXXFLAGS = -Wall -Wextra -Werror -MMD -std=c++98 -g
 endif
 
+ifdef LOG
+	CXXFLAGS = -Wall -Wextra -Werror -MMD -std=c++98 -DLOG=1
+endif
+
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
@@ -61,7 +65,10 @@ re:
 debug: fclean
 	make DEBUG=1 -j
 
-.PHONY: all clean fclean re debug
+log: fclean
+	make LOG=1 -j
+
+.PHONY: all clean fclean re debug log
 
 -include $(OBJECTS:.o=.d)
 
