@@ -42,25 +42,26 @@ Router::Router():
 	haveResponse(false),
 	server(NULL),
 	clientAddr(),
-	config(NULL),
+	myConfig(NULL),
+	configs(NULL),
 	CgiVariables(),
 	configURL(){
 		initializeMimeMap();
 	}
 
-Router::Router(Server* const server, const sockaddr_in& clientAddr, const ServerConfig* config):
+Router::Router(Server* const server, const sockaddr_in& clientAddr, const std::vector<const ServerConfig*>* configs):
 	request(),
 	response(),
 	haveResponse(false),
 	server(server),
 	clientAddr(clientAddr),
-	config(config),
+	myConfig(NULL),
+	configs(configs),
 	CgiVariables(),
 	configURL(), 
 	matchLocation(NULL) {
 		initializeMimeMap();
 	}
-
 
 Router::Router(const Router& copy):
 	request(copy.request),
@@ -68,7 +69,8 @@ Router::Router(const Router& copy):
 	haveResponse(copy.haveResponse),
 	server(copy.server),
 	clientAddr(copy.clientAddr),
-	config(copy.config),
+	myConfig(copy.myConfig),
+	configs(copy.configs),
 	CgiVariables(copy.CgiVariables),
 	configURL(copy.configURL),
 	matchLocation(NULL) {
@@ -81,7 +83,8 @@ Router& Router::operator=(const Router& copy) {
 	haveResponse = copy.haveResponse;
 	server = copy.server;
 	clientAddr = copy.clientAddr;
-	config = copy.config;
+	myConfig = copy.myConfig;
+	configs = copy.configs;
 	CgiVariables = copy.CgiVariables;
 	configURL = copy.configURL;
 	matchLocation = copy.matchLocation;
@@ -167,15 +170,30 @@ void Router::handleMethod(const std::string& method) {
     }
 }
 
+void Router::findMyConfig(void) {
+
+	std::vector<const ServerConfig*>::const_iterator it = configs->begin();
+	for (; it != configs->end(); it++) {
+		const std::string& requestServer = request.findValue("Host");
+		const std::string& configServer = (*it)->getServerName();
+		if (requestServer.compare(0, configServer.size(), configServer) == 0) {
+			myConfig = (*it);
+			return;
+		}
+	}
+	myConfig = (*configs->begin());
+}
+
 void Router::handleRedirect(const std::string& url) {
     response.makeStatusLine("HTTP/1.1", "301", "Moved Permanently");
     response.makeHeader("Location", url);
     haveResponse = true;
 }
 
-
 void Router::handleRequest() {
     const std::string& method = request.getMethod();
+	
+	findMyConfig();
 	try {
 		setConfigURL();
         if (!matchLocation->getReturnURL().empty()) {
@@ -196,14 +214,6 @@ void Router::handleRequest() {
 		std::cout << e.what() << std::endl;
 		makeErrorResponse(e.getErrorCode());
 	}
-}
-
-const ServerConfig* Router::getConfig(void) const {
-	return config;
-}
-
-const sockaddr_in& Router::getClientAddr(void) const {
-	return clientAddr;
 }
 
 bool Router::isRequestEnd() const {

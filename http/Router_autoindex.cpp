@@ -53,13 +53,18 @@ std::string Router::generateDirectoryListing(const std::string& directoryPath, c
             struct stat fileStat;
             if (stat(filePath.c_str(), &fileStat) == 0) {
                 const std::string fileSize = std::to_string(fileStat.st_size);
-                if (fileName == "..")
-                    fileName = "[parent directory]";
                 if (fileName.length() > 20)
                     fileName.erase(20);
-                html += "<a href=\"" + URLPath + "/" + fileName + "\">" + fileName + "</a>";
-                std::string tab(20 - fileName.length(), ' ');
-                html += tab + makeSpacedStr(10, std::to_string(fileType));
+                if (fileName == "..") {
+                    html += "<a href=\"" + URLPath + "/" + fileName + "\">" + "[parent directory]" + "</a>";
+                    std::string tab = "  ";
+                    html += tab + makeSpacedStr(10, std::to_string(fileType));
+                }
+                else {
+                    html += "<a href=\"" + URLPath + "/" + fileName + "\">" + fileName + "</a>";
+                    std::string tab(20 - fileName.length(), ' ');
+                    html += tab + makeSpacedStr(10, std::to_string(fileType));
+                }
                 html += fileSize + "\n";
             }
             else
