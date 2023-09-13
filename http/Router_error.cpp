@@ -84,6 +84,7 @@ void Router::makeErrorResponse(int statusCode) {
         return;
     }
     const std::string&  customPath = '.' + it->second;
+
     try {
         response.makeStatusLine("HTTP/1.1", std::to_string(statusCode), "Custom Error");
         setCustomErrorPage(customPath);
